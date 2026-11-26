@@ -60,17 +60,25 @@ export function MonthTimeline({ month, moments, activeId, onOpen }: {
   const first = new Date(`${month}-01T00:00:00Z`);
   const days = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
   const positions = new Map<number, MomentLifeMoneySummary>();
+  const spans: { id: string; start: number; end: number }[] = [];
+  const percent = (day: number) => (day - 1) / (days - 1) * 100;
   for (const moment of moments) {
     const day = moment.startDate.startsWith(month) ? Number(moment.startDate.slice(-2)) : 1;
     if (!positions.has(day)) positions.set(day, moment);
+    if (moment.endDate) {
+      const endDay = moment.endDate.startsWith(month) ? Number(moment.endDate.slice(-2)) : days;
+      if (endDay > day) spans.push({ id: moment.momentId, start: day, end: endDay });
+    }
   }
   if (!positions.size) return null;
   return <div className={styles.monthTimeline} aria-label="Moments dans le mois">
     <div className={styles.timelineTrack}>
+      {spans.map(span => <i key={span.id} className={styles.timelineSpan} data-current={activeId === span.id}
+        style={{ left: `${percent(span.start)}%`, width: `${percent(span.end) - percent(span.start)}%` }} aria-hidden />)}
       {[...positions].map(([day, moment]) => <button key={moment.momentId} type="button"
         title={`${moment.title} · ${formatFrenchDateRange(moment.startDate, moment.endDate, false)}`}
         aria-label={`Moment du ${day} · ${moment.title}`} aria-pressed={activeId === moment.momentId}
-        style={{ "--position": `${(day - 1) / (days - 1) * 100}%` } as CSSProperties}
+        style={{ "--position": `${percent(day)}%` } as CSSProperties}
         onClick={() => onOpen(moment)}><span /></button>)}
     </div>
     <div className={styles.timelineScale} aria-hidden="true"><span>1</span><span>15</span><span>{days}</span></div>

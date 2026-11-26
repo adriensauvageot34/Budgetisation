@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowDownRight, ArrowLeft, ArrowUpRight, ChartNoAxesColumn, ChevronDown, Landmark, MapPin, SlidersHorizontal, Sparkles, Wallet, X } from "lucide-react";
 import type { YearMonth } from "@/core/time";
 import type { MetricValue } from "@/core/history-v2";
@@ -66,9 +66,26 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
   const [stack, setStack] = useState<readonly DetailSelection[]>(() =>
     initialDetail && initialDetail.kind !== "bridge" ? [{ target: initialDetail, label: linkedDetailLabels[initialDetail.kind] }] : []);
   const id = useId();
+  const dashboard = useRef<HTMLDivElement>(null);
+  const previousHeadings = useRef<Map<HTMLElement, DOMRect> | null>(null);
   const opener = useRef<HTMLElement | null>(null);
   const nestedTitle = useRef<HTMLHeadingElement>(null);
   const current = stack.at(-1);
+
+  useLayoutEffect(() => {
+    const headings = previousHeadings.current;
+    previousHeadings.current = null;
+    headings?.forEach((before, element) => {
+      element.getAnimations().forEach(animation => animation.cancel());
+      const after = element.getBoundingClientRect();
+      const x = before.left - after.left;
+      const y = before.top - after.top;
+      if (Math.abs(x) + Math.abs(y) < 2) return;
+      element.animate([{ transform: `translate(${x}px, ${y}px)` }, { transform: "none" }],
+        { duration: 280, easing: "cubic-bezier(.22,.75,.22,1)" });
+    });
+  }, [activePanel]);
+
   if (state.kind !== "balance") return null;
 
   const summary = stateValue(state.summary);
@@ -80,10 +97,21 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
     return <p role="alert" className={styles.unavailable}>Le bilan rassemble des versions de données différentes. Actualise la page pour le consulter.</p>;
   }
 
+  function captureHeadingPositions() {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !dashboard.current) return;
+    previousHeadings.current = new Map(
+      [...dashboard.current.querySelectorAll<HTMLElement>(`.${styles.headingRow}`)].map(element => [element, element.getBoundingClientRect()]),
+    );
+  }
+
   function close() {
+    captureHeadingPositions();
     setActivePanel(undefined);
     setStack([]);
-    requestAnimationFrame(() => opener.current?.focus({ preventScroll: true }));
+    requestAnimationFrame(() => {
+      const target = opener.current?.isConnected ? opener.current : document.getElementById(`${id}-${activePanel}-heading`);
+      target?.focus({ preventScroll: true });
+    });
   }
 
   function selectPanel(panel: PanelKind) {
@@ -91,6 +119,7 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
       close();
       return;
     }
+    captureHeadingPositions();
     if (document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
     setActivePanel(panel);
     setStack([]);
@@ -99,8 +128,11 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
   function showDetail(selection: DetailSelection) {
     const panel = panelFor(selection.target);
     if (!panel) return;
-    if (activePanel !== panel && document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
-    setActivePanel(panel);
+    if (activePanel !== panel) {
+      captureHeadingPositions();
+      if (document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
+      setActivePanel(panel);
+    }
     if (selection.target.kind === "bridge") {
       setStack([]);
       requestAnimationFrame(() => document.getElementById(`${id}-bank-heading`)?.focus({ preventScroll: true }));
@@ -114,33 +146,50 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
     requestAnimationFrame(() => nestedTitle.current?.focus({ preventScroll: true }));
   }
 
+  const actual = visibleValue(summary?.actualValue);
+  const categoryCollection = visibleValue(categories?.categories);
+  const momentCollection = visibleValue(life?.moments);
+  const momentCount = momentCollection?.status === "KNOWN" || momentCollection?.status === "PARTIAL" ? momentCollection.items.length : 0;
+  const immediateMargin = visibleValue(spending?.matrix)?.immediateMargin;
+  const compact: Record<PanelKind, ReactNode> = {
+    summary: actual && <MoneyMetric metric={actual} partialDisplay="value-only" />,
+    categories: categoryCollection?.status === "KNOWN" || categoryCollection?.status === "PARTIAL"
+      ? formatCount(categoryCollection.items.length, "poste") : null,
+    spending: metricValue(immediateMargin) === undefined ? null : <MarginAmount metric={immediateMargin} />,
+    life: momentCount ? formatCount(momentCount, "moment") : null,
+  };
+
   function renderPanel(panel: PanelKind, title: string, icon: ReactNode, body: ReactNode, extra?: ReactNode) {
     const selected = activePanel === panel;
     const detailId = `${id}-${panel}`;
     return <Panel kind={panel} title={title} icon={icon} selected={selected} collapsed={activePanel !== undefined && !selected}
-      detailId={detailId} onOpen={() => selectPanel(panel)}>
+      detailId={detailId} compact={compact[panel]} onOpen={() => selectPanel(panel)}>
       {body}
-      {selected && extra}
-      {selected && current && <div id={`${detailId}-specific`} className={styles.inlineDetail} aria-labelledby={`${detailId}-item-title`}>
-        <div className={styles.detailHeader}>
-          {stack.length > 1 && <button type="button" aria-label="Revenir au détail précédent"
-            onClick={() => setStack(items => items.slice(0, -1))}><ArrowLeft aria-hidden size={16} /></button>}
-          <h3 id={`${detailId}-item-title`} ref={nestedTitle} tabIndex={-1}>{current.label}</h3>
-          <button type="button" aria-label="Replier ce détail" className={styles.close} onClick={() => {
-            setStack([]);
-            requestAnimationFrame(() => document.getElementById(`${detailId}-heading`)?.focus({ preventScroll: true }));
-          }}><X aria-hidden size={17} /></button>
+      {selected && extra && <div className={styles.reveal}><div>{extra}</div></div>}
+      {selected && current && <div className={styles.reveal} key={detailKey(current.target)}>
+        <div>
+          <div id={`${detailId}-specific`} className={styles.inlineDetail} aria-labelledby={`${detailId}-item-title`}>
+            <div className={styles.detailHeader}>
+              {stack.length > 1 && <button type="button" aria-label="Revenir au détail précédent"
+                onClick={() => setStack(items => items.slice(0, -1))}><ArrowLeft aria-hidden size={16} /></button>}
+              <h3 id={`${detailId}-item-title`} ref={nestedTitle} tabIndex={-1}>{current.label}</h3>
+              <button type="button" aria-label="Replier ce détail" className={styles.close} onClick={() => {
+                setStack([]);
+                requestAnimationFrame(() => document.getElementById(`${detailId}-heading`)?.focus({ preventScroll: true }));
+              }}><X aria-hidden size={17} /></button>
+            </div>
+            <BalanceDetail selection={current} month={month} subcategoryLabels={subcategoryLabels}
+              onOpen={selection => {
+                setStack(items => [...items, selection]);
+                requestAnimationFrame(() => nestedTitle.current?.focus({ preventScroll: true }));
+              }} />
         </div>
-        <BalanceDetail key={detailKey(current.target)} selection={current} month={month} subcategoryLabels={subcategoryLabels}
-          onOpen={selection => {
-            setStack(items => [...items, selection]);
-            requestAnimationFrame(() => nestedTitle.current?.focus({ preventScroll: true }));
-          }} />
+        </div>
       </div>}
     </Panel>;
   }
 
-  return <div className={styles.dashboard} data-detail-open={activePanel !== undefined} data-detail-deep={current !== undefined}
+  return <div ref={dashboard} className={styles.dashboard} data-detail-open={activePanel !== undefined} data-detail-deep={current !== undefined}
     onKeyDown={event => {
       if (event.key !== "Escape" || activePanel === undefined) return;
       event.preventDefault();
@@ -155,38 +204,42 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
     </header>
 
     <div className={styles.panelGrid}>
-      {renderPanel("summary", "Dépenses du mois", <Wallet size={19} aria-hidden />,
-        summary ? <SummaryCard model={summary} expanded={activePanel === "summary"} onOpen={showDetail} /> : <DataStatus failed={state.summary.status === "error"} />,
-        summary && <>
-          <BalanceBankDetail month={month} headingId={`${id}-bank-heading`} />
-          {summary.importedSummary.text && <section className={styles.panelExtension} aria-labelledby={`${id}-editorial-heading`}>
-            <h3 id={`${id}-editorial-heading`}>{summary.importedSummary.freshness === "STALE" ? "Résumé à actualiser" : "Résumé du mois"}</h3>
-            <PagedRows size={1} label="Résumé du mois" items={summary.importedSummary.text.match(/.{1,210}(?:\s+|$)|\S+/gu) ?? [summary.importedSummary.text]}>
-              {rows => <p className={styles.longNote}>{rows[0]}</p>}
-            </PagedRows>
-          </section>}
-        </>)}
-      {renderPanel("categories", "Dépenses par catégorie", <ChartNoAxesColumn size={19} aria-hidden />,
-        categories ? <CategoryCard model={categories} total={metricValue(visibleValue(summary?.actualValue))}
-          expanded={activePanel === "categories"} activeId={current?.target.kind === "category" ? current.target.categoryId : undefined}
-          onOpen={showDetail} onExpand={() => selectPanel("categories")} detailId={`${id}-categories-specific`} />
-          : <DataStatus failed={state.categories.status === "error"} />)}
-      {renderPanel("spending", "Marges du mois", <SlidersHorizontal size={19} aria-hidden />,
-        spending ? <MarginCard model={spending} /> : <DataStatus failed={state.spendingNature.status === "error"} />,
-        spending && <section className={styles.panelExtension} aria-labelledby={`${id}-spending-breakdown`}>
-          <h3 id={`${id}-spending-breakdown`}>Répartition des dépenses</h3>
-          <SpendingBreakdown model={spending} month={month} />
-        </section>)}
-      {renderPanel("life", "Vie et argent", <Sparkles size={19} aria-hidden />,
-        life ? <LifeCard model={life} month={month} expanded={activePanel === "life"}
-          activeId={current?.target.kind === "moment" ? current.target.momentId : undefined}
-          onOpen={showDetail} /> : <DataStatus failed={state.lifeMoney.status === "error"} />,
-        life && <BalanceLifeDetails model={life} onOpen={showDetail} />)}
+      <div className={styles.band} data-active={activePanel === "summary" || activePanel === "categories"}>
+        {renderPanel("summary", "Dépenses du mois", <Wallet size={19} aria-hidden />,
+          summary ? <SummaryCard model={summary} expanded={activePanel === "summary"} onOpen={showDetail} /> : <DataStatus failed={state.summary.status === "error"} />,
+          summary && <div className={styles.summaryDetails}>
+            <BalanceBankDetail month={month} headingId={`${id}-bank-heading`} />
+            {summary.importedSummary.text && <section className={styles.panelExtension} aria-labelledby={`${id}-editorial-heading`}>
+              <h3 id={`${id}-editorial-heading`}>{summary.importedSummary.freshness === "STALE" ? "Résumé à actualiser" : "Résumé du mois"}</h3>
+              <PagedRows size={1} label="Résumé du mois" items={summary.importedSummary.text.match(/.{1,210}(?:\s+|$)|\S+/gu) ?? [summary.importedSummary.text]}>
+                {rows => <p className={styles.longNote}>{rows[0]}</p>}
+              </PagedRows>
+            </section>}
+          </div>)}
+        {renderPanel("categories", "Dépenses par catégorie", <ChartNoAxesColumn size={19} aria-hidden />,
+          categories ? <CategoryCard model={categories} total={metricValue(actual)}
+            expanded={activePanel === "categories"} activeId={current?.target.kind === "category" ? current.target.categoryId : undefined}
+            onOpen={showDetail} onExpand={() => selectPanel("categories")} detailId={`${id}-categories-specific`} />
+            : <DataStatus failed={state.categories.status === "error"} />)}
+      </div>
+      <div className={styles.band} data-active={activePanel === "spending" || activePanel === "life"}>
+        {renderPanel("spending", "Marges du mois", <SlidersHorizontal size={19} aria-hidden />,
+          spending ? <MarginCard model={spending} /> : <DataStatus failed={state.spendingNature.status === "error"} />,
+          spending && <section className={styles.panelExtension} aria-labelledby={`${id}-spending-breakdown`}>
+            <h3 id={`${id}-spending-breakdown`}>Répartition des dépenses</h3>
+            <SpendingBreakdown model={spending} month={month} />
+          </section>)}
+        {renderPanel("life", "Vie et argent", <Sparkles size={19} aria-hidden />,
+          life ? <LifeCard model={life} month={month} expanded={activePanel === "life"}
+            activeId={current?.target.kind === "moment" ? current.target.momentId : undefined}
+            onOpen={showDetail} /> : <DataStatus failed={state.lifeMoney.status === "error"} />,
+          life && <BalanceLifeDetails model={life} onOpen={showDetail} />)}
+      </div>
     </div>
   </div>;
 }
 
-function Panel({ kind, title, icon, selected, collapsed, onOpen, detailId, children }: {
+function Panel({ kind, title, icon, selected, collapsed, onOpen, detailId, compact, children }: {
   readonly kind: PanelKind;
   readonly title: string;
   readonly icon: ReactNode;
@@ -194,13 +247,15 @@ function Panel({ kind, title, icon, selected, collapsed, onOpen, detailId, child
   readonly collapsed: boolean;
   readonly onOpen: () => void;
   readonly detailId: string;
+  readonly compact: ReactNode;
   readonly children: ReactNode;
 }) {
   return <section key={kind} className={styles.panel} data-panel={kind} data-selected={selected} data-collapsed={collapsed}>
-    <h2><button type="button" className={styles.panelHeading} id={`${detailId}-heading`} onClick={onOpen} aria-controls={detailId} aria-expanded={selected}>
-      <span className={styles.panelIcon}>{icon}</span><span>{title}</span>
+    <h2 className={styles.headingRow}><button type="button" className={styles.panelHeading} id={`${detailId}-heading`} onClick={onOpen}
+      aria-label={title} aria-controls={detailId} aria-expanded={selected}>
+      <span className={styles.panelIcon}>{icon}</span><span className={styles.headingLabel}>{title}</span>
       <ChevronDown className={styles.chevron} size={16} aria-hidden />
-    </button></h2>
+    </button>{collapsed && compact && <span className={styles.compactFigure}>{compact}</span>}</h2>
     <div className={styles.panelSummary} id={detailId} aria-hidden={collapsed} inert={collapsed}>
       <div className={styles.panelSummaryClip}><div className={styles.panelBody}>{children}</div></div>
     </div>
@@ -235,7 +290,10 @@ function SummaryCard({ model, expanded, onOpen }: {
       </div>
       <SpendingComparison actual={metricValue(actual)} typical={metricValue(typical)} range={zone} />
       {!expanded && <div className={styles.panelFoot}>
-        {zone && <span className={styles.zone}>Fourchette habituelle <strong>{formatMoney(zone.lowerBound)} – {formatMoney(zone.upperBound)}</strong></span>}
+        <div className={styles.summaryReferences}>
+          {zone && <span className={styles.zone}>Fourchette habituelle <strong>{formatMoney(zone.lowerBound)} – {formatMoney(zone.upperBound)}</strong></span>}
+          {rank?.presentation === "RANKED" && <span className={styles.zone}>{formatHistoricalRank(rank.rank, rank.universeCount)}</span>}
+        </div>
         <button type="button" className={styles.textButton} onClick={() => onOpen({ target: { kind: "bridge" }, label: "Écart avec mon compte" })}>
           <Landmark size={14} aria-hidden /> Écart avec mon compte
         </button>
@@ -283,9 +341,10 @@ function CategoryCard({ model, total, expanded, activeId, onOpen, onExpand, deta
         {expanded && rows.some(row => row.delta !== undefined) && <p className={styles.note}>Les écarts signés comparent les dépenses au mois habituel.</p>}
         <ul className={styles.categoryPlot}>
           {rows.map((row, index) => <li key={row.id}>
-            <button type="button" onClick={() => onOpen({ target: { kind: "category", categoryId: row.id }, label: row.label })}
+            <button type="button" style={{ "--category-color": categoryColors[index % categoryColors.length] } as CSSProperties}
+              onClick={() => onOpen({ target: { kind: "category", categoryId: row.id }, label: row.label })}
               aria-controls={activeId === row.id ? detailId : undefined} aria-expanded={activeId === row.id}>
-              <i style={{ backgroundColor: categoryColors[index % categoryColors.length] }} aria-hidden />
+              <i aria-hidden />
               <AmountBar row={row} maximum={maximum} />
               {expanded && row.delta !== undefined && <small className={styles.categoryDelta} data-above={Number(row.delta) > 0}>{formatDelta(row.delta)}</small>}
               <ChevronDown size={14} aria-hidden />
