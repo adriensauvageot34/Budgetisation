@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, ChevronRight, ExternalLink, Info, RefreshCw, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, ChevronLeft, ChevronRight, ExternalLink, Info, RefreshCw, Sparkles, X } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { parseMetricId } from "@/core/identity";
 import { parseMoney, type Money } from "@/core/money";
 import type { MetricEnvelope } from "@/core/metrics";
-import { MultiSeriesMonetaryEvolution, OverlayFrame, RankingBar } from "@/ui";
+import { MultiSeriesMonetaryEvolution } from "@/ui";
 import type {
   GlobalCompactInsight,
   GlobalCompactKpi,
@@ -22,9 +22,10 @@ import type {
   GlobalMomentComponentRow,
   GlobalMomentPeerObservation,
   GlobalLifeTimelineV2ReadModel,
+  GlobalLifeTimelineReadModel,
+  GlobalLifeTimelineV3ReadModel,
   GlobalTimelineComparisonEventObservation,
   GlobalNavigationDestination,
-  GlobalModuleCompactReadModel,
   GlobalPrimaryModuleKey,
   GlobalReadModelPublicationMeta,
   GlobalReadModelTransportState,
@@ -32,18 +33,19 @@ import type {
 } from "@/query-api/global-v2";
 import { globalV2MethodRef } from "@/query-api/global-v2";
 import { globalModulePresentation, globalUiCopy } from "./catalog";
-import { ComparisonRange } from "./comparison-range";
 import { economicMetric, economicStructureGroups, economicStructureLabel } from "./economic-ui";
 import { emitGlobalV2UxEvent } from "./instrumentation";
-import { GlobalModuleBoundary } from "./module-boundary";
-import { GlobalClayIcon, type GlobalClayIconName } from "./global-clay-icon";
-import { LifeTimeline, TimelineComparator } from "./life-timeline";
-import type { TimelineDensityMode } from "./life-timeline-presentation";
+import { DensityAtom, useContentDensity } from "@/components/layout/content-density";
+import { AtomicDetailPages } from "./atomic-detail-pages";
+import atomic from "./global-atomic.module.css";
+import { GlobalClayIcon } from "./global-clay-icon";
+import { groupTimelineEvents, TimelineComparator, TimelineEventFacts } from "./life-timeline";
+import { timelineEventAmount } from "./life-timeline-presentation";
 import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-collections";
-import { resolveRhythmDetailContext, rhythmDetailReturnSection, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
+import { resolveRhythmDetailContext, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
 import { globalV2PersonaPanelResource, type GlobalV2PersonaPanelModel } from "@/query-api/global-v2/persona-panel";
 import { BackgroundRhythms } from "./background-rhythms";
-import { useGlobalV2Resource, useMobileGlobalLayout, useNearViewport } from "./use-global-resource";
+import { useGlobalV2Resource } from "./use-global-resource";
 import { GlobalV2VisitRuntime, parseGlobalDeepLink, type GlobalV2UiRequest, type GlobalV2UiTransport } from "./visit-runtime";
 import styles from "./global-v2.module.css";
 
@@ -69,33 +71,6 @@ const storyOrder = Object.freeze([
   "ECONOMIC", "CATEGORIES_NEEDS", "RHYTHM", "PERSONAS",
 ] as const satisfies readonly GlobalPrimaryModuleKey[]);
 
-const internalNavigation = Object.freeze([
-  { label: "Synthèse", anchor: "synthese", icon: "overview" },
-  { label: "Nos dépenses", anchor: "economie", icon: "expenses" },
-  { label: "Catégories", anchor: "categories", icon: "categories" },
-  { label: "Vie & dépenses", anchor: "rythmes", icon: "events" },
-  { label: "Profils", anchor: "profils", icon: "profiles" },
-] as const);
-
-const rhythmViews = [
-  { key: "timeline", label: "Événements", icon: "events" },
-  { key: "food", label: "Alimentation", icon: "groceries" },
-  { key: "car", label: "Voiture", icon: "car" },
-] as const satisfies readonly { key: string; label: string; icon: GlobalClayIconName }[];
-
-const moduleTabs: Readonly<Record<GlobalPrimaryModuleKey, readonly { readonly key: GlobalExpandedSectionKey; readonly label: string }[]>> = Object.freeze({
-  ECONOMIC: [{ key: "OVERVIEW", label: "Résumé" }, { key: "EVOLUTION", label: "Évolution" }, { key: "BREAKDOWN", label: "Répartition" }, { key: "PATTERNS", label: "Dépenses récurrentes" }],
-  CATEGORIES_NEEDS: [{ key: "BREAKDOWN", label: "Catégories" }, { key: "PATTERNS", label: "Besoins renseignés" }, { key: "EVOLUTION", label: "Évolution" }],
-  TRANSFORMATIONS: [{ key: "OVERVIEW", label: "Vue d’ensemble" }],
-  RHYTHM: [{ key: "PATTERNS", label: "Habitudes & dépenses" }, { key: "BREAKDOWN", label: "Moments" }, { key: "EVOLUTION", label: "Changements" }],
-  RELATIONSHIPS: [{ key: "OVERVIEW", label: "Vue d’ensemble" }],
-  MOMENTS: [{ key: "OVERVIEW", label: "Moments" }, { key: "COMPARISONS", label: "Comparaisons" }],
-  GEO_MOBILITY: [{ key: "OVERVIEW", label: "Lieux" }, { key: "BREAKDOWN", label: "Dépenses" }, { key: "EVOLUTION", label: "Évolution" }],
-  CONSUMPTION: [{ key: "OVERVIEW", label: "Vue d’ensemble" }],
-  PERSONAS: [{ key: "OVERVIEW", label: "Profils" }],
-  TOGETHER: [{ key: "OVERVIEW", label: "Nous deux" }],
-});
-
 function moduleForSlug(slug: string): GlobalPrimaryModuleKey | undefined {
   return storyOrder.find((moduleKey) => moduleSlugs[moduleKey] === slug);
 }
@@ -114,10 +89,6 @@ function LoadingCard({ label, compact = false }: { readonly label: string; reado
 
 function LocalError({ retry }: { readonly retry: () => void }) {
   return <div className={styles.localError} role="alert"><strong>Ce contenu n’a pas pu être chargé.</strong><p>Le reste de l’analyse reste disponible.</p><button type="button" className="button-secondary" onClick={retry}><RefreshCw aria-hidden size={16} /> Réessayer</button></div>;
-}
-
-function PartialBadge({ onClick }: { readonly onClick: () => void }) {
-  return <button type="button" className={styles.partialBadge} onClick={onClick}><Info aria-hidden size={14} /> Analyse partielle</button>;
 }
 
 function HumanQualityNote({ quality }: { readonly quality: GlobalCompactQuality }) {
@@ -143,32 +114,6 @@ function moneyEnvelope(value: number | undefined): MetricEnvelope<Money, "EUR"> 
     : { availability: "known", value: parseMoney(String(value)), unit: "EUR", provenance: "derived" };
 }
 
-function countEnvelope(value: number | undefined): MetricEnvelope<number, "count"> {
-  return value === undefined
-    ? { availability: "unknown", value: null, unit: "count", provenance: "derived" }
-    : { availability: "known", value, unit: "count", provenance: "derived" };
-}
-
-function MoneyRanking({ title, rows, limit = 5 }: { readonly title: string; readonly rows: readonly { readonly id: string; readonly label: string; readonly displayValue?: string }[]; readonly limit?: number }) {
-  const metricId = parseMetricId("global-ui-money");
-  const values = rows.slice(0, limit).flatMap((item, index) => {
-    const value = numericDisplay(item.displayValue);
-    return value === undefined ? [] : [{ identity: item.id, label: humanLabel(item.label), rank: index + 1, metricId, metric: moneyEnvelope(value) }];
-  });
-  if (values.length === 0) return null;
-  return <div className={styles.chartCompact}><RankingBar frame={{ title, state: { kind: "ready" }, summary: <span>{values.length} éléments classés à partir des valeurs publiées.</span> }} activeMeasure={{ metricId, unit: "EUR" }} sort={{ metricId, direction: "desc" }} rows={values} /></div>;
-}
-
-function CountRanking({ title, rows, limit = 5 }: { readonly title: string; readonly rows: readonly { readonly id: string; readonly label: string; readonly displayValue?: string }[]; readonly limit?: number }) {
-  const metricId = parseMetricId("global-ui-count");
-  const values = rows.slice(0, limit).flatMap((item, index) => {
-    const value = numericDisplay(item.displayValue);
-    return value === undefined ? [] : [{ identity: item.id, label: humanLabel(item.label), rank: index + 1, metricId, metric: countEnvelope(value) }];
-  });
-  if (values.length === 0) return null;
-  return <div className={styles.chartCompact}><RankingBar frame={{ title, state: { kind: "ready" }, summary: <span>{values.length} éléments observés.</span> }} activeMeasure={{ metricId, unit: "count" }} sort={{ metricId, direction: "desc" }} rows={values} /></div>;
-}
-
 function M2MonetarySeries({ title, series, reference, showLegend = true, showSummary = true, highlightLastPoint = false }: { readonly title: string; readonly series: readonly GlobalDetailSeries[]; readonly reference?: GlobalDetailMetric; readonly showLegend?: boolean; readonly showSummary?: boolean; readonly highlightLastPoint?: boolean }) {
   const comparable = series.slice(0, 3).filter((item) => item.points.length > 0 && item.points.length <= 12 && item.points.every((point) => point.typedMeasure?.kind === "MONEY"));
   const periods = comparable[0]?.points.map(({ unitKey }) => unitKey) ?? [];
@@ -176,15 +121,6 @@ function M2MonetarySeries({ title, series, reference, showLegend = true, showSum
   if (aligned.length === 0) return null;
   const referenceValue = reference?.typedMeasure?.kind === "MONEY" ? m2TypedNumber(reference) : undefined;
   return <div className={styles.m2MonetarySeries}><MultiSeriesMonetaryEvolution frame={{ title, state: { kind: "ready" }, summary: showSummary ? <span>Évolution mensuelle sur la période analysée.</span> : null }} unit="EUR" series={aligned.map((item) => ({ id: item.seriesId, label: humanLabel(item.labelKey), points: item.points.map((point) => ({ period: point.unitKey, label: capitalize(frenchMonth(point.unitKey)), metric: moneyEnvelope(m2TypedNumber(point)) })) }))} {...(referenceValue === undefined ? {} : { referenceLine: { label: "Référence", metric: moneyEnvelope(referenceValue) } })} showLegend={showLegend} highlightLastPoint={highlightLastPoint} /></div>;
-}
-
-function InsightCard({ insight }: { readonly insight: GlobalCompactInsight }) {
-  return <article className={styles.primaryInsight}><Sparkles aria-hidden size={20} /><div><strong>{humanLabel(insight.titleKey)}</strong><p>{humanLabel(insight.statementKey)}</p></div></article>;
-}
-
-function KpiGrid({ kpis, limit = 3 }: { readonly kpis: readonly GlobalCompactKpi[]; readonly limit?: number }) {
-  if (kpis.length === 0) return null;
-  return <div className={styles.kpis}>{kpis.slice(0, limit).map((kpi) => <div key={kpi.kpiId}><span>{humanLabel(kpi.labelKey)}</span><strong>{kpi.displayValue}</strong></div>)}</div>;
 }
 
 const integerFormatter = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
@@ -389,25 +325,6 @@ function EconomicChart({ evolution, overview, certifiedThrough, compact = false 
   </section>;
 }
 
-function EconomicCompactCard({ overview, evolution, certifiedThrough, onDetail, onMethod }: { readonly overview: GlobalExpandedReadModel; readonly evolution: GlobalExpandedReadModel; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onMethod: () => void }) {
-  const period = analysisPeriod(certifiedThrough);
-  const targetMonthName = frenchMonth(period.targetMonth).replace(/\s+\d{4}$/u, "");
-  const minimal = economicMetric(overview, "minimal-state");
-  const minimalKnown = economicNumber(minimal) !== undefined;
-  return <div className={styles.economicCompact}>
-    <p className={styles.economicPeriod}>{period.label}</p>
-    <div className={styles.economicHero} aria-label="Nos trois repères mensuels">
-      <article className={styles.economicHeroPrimary}><span>Notre mois habituel</span><EconomicMetricValue metric={economicMetric(overview, "typical-state")} perMonth /></article>
-      <article><span>Nos dépenses minimum <InfoTooltip text="Estimation annuelle calculée avec les données disponibles sur les 12 mois analysés." /></span><EconomicMetricValue metric={minimal} perMonth /></article>
-      {minimalKnown ? <article><span>Notre marge</span><EconomicMetricValue metric={economicMetric(overview, "typical-minimal-gap")} perMonth /></article> : null}
-    </div>
-    <div className={styles.lastMonth}><div><span>{period.targetLabel}</span><strong>{formatMoney(economicNumber(economicMetric(overview, "actual")))} dépensés</strong></div><p><strong>{formatMoney(economicNumber(economicMetric(overview, "actual-reference-delta")), { signed: true })}</strong> par rapport à notre niveau habituel avant {targetMonthName}</p></div>
-    <EconomicChart evolution={evolution} overview={overview} certifiedThrough={certifiedThrough} compact />
-    <p className={styles.economicInsight}>{annualReading}</p>
-    <footer className={styles.economicActions}><button type="button" className={styles.methodLink} onClick={onMethod}><Info aria-hidden size={15} /> Méthode</button><button type="button" className={styles.exploreLink} onClick={onDetail}>Explorer <span aria-hidden>→</span></button></footer>
-  </div>;
-}
-
 function EconomicSummary({ model, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly certifiedThrough: string }) {
   const period = analysisPeriod(certifiedThrough);
   const targetMonthName = frenchMonth(period.targetMonth).replace(/\s+\d{4}$/u, "");
@@ -521,8 +438,6 @@ type OverlayTarget = {
   readonly queryDetailRef?: string;
 };
 
-type DetailTrailEntry = { readonly target: OverlayTarget; readonly scrollTop: number | undefined; readonly peerRef: string };
-
 function moduleOverlayTarget(moduleKey: GlobalPrimaryModuleKey, initialSection?: GlobalExpandedSectionKey): OverlayTarget {
   const presentation = globalModulePresentation(moduleKey);
   const title = moduleKey === "RHYTHM" && initialSection === "PATTERNS"
@@ -574,12 +489,6 @@ function M2MoneyRows({ rows, onDetail, initialLimit = 9, allowExpansion = true, 
     })}</div>
     {allowExpansion && typedRows.length > initialLimit ? <button type="button" className={styles.m2ShowAll} onClick={() => setExpanded((value) => !value)}>{expanded ? expansionLabels.fewer : showRemainingCount ? `Voir les ${typedRows.length - initialLimit} autres` : `${expansionLabels.all} (${typedRows.length})`}</button> : null}
   </div>;
-}
-
-function M2Concentration({ value }: { readonly value: GlobalCompactKpi | GlobalDetailMetric | undefined }) {
-  const ratio = value?.typedMeasure?.kind === "RATIO" ? m2TypedNumber(value) : undefined;
-  if (ratio === undefined) return null;
-  return <p className={styles.m2Concentration}>Nos 5 principaux postes concentrent <strong>{formatM2Ratio(ratio)} de nos dépenses</strong>.</p>;
 }
 
 function M2Comparisons({ model, certifiedThrough, onDetail }: { readonly model: GlobalExpandedReadModel; readonly certifiedThrough: string; readonly onDetail: (row: GlobalDetailRow, title?: string) => void }) {
@@ -724,14 +633,6 @@ function LifeActivityProfiles({ model, onDetail }: { readonly model: GlobalExpan
     })}</div>
     <p className={styles.lifeNonAdditive}>Chaque habitude est à lire séparément : ces montants ne forment pas un total.</p>
   </section>;
-}
-
-function lifeComparisonDelta(comparison: NonNullable<GlobalDetailRow["momentComparison"]>): string | undefined {
-  const delta = m2TypedNumber({ typedMeasure: comparison.absoluteDelta });
-  const count = m2TypedNumber({ typedMeasure: comparison.peerCount });
-  if (delta === undefined || count === undefined) return undefined;
-  const direction = delta < 0 ? "en dessous" : "au-dessus";
-  return `${formatLifeMoney(Math.abs(delta))} ${direction} de la médiane de ${integerFormatter.format(count)} moments comparables.`;
 }
 
 function LifeMomentComparisons({ model, onDetail }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow, title?: string) => void }) {
@@ -901,150 +802,6 @@ function GlobalExpandedContent({ model, entityRef, onDetail, onOpenPeer, onOpenT
   </div>;
 }
 
-function GlobalDetailOverlay({ target, runtime, mobile, certifiedThrough, restoreFocusRef, onReplace, onClose }: { readonly target: OverlayTarget; readonly runtime: GlobalV2VisitRuntime; readonly mobile: boolean; readonly certifiedThrough: string; readonly restoreFocusRef: RefObject<HTMLElement | null>; readonly onReplace: (target: OverlayTarget) => void; readonly onClose: () => void }) {
-  const returnFocusEntityRef = useRef<string | undefined>(target.kind === "ENTITY_DETAIL" ? target.entityRef : undefined);
-  const returnScrollTop = useRef<number | undefined>(undefined);
-  const returnFocusPeerRef = useRef<string | undefined>(undefined);
-  const returnPeerScrollTop = useRef<number | undefined>(undefined);
-  const [detailTrail, setDetailTrail] = useState<readonly DetailTrailEntry[]>([]);
-  const lifeModule = target.kind === "MODULE_DETAIL" && target.moduleKey === "RHYTHM";
-  const lifePatternsRequest = useMemo(() => ({ resource: "analysis_global_rhythm_expanded" as const, params: { sectionKey: "PATTERNS" } }), []);
-  const lifeBreakdownRequest = useMemo(() => ({ resource: "analysis_global_rhythm_expanded" as const, params: { sectionKey: "BREAKDOWN" } }), []);
-  const lifeComparisonsRequest = useMemo(() => ({ resource: "analysis_global_rhythm_expanded" as const, params: { sectionKey: "COMPARISONS" } }), []);
-  const lifeEvolutionRequest = useMemo(() => ({ resource: "analysis_global_rhythm_expanded" as const, params: { sectionKey: "EVOLUTION" } }), []);
-  const lifePatterns = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, lifePatternsRequest, lifeModule, "BACKGROUND");
-  const lifeBreakdown = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, lifeBreakdownRequest, lifeModule, "BACKGROUND");
-  const lifeComparisons = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, lifeComparisonsRequest, lifeModule, "BACKGROUND");
-  const lifeEvolution = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, lifeEvolutionRequest, lifeModule, "BACKGROUND");
-  const lifePatternsModel = transportData(lifePatterns.state);
-  const lifeBreakdownModel = transportData(lifeBreakdown.state);
-  const lifeComparisonsModel = transportData(lifeComparisons.state);
-  const lifeEvolutionModel = transportData(lifeEvolution.state);
-  const tabs = useMemo(() => {
-    if (target.kind !== "MODULE_DETAIL") return [];
-    if (target.moduleKey !== "RHYTHM") return moduleTabs[target.moduleKey];
-    const patternsAvailable = lifePatternsModel?.rows.some((row) => row.typedMeasure?.kind === "MONEY" && row.activityCostProfile !== undefined) ?? false;
-    const momentsAvailable = (lifeBreakdownModel?.rows.length ?? 0) > 0 || (lifeComparisonsModel?.rows.length ?? 0) > 0;
-    const evolutionAvailable = lifeEvolutionModel !== undefined && (lifeEvolutionModel.primaryInsight !== undefined || lifeEvolutionModel.secondaryInsights.length > 0 || lifeEvolutionModel.metrics.length > 0 || lifeEvolutionModel.series.length > 0 || lifeEvolutionModel.rows.length > 0);
-    return moduleTabs.RHYTHM.filter(({ key }) => key === "PATTERNS" && patternsAvailable || key === "BREAKDOWN" && momentsAvailable || key === "EVOLUTION" && evolutionAvailable);
-  }, [lifeBreakdownModel, lifeComparisonsModel, lifeEvolutionModel, lifePatternsModel, target.kind, target.moduleKey]);
-  const preferredSection = target.kind === "MODULE_DETAIL" && target.moduleKey === "RHYTHM"
-    ? target.initialSection !== undefined && target.initialSection !== "OVERVIEW" ? target.initialSection : tabs[0]?.key ?? "PATTERNS"
-    : target.initialSection ?? tabs[0]?.key ?? "METHODOLOGY";
-  const [section, setSection] = useState<GlobalExpandedSectionKey>(preferredSection);
-  useEffect(() => setSection(preferredSection), [preferredSection]);
-  useEffect(() => { if (target.kind === "MODULE_DETAIL" && tabs.length > 0 && !tabs.some(({ key }) => key === section)) setSection(tabs[0]!.key); }, [section, tabs, target.kind]);
-  const params = useMemo<Readonly<Record<string, string>>>(() => {
-    const next: Record<string, string> = {};
-    if (target.kind === "METHODOLOGY") {
-      next.moduleKey = target.moduleKey;
-      next.methodRef = target.entityRef;
-    } else if (target.kind === "ENTITY_DETAIL") {
-      next.entityRef = target.entityRef;
-    } else {
-      next.sectionKey = section;
-    }
-    return next;
-  }, [section, target]);
-  const request = useMemo(() => ({ resource: target.resource, params }), [params, target.resource]);
-  const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, true, "DIRECT");
-  const model = transportData(result.state);
-  useEffect(() => {
-    const entityRef = returnFocusEntityRef.current;
-    if (target.kind !== "MODULE_DETAIL" || model === undefined || entityRef === undefined) return;
-    const frame = document.querySelector<HTMLElement>('[data-overlay-shell][data-topmost="true"]');
-    if (frame === null) return;
-    const focusRow = () => {
-      const row = frame.querySelector<HTMLElement>(`[data-global-entity-ref="${CSS.escape(entityRef)}"], [data-m2-entity-ref="${CSS.escape(entityRef)}"]`);
-      if (row === null) return false;
-      const content = frame.querySelector<HTMLElement>("[data-overlay-content]");
-      if (content !== null && returnScrollTop.current !== undefined) content.scrollTop = returnScrollTop.current;
-      row.focus({ preventScroll: true });
-      returnFocusEntityRef.current = undefined;
-      returnScrollTop.current = undefined;
-      return true;
-    };
-    if (focusRow()) return;
-    const observer = new MutationObserver(() => { if (focusRow()) observer.disconnect(); });
-    observer.observe(frame, { childList: true, subtree: true });
-    const timeout = window.setTimeout(() => { observer.disconnect(); returnFocusEntityRef.current = undefined; returnScrollTop.current = undefined; }, 2_000);
-    return () => { observer.disconnect(); window.clearTimeout(timeout); };
-  }, [model, target.kind]);
-  useEffect(() => {
-    const peerRef = returnFocusPeerRef.current;
-    if (target.kind !== "ENTITY_DETAIL" || model === undefined || peerRef === undefined || model.rows[0]?.entityRef !== target.entityRef) return;
-    const frame = document.querySelector<HTMLElement>('[data-overlay-shell][data-topmost="true"]');
-    const peerPoint = frame?.querySelector<HTMLElement>(`[data-peer-ref="${CSS.escape(peerRef)}"]`);
-    const content = frame?.querySelector<HTMLElement>("[data-overlay-content]");
-    if (peerPoint === null || peerPoint === undefined) return;
-    if (content !== null && content !== undefined && returnPeerScrollTop.current !== undefined) content.scrollTop = returnPeerScrollTop.current;
-    peerPoint.focus({ preventScroll: true });
-    returnFocusPeerRef.current = undefined;
-    returnPeerScrollTop.current = undefined;
-  }, [model, target.kind]);
-  const presentation = globalModulePresentation(target.moduleKey);
-  const subtitle = target.kind === "ENTITY_DETAIL"
-    ? target.moduleKey === "RHYTHM" ? target.entityRef.startsWith("moment:") ? "Détail du moment" : target.entityRef.startsWith("household-activity:") ? "Détail de l’activité au niveau du foyer" : "Contexte de rythme individuel" : target.entityRef.startsWith("need:") ? "Besoin renseigné" : "Détail de la catégorie"
-    : target.moduleKey === "ECONOMIC" ? undefined : presentation.description;
-  const localError = target.kind === "METHODOLOGY" && target.moduleKey === "ECONOMIC" ? <div className={styles.methodError} role="alert">Impossible de charger les détails de méthode · <button type="button" onClick={result.retry}>Réessayer</button></div> : <LocalError retry={result.retry} />;
-  const activeTabId = `${moduleSlugs[target.moduleKey]}-tab-${section.toLowerCase()}`;
-  const activePanelId = `${moduleSlugs[target.moduleKey]}-panel-${section.toLowerCase()}`;
-  const rhythmReturnSection = target.kind === "ENTITY_DETAIL" ? rhythmDetailReturnSection(target.rhythmDetailContext) : undefined;
-  const returnSection = rhythmReturnSection ?? target.returnSection ?? (target.entityRef.startsWith("need:") ? "PATTERNS" : "BREAKDOWN");
-  const detailHasBack = detailTrail.length > 0 || target.kind === "ENTITY_DETAIL" && (target.moduleKey === "CATEGORIES_NEEDS" || rhythmReturnSection !== undefined);
-  const showTabs = target.moduleKey !== "RHYTHM" && tabs.length > 1;
-  const showRhythmMethod = target.kind === "MODULE_DETAIL" && target.moduleKey === "RHYTHM";
-  const rhythmDetailMode = target.kind === "ENTITY_DETAIL" && target.moduleKey === "RHYTHM";
-  const returnToCollection = () => onReplace(moduleOverlayTarget(target.moduleKey, returnSection));
-  const closeDetail = detailTrail.length > 0 || rhythmReturnSection === undefined ? onClose : returnToCollection;
-  const goBack = () => {
-    const previous = detailTrail.at(-1);
-    if (previous === undefined) returnToCollection();
-    else {
-      returnFocusPeerRef.current = previous.peerRef;
-      returnPeerScrollTop.current = previous.scrollTop;
-      setDetailTrail((trail) => trail.slice(0, -1));
-      onReplace(previous.target);
-    }
-  };
-  const openPeer = (peer: GlobalMomentPeerObservation) => {
-    if (!peer.detailRef.startsWith("global-query:analysis_global_moment_experience_detail:")) return;
-    const nextTarget = entityOverlayTarget("RHYTHM", peer.peerRef, peer.canonicalName, undefined, "NARRATIVE");
-    if (nextTarget === undefined) return;
-    const content = document.querySelector<HTMLElement>('[data-overlay-shell][data-topmost="true"] [data-overlay-content]');
-    setDetailTrail((trail) => [...trail, { target, scrollTop: content?.scrollTop, peerRef: peer.peerRef }]);
-    onReplace({ ...nextTarget, queryDetailRef: peer.detailRef });
-    if (content !== null) content.scrollTop = 0;
-  };
-  const openTimelinePeer = (peer: GlobalTimelineComparisonEventObservation) => {
-    if (peer.sourceKind === "LIFE_EVENT") {
-      onClose();
-      window.requestAnimationFrame(() => window.dispatchEvent(new CustomEvent("global-v2:focus-life-event", { detail: { eventRef: peer.eventRef, visibilityTier: peer.visibilityTier } })));
-      return;
-    }
-    const nextTarget = entityOverlayTarget("RHYTHM", peer.eventRef, peer.canonicalName, undefined, "NARRATIVE");
-    if (nextTarget === undefined) return;
-    const content = document.querySelector<HTMLElement>('[data-overlay-shell][data-topmost="true"] [data-overlay-content]');
-    onReplace(nextTarget);
-    if (content !== null) content.scrollTop = 0;
-  };
-  return <OverlayFrame kind="exploration" title={target.title} subtitle={subtitle} closeAction={{ kind: "callback", onAction: closeDetail }} {...(detailHasBack ? { backAction: { kind: "callback" as const, onAction: goBack } } : {})} restoreFocusRef={restoreFocusRef} closeOnBackdrop className={`${styles.detailOverlay} ${rhythmDetailMode ? styles.rhythmDetailSheet : ""} ${mobile ? styles.mobileOverlay : ""}`}>
-    {showTabs || showRhythmMethod ? <div className={`${styles.overlayNavigation} ${target.moduleKey === "CATEGORIES_NEEDS" || target.moduleKey === "RHYTHM" ? styles.m2OverlayNavigation : ""}`}>{showTabs ? <div className={`${styles.sectionTabs} ${target.moduleKey === "CATEGORIES_NEEDS" ? styles.m2Tabs : ""}`} role="tablist" aria-label={`Sections de ${target.title}`}>{tabs.map((item) => <button id={`${moduleSlugs[target.moduleKey]}-tab-${item.key.toLowerCase()}`} key={item.key} type="button" role="tab" aria-selected={section === item.key} aria-controls={`${moduleSlugs[target.moduleKey]}-panel-${item.key.toLowerCase()}`} onClick={() => { setSection(item.key); emitGlobalV2UxEvent("global_section_expanded", { moduleKey: target.moduleKey, sectionKey: item.key }); window.history.replaceState(window.history.state, "", `#${moduleSlugs[target.moduleKey]}-${item.key.toLowerCase()}`); }}>{item.label}</button>)}</div> : null}{target.moduleKey === "ECONOMIC" || target.moduleKey === "RHYTHM" ? <button type="button" className={styles.methodLink} onClick={() => onReplace(methodOverlayTarget(target.moduleKey))}><Info aria-hidden size={15} /> {target.moduleKey === "RHYTHM" ? "Fiabilité & méthode" : "Méthode"}</button> : null}</div> : null}
-    {target.moduleKey === "CATEGORIES_NEEDS" ? <p className={styles.m2Period}>{analysisPeriod(certifiedThrough).label.replace("—", "→")}</p> : null}
-    <div data-rhythm-detail-origin={target.rhythmDetailContext?.origin} data-query-detail-ref={target.queryDetailRef} {...(showTabs ? { id: activePanelId, role: "tabpanel", "aria-labelledby": activeTabId } : {})}>{result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? localError : model === undefined ? null : <GlobalExpandedContent model={model} entityRef={target.entityRef} runtime={runtime} certifiedThrough={certifiedThrough} onOpenPeer={openPeer} onOpenTimelinePeer={openTimelinePeer} onDetail={(row, detailTitle) => {
-      if (row.entityRef === undefined) return;
-      const rhythmOrigin = target.moduleKey !== "RHYTHM" ? undefined : section === "PATTERNS" ? "HABITS_COLLECTION" : section === "BREAKDOWN" ? "MOMENTS_COLLECTION" : undefined;
-      const nextTarget = entityOverlayTarget(target.moduleKey, row.entityRef, detailTitle ?? humanLabel(row.labelKey), section, rhythmOrigin);
-      if (nextTarget === undefined) return;
-      const content = document.querySelector<HTMLElement>('[data-overlay-shell][data-topmost="true"] [data-overlay-content]');
-      returnScrollTop.current = content?.scrollTop;
-      returnFocusEntityRef.current = row.entityRef;
-      onReplace(nextTarget);
-      if (content !== null) content.scrollTop = 0;
-    }} />}</div>
-  </OverlayFrame>;
-}
-
 function useExpandedModule(runtime: GlobalV2VisitRuntime, moduleKey: GlobalPrimaryModuleKey, sectionKey: GlobalExpandedSectionKey, enabled = true) {
   const resource = globalModulePresentation(moduleKey).expandedResource;
   const request = useMemo(() => ({ resource, params: { sectionKey } }), [resource, sectionKey]);
@@ -1059,262 +816,331 @@ function ExpandedPreview({ runtime, moduleKey, sectionKey, children }: { readonl
   return <LoadingCard label="la visualisation" compact />;
 }
 
-function SeeDetail({ onClick }: { readonly onClick: () => void }) {
-  return <button type="button" className={styles.detailButton} onClick={onClick}>Voir le détail <span aria-hidden>→</span></button>;
+type AtomicSlot = "spending" | "categories" | "life" | "profiles";
+type AtomicFocus =
+  | { readonly kind: "query"; readonly slot: AtomicSlot; readonly target: OverlayTarget }
+  | { readonly kind: "month"; readonly slot: "spending"; readonly month: string; readonly title: string }
+  | { readonly kind: "event"; readonly slot: "life"; readonly event: DashboardEvent }
+  | { readonly kind: "person"; readonly slot: "profiles"; readonly person?: "adrien" | "manon" }
+  | { readonly kind: "rhythm"; readonly slot: "life"; readonly view: "food" | "car" };
+
+type DashboardTimeline = GlobalLifeTimelineReadModel | GlobalLifeTimelineV2ReadModel | GlobalLifeTimelineV3ReadModel;
+type DashboardEvent = DashboardTimeline["events"][number];
+type OpenFocus = (focus: AtomicFocus) => void;
+
+const timelineRequest = { resource: "analysis_global_life_timeline", params: {} } as const;
+const personaPanelRequest = { resource: globalV2PersonaPanelResource, params: {} } as const;
+const AtomicPersona = lazy(() => import("./persona/atomic-persona"));
+const categoryColors = ["#8051ae", "#b370a4", "#667eb6", "#b27c48", "#647f98", "#946ba8"];
+
+const atomicSections = {
+  spending: { id: "economie", title: "Nos dépenses", icon: "expenses" },
+  categories: { id: "categories", title: "Catégories et besoins", icon: "categories" },
+  life: { id: "rythmes", title: "Vie et dépenses", icon: "events" },
+  profiles: { id: "profils", title: "Nos profils", icon: "profiles" },
+} as const;
+
+function Atom(props: Omit<ComponentProps<typeof DensityAtom>, "className" | "motionClassName">) {
+  return <DensityAtom {...props} className={atomic.atom} motionClassName={atomic.motion} />;
 }
 
-function M2CompactRecentInsight({ insight, runtime, certifiedThrough, onDetail }: { readonly insight: GlobalCompactInsight; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: (entityRef: string, title: string) => void }) {
-  const entityRef = insight.entityRefs[0];
-  const request = useMemo<GlobalV2UiRequest>(() => ({ resource: "analysis_global_category_need_detail", params: { entityRef: entityRef ?? "" } }), [entityRef]);
-  const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, entityRef !== undefined, "BACKGROUND");
-  const detail = transportData(result.state);
-  if (detail === undefined) return null;
-  const metric = (id: string) => detail.metrics.find(({ metricId }) => metricId === id);
-  const current = m2TypedNumber(metric("detail:current-amount"));
-  const reference = m2TypedNumber(metric("detail:typical-amount"));
-  const delta = m2TypedNumber(metric("detail:delta-amount"));
-  if (current === undefined || reference === undefined || delta === undefined) return null;
-  const targetLabel = analysisPeriod(certifiedThrough).targetLabel.toLocaleLowerCase("fr-FR");
-  const comparison = delta === 0 ? "au même niveau que" : `${formatMoney(delta)} ${delta > 0 ? "au-dessus de" : "en dessous de"}`;
-  return <section className={styles.m2CompactChange} aria-labelledby="m2-compact-change"><h3 id="m2-compact-change">Ce qui distingue {targetLabel}</h3><button type="button" className={`${styles.primaryInsight} ${styles.m2InsightButton}`} data-m2-entity-ref={entityRef} onClick={() => onDetail(entityRef, humanLabel(insight.titleKey))} aria-label={`Explorer ${humanLabel(insight.titleKey)}`}><Sparkles aria-hidden size={20} /><span><strong>{humanLabel(insight.titleKey)}</strong><p>En {targetLabel} : {formatMoney(current)}, soit {comparison} son niveau de référence de {formatMoney(reference)}.</p></span></button></section>;
+function AtomicSection({ slot, children, detail }: { readonly slot: AtomicSlot; readonly children: ReactNode; readonly detail?: ReactNode }) {
+  const { region, flow } = useContentDensity();
+  const { id, title, icon } = atomicSections[slot];
+  return <section className={atomic.section} data-global-section={slot} data-focused={detail !== undefined} id={id} aria-labelledby={`${id}-title`} ref={region}>
+    <div ref={flow} className={atomic.flow}>
+      <Atom name="heading" priority={100} minimum={1}>
+        <h2 id={`${id}-title`} className={atomic.heading}><GlobalClayIcon name={icon} size={34} />{title}</h2>
+      </Atom>
+      {children}
+      {detail}
+    </div>
+  </section>;
 }
 
-function M2CompactCard({ model, runtime, certifiedThrough, onDetail, onEntityDetail }: { readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onEntityDetail: (entityRef: string, title: string) => void }) {
-  const concentration = model.kpis.find(({ kpiId }) => kpiId === "kpi:categories:top-five-concentration");
-  const period = analysisPeriod(certifiedThrough);
-  return <div className={styles.m2Compact}>
-    <p className={styles.m2Period}>{period.label.replace("—", "→")}</p>
-    <M2Concentration value={concentration} />
-    <ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="BREAKDOWN">{(breakdown) => <M2MoneyRows rows={breakdown.rows} onDetail={(row) => row.entityRef === undefined ? undefined : onEntityDetail(row.entityRef, humanLabel(row.labelKey))} initialLimit={5} allowExpansion={false} />}</ExpandedPreview>
-    {model.primaryInsight === undefined ? null : <M2CompactRecentInsight insight={model.primaryInsight} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={onEntityDetail} />}
-    <button type="button" className={styles.detailButton} onClick={onDetail}>Explorer l’analyse <span aria-hidden>→</span></button>
+function FocusLink({ children, onClick }: { readonly children: ReactNode; readonly onClick: () => void }) {
+  return <button className={atomic.focusLink} type="button" onClick={onClick}>{children}<ChevronRight size={14} aria-hidden /></button>;
+}
+
+function dashboardEventValue(event: DashboardEvent) {
+  if ("eventCost" in event) return timelineEventAmount(event);
+  const cost = event.causalCost;
+  return cost.status === "KNOWN" || cost.status === "PARTIAL" ? `${formatLifeMoney(Number(cost.value.value))}${cost.status === "PARTIAL" ? " · Partiel" : ""}` : "Coût à renseigner";
+}
+
+function AtomicTimeline({ model, open, selectedEvent }: { readonly model: DashboardTimeline; readonly open: OpenFocus; readonly selectedEvent?: DashboardEvent }) {
+  const [selected, setSelected] = useState<string>();
+  const [all, setAll] = useState(false);
+  const [page, setPage] = useState(0);
+  const months = groupTimelineEvents(model.events.filter((event) => all || !("visibilityTier" in event) || event.visibilityTier === "PRINCIPAL")).flatMap((year) => year.months);
+  const current = months.find(({ key }) => key === selected) ?? months.at(-1);
+  const busiestMonth = Math.max(1, ...months.map(({ events }) => events.length));
+  const events = current?.events ?? [];
+  const pageCount = Math.ceil(events.length / 4);
+  const currentPage = Math.max(0, Math.min(page, pageCount - 1));
+  return <>
+    {months.length > 1 && <Atom name="event-months" priority={35}>
+      <div className={atomic.timelineSummary}>
+        <h3>Événements par mois</h3>
+        <div className={atomic.ruler}>{months.map(({ key, events }) =>
+          <button key={key} type="button" aria-pressed={current?.key === key} aria-label={`${capitalize(frenchMonth(key))} · ${events.length} événements`}
+            onClick={() => { setSelected(key); setPage(0); }}>
+            <span className={atomic.barWell}><i style={{ height: `${events.length / busiestMonth * 100}%` }} /></span>
+            <small>{frenchMonth(key, true).split(" ")[0]}</small>
+          </button>)}</div>
+      </div>
+    </Atom>}
+    <Atom name="timeline" priority={68} minimum={1}>
+      <div className={atomic.timelineControls}>
+        <label className={atomic.monthLabel}>Événements <select aria-label="Mois des événements" value={current?.key ?? ""} onChange={(event) => { setSelected(event.currentTarget.value); setPage(0); }}>
+          {months.length === 0 && <option value="">Aucun mois renseigné</option>}
+          {months.map(({ key }) => <option key={key} value={key}>{capitalize(frenchMonth(key))}</option>)}
+        </select></label>
+        <label className={atomic.checkbox}><input type="checkbox" checked={all} onChange={(event) => { setAll(event.currentTarget.checked); setPage(0); }} /> Tous les événements</label>
+      </div>
+      {events.length === 0 ? <p className={atomic.note}>Aucun événement dans cette sélection.</p> : <div className={atomic.timelineStrip} aria-label="Événements au fil du mois">
+        {events.slice(currentPage * 4, currentPage * 4 + 4).map((event) => <button type="button" key={event.eventRef} aria-pressed={selectedEvent?.eventRef === event.eventRef} aria-label={`${event.canonicalName} · ${dashboardEventValue(event)}`}
+          onClick={() => open({ kind: "event", slot: "life", event })}><i aria-hidden /><time dateTime={event.startDate}>{lifeMomentDates(event.startDate, false)?.split(" ").slice(0, 2).join(" ")}</time><strong title={event.canonicalName}>{event.canonicalName}</strong><small>{dashboardEventValue(event)}</small></button>)}
+      </div>}
+      {pageCount > 1 && <div className={atomic.pagination} aria-label="Autres événements du mois">
+        <button type="button" disabled={currentPage <= 0} onClick={() => setPage(currentPage - 1)} aria-label="Événements précédents"><ChevronLeft size={14} /></button>
+        <span>{currentPage + 1} / {pageCount}</span>
+        <button type="button" disabled={currentPage + 1 >= pageCount} onClick={() => setPage(currentPage + 1)} aria-label="Événements suivants"><ChevronRight size={14} /></button>
+      </div>}
+    </Atom>
+  </>;
+}
+
+function AtomicQueryDetail({ target, runtime, certifiedThrough, open, slot }: { readonly target: OverlayTarget; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly open: OpenFocus; readonly slot: AtomicSlot }) {
+  const section = target.initialSection ?? (target.moduleKey === "CATEGORIES_NEEDS" ? "BREAKDOWN" : "OVERVIEW");
+  const params: GlobalV2UiRequest["params"] = target.kind === "METHODOLOGY" ? { moduleKey: target.moduleKey, methodRef: target.entityRef }
+    : target.kind === "ENTITY_DETAIL" ? { entityRef: target.entityRef }
+      : { sectionKey: section };
+  const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, { resource: target.resource, params }, true, "DIRECT");
+  const model = transportData(result.state);
+  if (model === undefined) return result.state.status === "ERROR" ? <LocalError retry={result.retry} /> : <LoadingCard label={target.title} compact />;
+  const openTarget = (next: OverlayTarget | undefined) => {
+    if (next) open({ kind: "query", slot, target: next });
+  };
+  return <div data-rhythm-detail-origin={target.rhythmDetailContext?.origin}>
+    <GlobalExpandedContent model={model} entityRef={target.entityRef} runtime={runtime} certifiedThrough={certifiedThrough}
+      onDetail={(row, label) => { if (row.entityRef) openTarget(entityOverlayTarget(target.moduleKey, row.entityRef, label ?? humanLabel(row.labelKey), section)); }}
+      onOpenPeer={(peer) => openTarget(entityOverlayTarget("RHYTHM", peer.peerRef, peer.canonicalName, undefined, "NARRATIVE"))}
+      onOpenTimelinePeer={(peer) => {
+        if (peer.sourceKind === "LIFE_EVENT") window.dispatchEvent(new CustomEvent("global-v2:focus-life-event", { detail: { eventRef: peer.eventRef } }));
+        else openTarget(entityOverlayTarget("RHYTHM", peer.eventRef, peer.canonicalName, undefined, "NARRATIVE"));
+      }} />
   </div>;
 }
 
-const PersonaPanel = lazy(() => import("./persona/persona-panel"));
-const personaPanelRequest = { resource: globalV2PersonaPanelResource, params: {} } as const;
+function AtomicEventDetail({ event, runtime, certifiedThrough, open }: { readonly event: DashboardEvent; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly open: OpenFocus }) {
+  const target = ("momentDetailAvailable" in event ? event.momentDetailAvailable : event.detailAvailability === "MOMENT_DETAIL")
+    ? entityOverlayTarget("RHYTHM", event.eventRef, event.canonicalName, undefined, "NARRATIVE") : undefined;
+  return <>
+    <div className={atomic.eventFacts}>
+      <span>{lifeMomentDates(`${event.startDate} → ${event.endDate}`, true)}</span>
+      <strong>{dashboardEventValue(event)}</strong>
+      {"primaryPlaceLabel" in event && event.primaryPlaceLabel ? <span>{event.primaryPlaceLabel}</span> : null}
+      {"eventCost" in event && <TimelineEventFacts event={event} />}
+    </div>
+    {"eventCost" in event && event.comparisonLevels.length > 0 ? <TimelineComparator event={event} runtime={runtime} onOpenPeer={(peer) => window.dispatchEvent(new CustomEvent("global-v2:focus-life-event", { detail: { eventRef: peer.eventRef } }))} /> : null}
+    {target && <AtomicQueryDetail target={target} runtime={runtime} certifiedThrough={certifiedThrough} open={open} slot="life" />}
+  </>;
+}
 
-function GlobalPersonaTab({ runtime }: { readonly runtime: GlobalV2VisitRuntime }) {
+function AtomicProfiles({ runtime, person }: { readonly runtime: GlobalV2VisitRuntime; readonly person?: "adrien" | "manon" }) {
   const result = useGlobalV2Resource<GlobalV2PersonaPanelModel>(runtime, personaPanelRequest, true, "DIRECT");
   const model = transportData(result.state);
-  const placeholder = result.state.status === "ERROR" ? <LocalError retry={result.retry} /> : <LoadingCard label="Profils" />;
-  return <section id="profils" className={styles.module} data-module="PERSONAS" aria-label="Profils">
-    <Suspense fallback={placeholder}><PersonaPanel model={model} placeholder={placeholder} /></Suspense>
-  </section>;
+  const placeholder = result.state.status === "ERROR" ? <LocalError retry={result.retry} /> : <LoadingCard label="Profils" compact />;
+  return model === undefined ? placeholder : <Suspense fallback={placeholder}><AtomicPersona model={model} person={person} /></Suspense>;
 }
 
-function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onEntityDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
-  if (moduleKey === "TRANSFORMATIONS" || moduleKey === "RELATIONSHIPS" || moduleKey === "MOMENTS" || moduleKey === "RHYTHM" || moduleKey === "GEO_MOBILITY" || moduleKey === "CONSUMPTION") return null;
-
-  const insight = model.primaryInsight;
-  if (moduleKey === "ECONOMIC") return <div className={styles.compact}><ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="OVERVIEW">{(overview) => <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="EVOLUTION">{(evolution) => <EconomicCompactCard overview={overview} evolution={evolution} certifiedThrough={certifiedThrough} onDetail={onDetail} onMethod={onMethod} />}</ExpandedPreview>}</ExpandedPreview></div>;
-
-  if (moduleKey === "CATEGORIES_NEEDS") return <M2CompactCard model={model} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={onDetail} onEntityDetail={onEntityDetail} />;
-
-  return <div className={styles.compact}>
-    <PartialBadge onClick={onMethod} />
-    <p className={styles.moduleSubtitle}>Ce que les données vous voient explicitement faire ensemble</p>
-    {insight === undefined ? null : <InsightCard insight={insight} />}
-    <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="OVERVIEW">{(expanded) => <CountRanking title="Univers partagés observés" rows={expanded.rows.map((row) => ({ id: row.rowId, label: row.labelKey, displayValue: row.displayValue }))} />}</ExpandedPreview>
-    <SeeDetail onClick={onDetail} />
-  </div>;
-}
-
-function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct, onOverlay }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly eager: boolean; readonly direct: boolean; readonly onOverlay: (target: OverlayTarget) => void }) {
-  const presentation = globalModulePresentation(moduleKey);
-  const nearViewport = useNearViewport();
-  const shouldLoad = eager || direct || nearViewport.near;
-  const request = useMemo(() => ({ resource: presentation.resource, params: {} }), [presentation.resource]);
-  const compact = useGlobalV2Resource<GlobalModuleCompactReadModel>(runtime, request, shouldLoad, direct ? "DIRECT" : "BACKGROUND");
-  const compactModel = transportData(compact.state);
-  const viewed = useRef(false);
-  useEffect(() => {
-    if (compactModel === undefined || viewed.current) return;
-    viewed.current = true;
-    emitGlobalV2UxEvent("global_module_viewed", { moduleKey });
-  }, [compactModel, moduleKey]);
-  const openDetail = () => { onOverlay(moduleOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_module_expanded", { moduleKey, state: "overlay" }); };
-  const openEntityDetail = (entityRef: string, title: string) => {
-    const target = entityOverlayTarget(moduleKey, entityRef, title);
-    if (target === undefined) return;
-    onOverlay(target);
-    emitGlobalV2UxEvent("global_entity_opened", { moduleKey });
-  };
-  const openMethod = () => { onOverlay(methodOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_methodology_opened", { moduleKey }); };
-  return <section ref={nearViewport.ref} id={moduleSlugs[moduleKey]} className={styles.module} data-module={moduleKey} aria-labelledby={`${moduleSlugs[moduleKey]}-title`}>
-    <header className={styles.moduleHeader}>
-      <h2 id={`${moduleSlugs[moduleKey]}-title`} className={styles.clayHeading}><GlobalClayIcon name={moduleKey === "ECONOMIC" ? "expenses" : "categories"} size={31} />{presentation.title}</h2>
-      <nav className={styles.workspaceChoices} aria-label={`Détails · ${presentation.title}`}>
-        {moduleTabs[moduleKey].filter(({ key }) => key !== (moduleKey === "ECONOMIC" ? "OVERVIEW" : "BREAKDOWN")).map(({ key, label }) => (
-          <button key={key} type="button" onClick={() => onOverlay(moduleOverlayTarget(moduleKey, key))}>{label}</button>
-        ))}
-      </nav>
-    </header>
-    {compact.state.status === "IDLE" || compact.state.status === "LOADING" ? <LoadingCard label={presentation.title} /> : compact.state.status === "ERROR" && compactModel === undefined ? <LocalError retry={compact.retry} /> : compactModel === undefined ? null : <ModuleContent moduleKey={moduleKey} model={compactModel} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={openDetail} onEntityDetail={openEntityDetail} onMethod={openMethod} />}
-  </section>;
-}
-
-function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: GlobalV2VisitRuntime; readonly onOverlay: (target: OverlayTarget) => void }) {
-  const presentation = globalModulePresentation("RHYTHM");
-  const [density, setDensity] = useState<TimelineDensityMode>("PRINCIPAL");
-  const [view, setView] = useState<typeof rhythmViews[number]["key"]>("timeline");
-  useEffect(() => {
-    const showTimeline = () => setView("timeline");
-    window.addEventListener("global-v2:focus-life-event", showTimeline);
-    return () => window.removeEventListener("global-v2:focus-life-event", showTimeline);
-  }, []);
-  const expanded = density === "EXTENDED";
-  return <section id={moduleSlugs.RHYTHM} className={styles.module} data-module="RHYTHM" aria-labelledby="rythmes-title">
-    <header className={`${styles.moduleHeader} ${styles.timelineModuleHeader}`}>
-      <h2 id="rythmes-title">{presentation.title}</h2>
-      <nav className={styles.workspaceChoices} aria-label="Vues de la vie et des dépenses">
-        {rhythmViews.map(({ key, label, icon }) => (
-          <button key={key} type="button" aria-pressed={view === key} onClick={() => setView(key)}><GlobalClayIcon name={icon} size={24} />{label}</button>
-        ))}
-      </nav>
-      {view === "timeline" && <button
-      type="button"
-      className={styles.timelineFocusControl}
-      data-expanded={expanded}
-      aria-pressed={expanded}
-      aria-label={expanded ? "Recentrer la timeline sur les événements principaux" : "Élargir la timeline aux événements étendus"}
-      onClick={() => setDensity(expanded ? "PRINCIPAL" : "EXTENDED")}
-    >
-      <span className={styles.timelineFocusFrame} aria-hidden>
-        <i /><i /><i /><i />
-        <span className={styles.timelineFocusLabels}>
-          <span data-active={!expanded}>Élargir</span>
-          <span className={styles.timelineFocusRecenter} data-active={expanded}>Recentrer</span>
-        </span>
-      </span>
-    </button>}</header>
-    <div hidden={view !== "timeline"}><LifeTimeline runtime={runtime} density={density} onDensityChange={setDensity} onMomentDetail={(eventRef, title) => {
-      const target = entityOverlayTarget("RHYTHM", eventRef, title, undefined, "NARRATIVE");
-      if (target === undefined) return;
-      onOverlay(target);
-      emitGlobalV2UxEvent("global_entity_opened", { moduleKey: "RHYTHM" });
-    }} /></div>
-    {view !== "timeline" && <BackgroundRhythms view={view} runtime={runtime} onMethod={() => {
-      onOverlay(methodOverlayTarget("RHYTHM"));
-      emitGlobalV2UxEvent("global_methodology_opened", { moduleKey: "RHYTHM" });
-    }} />}
-  </section>;
-}
-
-function DashboardSummary({ runtime, certifiedThrough, onNavigate, onOverlay, navigation, enabled }: {
-  readonly runtime: GlobalV2VisitRuntime;
-  readonly certifiedThrough: string;
-  readonly onNavigate: (anchor: string) => void;
-  readonly onOverlay: (target: OverlayTarget) => void;
-  readonly navigation: readonly typeof internalNavigation[number][];
-  readonly enabled: boolean;
-}) {
-  const figures = useExpandedModule(runtime, "ECONOMIC", "OVERVIEW", enabled);
-  const chart = useExpandedModule(runtime, "ECONOMIC", "EVOLUTION", enabled);
-  const overview = transportData(figures.state);
-  const evolution = transportData(chart.state);
-  return <section id="synthese" className={styles.dashboardSummary} aria-label="Synthèse">
-    <div className={styles.summaryFinancial} data-module="ECONOMIC">
-      <div className={styles.summaryHeading}><h2>Nos dépenses sur 12 mois</h2><button type="button" className={styles.exploreLink}
-        onClick={() => onOverlay(moduleOverlayTarget("ECONOMIC", "EVOLUTION"))}>Évolution détaillée <ChevronRight size={16} aria-hidden /></button></div>
-      {overview === undefined ? figures.state.status === "ERROR" ? <LocalError retry={figures.retry} />
-        : <LoadingCard label="chiffres clés" compact /> :
-        <div className={styles.dashboardFigures}>
-          <div><span>{analysisPeriod(certifiedThrough).targetLabel}</span><EconomicMetricValue metric={economicMetric(overview, "actual")} /></div>
-          <div><span>Mois habituel</span><EconomicMetricValue metric={economicMetric(overview, "typical-state")} /></div>
-          <div><span>Dépenses minimum</span><EconomicMetricValue metric={economicMetric(overview, "minimal-state")} /></div>
-        </div>}
-      {evolution === undefined ? chart.state.status === "ERROR" ? <LocalError retry={chart.retry} />
-        : <LoadingCard label="graphique des dépenses" compact /> :
-        <EconomicChart evolution={evolution} overview={overview} certifiedThrough={certifiedThrough} compact />}
-    </div>
-    <div className={styles.summaryShortcuts}>
-      {navigation.filter(({ anchor }) => anchor !== "synthese").map(({ anchor, label, icon }) => (
-        <button type="button" key={anchor} data-topic={anchor} onClick={() => onNavigate(anchor)}>
-          <GlobalClayIcon name={icon} size={64} className={styles.summaryIcon} />
-          <span>{label}</span><ChevronRight size={17} aria-hidden />
-        </button>
-      ))}
-    </div>
-  </section>;
-}
+const slotForModule: Partial<Record<GlobalPrimaryModuleKey, AtomicSlot>> = {
+  ECONOMIC: "spending", CATEGORIES_NEEDS: "categories", RHYTHM: "life", PERSONAS: "profiles",
+};
 
 export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly bundle: GlobalV2PageBundle; readonly transport: GlobalV2UiTransport; readonly certifiedThrough: string }) {
-  const mobile = useMobileGlobalLayout();
   const runtime = useMemo(() => new GlobalV2VisitRuntime(bundle.initial.publicationMeta, transport, 2), [bundle.initial.publicationMeta, transport]);
-  const visibleModules = useMemo(() => new Set(bundle.initial.navigation.filter((entry) => entry.visibility !== "HIDDEN").map(({ moduleKey }) => moduleKey)), [bundle.initial.navigation]);
-  const navigation = internalNavigation.filter(({ anchor }) => {
-    const moduleKey = moduleForSlug(anchor);
-    return moduleKey === undefined || visibleModules.has(moduleKey);
-  });
-  // The browser hash is only available after hydration. Resolve it before fetching a tab.
-  const [resolvedAnchor, setActiveAnchor] = useState<string | null>(null);
-  const activeAnchor = resolvedAnchor ?? "synthese";
-  const [overlay, setOverlay] = useState<OverlayTarget | null>(null);
-  const workspaceBodyRef = useRef<HTMLDivElement>(null);
-  const overlayInvokerRef = useRef<HTMLElement | null>(null);
-  const openOverlay = useCallback((target: OverlayTarget) => {
-    overlayInvokerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    setOverlay(target);
+  const visible = useMemo(() => new Set(bundle.initial.navigation.filter(({ visibility }) => visibility !== "HIDDEN").map(({ moduleKey }) => moduleKey)), [bundle.initial.navigation]);
+  const [trail, setTrail] = useState<readonly AtomicFocus[]>([]);
+  const focus = trail.at(-1);
+  const origin = useRef<HTMLElement | null>(null);
+  const detailRef = useRef<HTMLElement>(null);
+  const detailHeading = useRef<HTMLHeadingElement>(null);
+  const open = useCallback<OpenFocus>((next) => {
+    const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const inside = detailRef.current?.contains(active) ?? false;
+    if (!inside) origin.current = active;
+    if (next.kind === "query") {
+      const event = next.target.kind === "ENTITY_DETAIL" ? "global_entity_opened"
+        : next.target.kind === "METHODOLOGY" ? "global_methodology_opened" : "global_module_expanded";
+      emitGlobalV2UxEvent(event, { moduleKey: next.target.moduleKey });
+    }
+    setTrail((current) => inside && current.at(-1)?.slot === next.slot ? [...current, next] : [next]);
   }, []);
+  function close() {
+    setTrail([]);
+    if (window.location.hash) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+    origin.current?.focus({ preventScroll: true });
+  }
+
+  const figures = useExpandedModule(runtime, "ECONOMIC", "OVERVIEW", visible.has("ECONOMIC"));
+  const history = useExpandedModule(runtime, "ECONOMIC", "EVOLUTION", visible.has("ECONOMIC"));
+  const categoriesResult = useExpandedModule(runtime, "CATEGORIES_NEEDS", "BREAKDOWN", visible.has("CATEGORIES_NEEDS"));
+  const timelineResult = useGlobalV2Resource<DashboardTimeline>(runtime, timelineRequest, visible.has("RHYTHM"), "BACKGROUND");
+  const overview = transportData(figures.state);
+  const evolution = transportData(history.state);
+  const categories = transportData(categoriesResult.state);
+  const timeline = transportData(timelineResult.state);
+  const period = analysisPeriod(certifiedThrough);
 
   useEffect(() => {
     function followHash() {
-      const deepLink = parseGlobalDeepLink(window.location.hash);
-      const [slug, rawSection] = (deepLink?.anchor ?? "synthese").split(/-(?=overview|evolution|breakdown|patterns|comparisons$)/u);
+      const anchor = parseGlobalDeepLink(window.location.hash)?.anchor;
+      const [slug, raw] = (anchor ?? "").split(/-(?=overview|evolution|breakdown|patterns|comparisons$)/u);
       const moduleKey = moduleForSlug(slug);
-      const valid = moduleKey !== undefined && visibleModules.has(moduleKey);
-      setActiveAnchor(valid ? slug : "synthese");
-      if (valid && rawSection !== undefined && moduleKey !== "RHYTHM") {
-        openOverlay(moduleOverlayTarget(moduleKey, rawSection.toUpperCase() as GlobalExpandedSectionKey));
-      } else setOverlay(null);
+      const slot = moduleKey === undefined ? undefined : slotForModule[moduleKey];
+      if (moduleKey === undefined || slot === undefined || !visible.has(moduleKey)) { setTrail([]); return; }
+      if (slot === "profiles") { setTrail([{ kind: "person", slot }]); return; }
+      if (!raw) { setTrail([]); return; }
+      setTrail([{ kind: "query", slot, target: moduleOverlayTarget(moduleKey, raw.toUpperCase() as GlobalExpandedSectionKey) }]);
     }
     followHash();
     window.addEventListener("hashchange", followHash);
     return () => window.removeEventListener("hashchange", followHash);
-  }, [openOverlay, visibleModules]);
+  }, [visible]);
 
-  const goTo = useCallback((anchor = "synthese") => {
-    if (window.location.hash !== `#${anchor}`) window.history.pushState(window.history.state, "", `#${anchor}`);
-    setActiveAnchor(anchor);
-  }, []);
   useEffect(() => {
-    workspaceBodyRef.current?.scrollTo(0, 0);
-  }, [activeAnchor]);
-  const closeOverlay = () => {
-    if (window.location.hash && window.location.hash !== `#${activeAnchor}`) {
-      window.history.replaceState(window.history.state, "", `#${activeAnchor}`);
+    function followEvent(raw: Event) {
+      const eventRef = (raw as CustomEvent<{ eventRef?: string }>).detail?.eventRef;
+      const event = timeline?.events.find((entry) => entry.eventRef === eventRef);
+      if (event) open({ kind: "event", slot: "life", event });
     }
-    setOverlay(null);
-  };
+    window.addEventListener("global-v2:focus-life-event", followEvent);
+    return () => window.removeEventListener("global-v2:focus-life-event", followEvent);
+  }, [open, timeline]);
 
-  return <div className={styles.page} data-global-v2="" data-publication-id={bundle.initial.publicationMeta.publicationId}>
-    <header className={styles.workspaceHeader}><GlobalClayIcon name="overview" size={38} className={styles.workspaceIcon} /><h1>Analyse globale</h1><p>{analysisPeriod(certifiedThrough).label.replace("—", "→")}</p><button type="button" className={styles.methodButton} onClick={() => openOverlay(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={16} /> Méthode</button></header>
-    {bundle.newerPublication === undefined ? null : <aside className={styles.generationBanner} role="status" aria-live="polite"><div><strong>Une version plus récente est disponible.</strong><span>Notre lecture actuelle reste stable jusqu’à l’actualisation.</span></div><button type="button" className="button-primary" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={16} /> Actualiser</button></aside>}
-    <nav className={styles.stickyNav} role="tablist" aria-label="Navigation dans l’analyse globale">{navigation.map(({ label, anchor, icon }, index) => (
-      <button key={anchor} id={`global-tab-${anchor}`} type="button" role="tab" aria-selected={activeAnchor === anchor}
-        tabIndex={activeAnchor === anchor ? 0 : -1} aria-controls="global-workspace-panel" onClick={() => goTo(anchor)}
-        onKeyDown={(event) => {
-          const last = navigation.length - 1;
-          const next = event.key === "ArrowRight" ? (index + 1) % navigation.length : event.key === "ArrowLeft" ? (index + last) % navigation.length
-            : event.key === "Home" ? 0 : event.key === "End" ? last : undefined;
-          if (next === undefined) return;
-          event.preventDefault();
-          const target = navigation[next]!.anchor;
-          goTo(target);
-          document.getElementById(`global-tab-${target}`)?.focus();
-        }}><GlobalClayIcon name={icon} size={25} />{label}</button>
-    ))}</nav>
-    <div ref={workspaceBodyRef} className={styles.workspaceBody} id="global-workspace-panel" role="tabpanel" aria-labelledby={`global-tab-${activeAnchor}`} tabIndex={0}>
-      <GlobalModuleBoundary key={activeAnchor}>
-        {activeAnchor === "economie" && <GlobalModulePanel moduleKey="ECONOMIC" runtime={runtime} certifiedThrough={certifiedThrough} eager direct onOverlay={openOverlay} />}
-        {activeAnchor === "categories" && <GlobalModulePanel moduleKey="CATEGORIES_NEEDS" runtime={runtime} certifiedThrough={certifiedThrough} eager direct onOverlay={openOverlay} />}
-        {activeAnchor === "rythmes" && <GlobalLifeTimelinePanel runtime={runtime} onOverlay={openOverlay} />}
-        {activeAnchor === "profils" && <GlobalPersonaTab runtime={runtime} />}
-        {activeAnchor === "synthese" && <DashboardSummary runtime={runtime} certifiedThrough={certifiedThrough} onNavigate={goTo} onOverlay={openOverlay} navigation={navigation} enabled={resolvedAnchor !== null} />}
-      </GlobalModuleBoundary>
+  useEffect(() => { if (focus) detailHeading.current?.focus({ preventScroll: true }); }, [focus]);
+
+  const query = (slot: AtomicSlot, moduleKey: GlobalPrimaryModuleKey, section: GlobalExpandedSectionKey, title: string) =>
+    open({ kind: "query", slot, target: { ...moduleOverlayTarget(moduleKey, section), title } });
+
+  const actual = evolution?.series.find(({ seriesId }) => seriesId === "economic:actual");
+  const typical = evolution?.series.find(({ seriesId }) => seriesId === "economic:typical-state");
+  const chartMax = Math.max(1, ...(actual?.points.map((point) => economicNumber(point) ?? 0) ?? []), ...(typical?.points.map((point) => economicNumber(point) ?? 0) ?? []));
+  const selectedMonth = focus?.kind === "month" ? focus.month : undefined;
+  const visibleRows = (categories?.rows ?? []).filter((row) => m2TypedNumber(row) !== undefined);
+  const categoryMaximum = Math.max(1, ...visibleRows.map((row) => m2TypedNumber(row) ?? 0));
+  const chartMonths = actual?.points ?? [];
+
+  function detail(slot: AtomicSlot) {
+    if (focus?.slot !== slot) return undefined;
+    const title = focus.kind === "query" ? focus.target.title
+      : focus.kind === "month" ? focus.title
+      : focus.kind === "event" ? focus.event.canonicalName
+      : focus.kind === "rhythm" ? focus.view === "car" ? "Dépenses et trajets en voiture" : "Rythme des courses et des repas"
+      : focus.person ? capitalize(focus.person) : "Adrien et Manon";
+    const point = focus.kind === "month" ? chartMonths.find(({ unitKey }) => unitKey === focus.month) : undefined;
+    const reference = focus.kind === "month" ? typical?.points.find(({ unitKey }) => unitKey === focus.month) : undefined;
+    return <Atom name="detail" priority={240} minimum={1}>
+      <article className={atomic.detail} ref={detailRef} aria-labelledby="global-detail-title">
+        <header className={atomic.detailHeader}>
+          {trail.length > 1 && <button type="button" onClick={() => setTrail(trail.slice(0, -1))} aria-label="Revenir au détail précédent"><ChevronLeft size={17} /></button>}
+          <h3 tabIndex={-1} id="global-detail-title" ref={detailHeading}>{title}</h3>
+          <button type="button" onClick={close} aria-label="Fermer le détail"><X size={17} /></button>
+        </header>
+        <AtomicDetailPages key={focus.kind === "query" ? [focus.target.entityRef, focus.target.initialSection].join(":") : focus.kind === "event" ? focus.event.eventRef : focus.kind === "month" ? focus.month : focus.kind === "rhythm" ? focus.view : focus.person ?? "profiles"}>
+          {focus.kind === "query" ? <AtomicQueryDetail target={focus.target} slot={slot} runtime={runtime} certifiedThrough={certifiedThrough} open={open} />
+            : focus.kind === "event" ? <AtomicEventDetail event={focus.event} runtime={runtime} certifiedThrough={certifiedThrough} open={open} />
+            : focus.kind === "person" ? <AtomicProfiles runtime={runtime} person={focus.person} />
+            : focus.kind === "rhythm" ? <BackgroundRhythms runtime={runtime} view={focus.view} onMethod={() => open({ kind: "query", slot, target: methodOverlayTarget("RHYTHM") })} />
+            : <div className={atomic.monthDetail}>
+              <div className={atomic.figures}><div><span>Dépenses réelles</span><strong>{formatMoney(economicNumber(point))}</strong></div><div><span>Niveau habituel</span><strong>{formatMoney(economicNumber(reference))}</strong></div></div>
+              <FocusLink onClick={() => query(slot, "ECONOMIC", "EVOLUTION", "Évolution des dépenses")}>Voir l’évolution sur la période</FocusLink>
+              <Link className={atomic.focusLink} href={`/mois-a-venir/composer?month=${encodeURIComponent(focus.month)}`}>Voir les cartes de {focus.title.toLocaleLowerCase("fr-FR")} <ChevronRight size={14} aria-hidden /></Link>
+            </div>}
+        </AtomicDetailPages>
+      </article>
+    </Atom>;
+  }
+
+  return <div className={atomic.dashboard} data-global-v2="" data-publication-id={bundle.initial.publicationMeta.publicationId} onKeyDown={(event) => {
+    if (event.key === "Escape" && focus) { event.preventDefault(); close(); }
+  }}>
+    <header className={atomic.header}><GlobalClayIcon name="overview" size={38} /><h1>Analyse globale</h1><p>{period.label.replace("—", "→")}</p>
+      {visible.has("ECONOMIC") && <button type="button" className={atomic.method} onClick={() => open({ kind: "query", slot: "spending", target: methodOverlayTarget("ECONOMIC") })}><Info aria-hidden size={15} /> Méthode</button>}
+    </header>
+    {bundle.newerPublication && <aside className={atomic.banner} role="status"><strong>Une version plus récente est disponible.</strong><button type="button" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={15} /> Actualiser</button></aside>}
+    <div className={atomic.grid} data-focus={focus?.slot}>
+      {visible.has("ECONOMIC") && <AtomicSection slot="spending" detail={detail("spending")}>
+        <Atom name="financial-markers" priority={95} minimum={1}>{overview ? <div className={atomic.figures}>
+          {([["actual", period.targetLabel, "OVERVIEW", "Dépenses du dernier mois"], ["typical-state", "Mois habituel", "BREAKDOWN", "Répartition du mois habituel"], ["minimal-state", "Dépenses minimum", "BREAKDOWN", "Dépenses minimum"]] as const).map(([id, label, section, title]) =>
+            <button key={id} type="button" onClick={() => query("spending", "ECONOMIC", section, title)}><span>{label}</span><EconomicMetricValue metric={economicMetric(overview, id)} /></button>)}
+        </div> : figures.state.status === "ERROR" ? <LocalError retry={figures.retry} /> : <LoadingCard label="chiffres clés" compact />}</Atom>
+        <Atom name="monthly-history" priority={84} minimum={1}>
+          {evolution === undefined ? history.state.status === "ERROR" ? <LocalError retry={history.retry} /> : <LoadingCard label="graphique des dépenses" compact /> :
+            chartMonths.length === 0 ? <p className={atomic.note}>Évolution indisponible sur cette période.</p> :
+              <section className={atomic.history} aria-label="Dépenses réelles et niveau habituel sur douze mois">
+                <div className={atomic.historyTitle}><h3>Dépenses par mois</h3><span><i />Niveau habituel</span></div>
+                <div className={atomic.ruler}>{chartMonths.map((point) => {
+                  const value = economicNumber(point);
+                  const habitual = economicNumber(typical?.points.find(({ unitKey }) => unitKey === point.unitKey));
+                  const title = capitalize(frenchMonth(point.unitKey));
+                  return <button type="button" key={point.unitKey} aria-label={`${title} · ${formatMoney(value)}`} aria-pressed={selectedMonth === point.unitKey}
+                    onClick={() => open({ kind: "month", slot: "spending", month: point.unitKey, title })}>
+                    <span className={atomic.barWell}><i style={{ height: `${((value ?? 0) / chartMax) * 100}%` }} />
+                    {habitual !== undefined && <b style={{ bottom: `${(habitual / chartMax) * 100}%` }} />}</span>
+                    <small>{frenchMonth(point.unitKey, true).split(" ")[0]}</small>
+                  </button>;
+                })}</div>
+              </section>}
+        </Atom>
+        <Atom name="spending-context" priority={32}><div className={atomic.actions}>
+          <FocusLink onClick={() => query("spending", "ECONOMIC", "EVOLUTION", "Évolution des dépenses")}>Tendance et écarts</FocusLink>
+          <FocusLink onClick={() => query("spending", "ECONOMIC", "PATTERNS", "Dépenses récurrentes")}>Dépenses récurrentes</FocusLink>
+        </div></Atom>
+      </AtomicSection>}
+      {visible.has("CATEGORIES_NEEDS") && <AtomicSection slot="categories" detail={detail("categories")}>
+        <Atom name="category-ranking" priority={75} minimum={1}>
+          {categories === undefined ? categoriesResult.state.status === "ERROR" ? <LocalError retry={categoriesResult.retry} /> : <LoadingCard label="catégories" compact /> :
+            visibleRows.length === 0 ? <p className={atomic.note}>Aucune dépense classée sur cette période.</p> :
+              <ul className={atomic.ranking}>{visibleRows.slice(0, 6).map((row, index) => {
+                const label = humanLabel(row.labelKey);
+                const value = m2TypedNumber(row) ?? 0;
+                const target = row.entityRef && entityOverlayTarget("CATEGORIES_NEEDS", row.entityRef, label, "BREAKDOWN");
+                const item = <><span>{label}</span><strong>{formatMoney(value)}</strong><i><b style={{ width: `${Math.max(0, (value / categoryMaximum) * 100)}%`, background: categoryColors[index] }} /></i></>;
+                return <li key={row.rowId}>{target ? <button type="button" aria-pressed={focus?.kind === "query" && focus.target.entityRef === row.entityRef} onClick={() => open({ kind: "query", slot: "categories", target })}>{item}</button> : <div>{item}</div>}</li>;
+              })}</ul>}
+        </Atom>
+        <Atom name="category-context" priority={70} minimum={1}><div className={atomic.actions}>
+          <FocusLink onClick={() => query("categories", "CATEGORIES_NEEDS", "BREAKDOWN", "Répartition de toutes les dépenses")}>Tous les postes</FocusLink>
+          <FocusLink onClick={() => query("categories", "CATEGORIES_NEEDS", "PATTERNS", "Besoins renseignés")}>Besoins renseignés</FocusLink>
+          <FocusLink onClick={() => query("categories", "CATEGORIES_NEEDS", "EVOLUTION", "Écarts et évolution par catégorie")}>Écarts à l’habitude</FocusLink>
+        </div></Atom>
+      </AtomicSection>}
+      {visible.has("RHYTHM") && <AtomicSection slot="life" detail={detail("life")}>
+        {timeline === undefined ? <Atom name="timeline-status" priority={65}>{timelineResult.state.status === "ERROR" ? <LocalError retry={timelineResult.retry} /> : <LoadingCard label="événements" compact />}</Atom> :
+          <AtomicTimeline model={timeline} open={open} selectedEvent={focus?.kind === "event" ? focus.event : undefined} />}
+        <Atom name="everyday-rhythms" priority={63} minimum={1}><div className={atomic.actions}>
+          <FocusLink onClick={() => open({ kind: "rhythm", slot: "life", view: "food" })}><GlobalClayIcon name="groceries" size={27} /> Alimentation</FocusLink>
+          <FocusLink onClick={() => open({ kind: "rhythm", slot: "life", view: "car" })}><GlobalClayIcon name="car" size={27} /> Voiture</FocusLink>
+          <FocusLink onClick={() => query("life", "RHYTHM", "PATTERNS", "Coûts des habitudes")}>Coûts des habitudes</FocusLink>
+        </div></Atom>
+      </AtomicSection>}
+      {visible.has("PERSONAS") && <AtomicSection slot="profiles" detail={detail("profiles")}>
+        <Atom name="portraits" priority={86} minimum={1}><div className={atomic.portraits}>
+          {(["adrien", "manon"] as const).map((person) => <button type="button" key={person} aria-pressed={focus?.kind === "person" && focus.person === person}
+            onClick={() => open({ kind: "person", slot: "profiles", person })}>
+            <span className={atomic.portraitImage} aria-hidden>
+              <GlobalClayIcon name="profiles" size={84} />
+              <Image src={`/api/persona-portrait/${person}`} alt="" width={84} height={84} unoptimized onError={(event) => { event.currentTarget.hidden = true; }} />
+            </span>
+            <span><strong>{capitalize(person)}</strong><small>Travail, habitudes et projets</small></span><ChevronRight size={16} aria-hidden />
+          </button>)}
+        </div></Atom>
+        <Atom name="shared-portraits" priority={52}><div className={atomic.actions}><FocusLink onClick={() => open({ kind: "person", slot: "profiles" })}>Comparer les portraits</FocusLink></div></Atom>
+      </AtomicSection>}
     </div>
-    {overlay === null ? null : <GlobalDetailOverlay target={overlay} runtime={runtime} mobile={mobile} certifiedThrough={certifiedThrough} restoreFocusRef={overlayInvokerRef} onReplace={(target) => { setOverlay(target); emitGlobalV2UxEvent("global_entity_opened", { moduleKey: target.moduleKey }); }} onClose={closeOverlay} />}
   </div>;
 }
 
