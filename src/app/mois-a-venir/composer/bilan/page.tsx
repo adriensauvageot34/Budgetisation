@@ -29,7 +29,7 @@ export default async function ComposerBalancePage({
   const initialState = await readHistoryBalance(month);
   const button = styles.reconstructionLink;
 
-  return <div className={material.page}>
+  return <div className={`${material.page} h-full`}>
     <h1 className="sr-only">Bilan du mois · {monthLabel(month)}</h1>
     <AppToolbarContent className={styles.compactToolbar}>
       <nav aria-label="Vues de Composer" className={styles.reconstructionModes}>
