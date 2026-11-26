@@ -53,7 +53,7 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
   const month = typeof params.month === "string" && months.includes(params.month) ? params.month : months[0];
   const goals = await readSavingsGoals(session.supabase, context.household.householdId);
   const filled = goals.filter(goal => savingsGoalProgress(goal).complete);
-  const completed = params.view === "complete";
+  const completed = params.view === "complete" || params.view === undefined && filled.some(goal => goal.goalId === params.goal);
   const visible = completed ? filled : goals.filter(goal => !savingsGoalProgress(goal).complete);
   const totals = summarizeSavingsGoals(goals);
   const projects = savingsProjectKeys.filter(project => goals.some(goal => goal.project === project));
@@ -158,7 +158,8 @@ function GoalCard({ goal, months, month, today, selected }: { goal: SavingsGoal;
   const payableMonths = months.filter(item => !goal.deadline || item <= goal.deadline.slice(0, 7));
   const allocations = effectiveSavingsAllocations(goal).sort((a, b) => a.month.localeCompare(b.month) || a.id.localeCompare(b.id));
   const Heading = goal.project === "travel" ? "h4" : "h3";
-  return <article className={styles.card} data-project={goal.project}>
+  const purchases = Object.entries(Object.groupBy(goal.purchases ?? [], purchase => purchase.operationId));
+  return <article id={`cagnotte-${goal.goalId}`} className={styles.card} data-project={goal.project}>
     <div className={styles.cardIntro}>
       <Image src={goalArt(goal)} width={53} height={53} alt="" unoptimized />
       <div><Heading>{goal.label}</Heading>
@@ -176,13 +177,21 @@ function GoalCard({ goal, months, month, today, selected }: { goal: SavingsGoal;
       : progress.planned > 0 ? `${savingsMoney(progress.planned)} prévus` : "Montant à renseigner"}</p>
     <details open={selected || undefined} className={styles.details}>
       <summary>{target || goal.purchases?.length ? "Affectations et suivi" : "Configurer la cagnotte"} <ChevronDown size={15} aria-hidden /></summary>
-      {!!goal.purchases?.length && <ul className={styles.purchaseLinks} aria-label="Achats liés">
-        {goal.purchases.map(purchase => <li key={purchase.operationId}>
-          <Link prefetch={false} href={purchaseHref(purchase.date, purchase.operationId)}>
-            {purchase.label} <ArrowUpRight size={13} aria-hidden />
-          </Link>
-          <span>{dateLabel(purchase.date)}</span><strong>{savingsMoney(purchase.cents)}</strong>
-        </li>)}
+      {purchases.length > 0 && <ul className={styles.purchaseLinks} aria-label="Achats liés">
+        {purchases.map(([operationId, items]) => {
+          const payment = items![0];
+          return <li key={operationId} className={styles.linkedPayment}>
+            <Link prefetch={false} href={purchaseHref(payment.date, operationId)}>
+              {payment.label} <ArrowUpRight size={13} aria-hidden />
+            </Link>
+            <time dateTime={payment.date}>{dateLabel(payment.date)}</time>
+            <ul>{items!.map(purchase => <li key={purchase.id}>
+              <span>{purchase.article}{purchase.recipient && ` · ${purchase.recipient}`}</span>
+              <strong>{savingsMoney(purchase.cents)}</strong>
+              {purchase.refundedCents > 0 && <small>{savingsMoney(purchase.refundedCents)} remboursés sur {savingsMoney(purchase.grossCents)}</small>}
+            </li>)}</ul>
+          </li>;
+        })}
       </ul>}
       {allocations.length > 0 && <div className={styles.allocations}>{allocations.map(row =>
         <Allocation key={row.id} goal={goal} row={row} months={payableMonths} currentMonth={month} />)}</div>}

@@ -106,10 +106,10 @@ await test("SAVE-013", () => {
 
 /** Exercise real persistence/authenticated actions against only in-memory prospective tables. */
 const h = planningHarness(), originalFrom = h.client.from.bind(h.client);
-const savingsRows = { phase2_savings_goal_month_entries: [], phase2_savings_purchases: [] };
+const savingsRows = { phase2_savings_goal_month_entries: [], phase2_savings_purchase_lines: [] };
 h.client.from = table => {
   if (Object.hasOwn(savingsRows, table)) return {
-    select() { return this; }, eq() { return this; }, gte() { return this; }, lt() { return this; }, order() { return this; },
+    select() { return this; }, eq() { return this; }, gte() { return this; }, lt() { return this; }, not() { return this; }, order() { return this; },
     then(resolve) { return Promise.resolve({ data: savingsRows[table], error: null }).then(resolve); },
   };
   if (table !== "phase2_month_inputs") return originalFrom(table);
@@ -139,18 +139,22 @@ await test("SAVE-LINKED-PURCHASE", async () => {
     goal_id: "gift", label: "Noël", project: "christmas", deadline: null, id: "reserve",
     target_month: "2026-10", cents: 10000, status: "planned", accounted: false,
   }];
-  savingsRows.phase2_savings_purchases = [
-    { operation_id: "payment", goal_id: "gift", payment_date: "2026-10-09", payment_label: "Cadeau", cents: 3500 },
+  const line = { line_id: "article", operation_id: "payment", goal_id: "gift", payment_date: "2026-10-09",
+    payment_label: "Commande", article: "Cadeau", recipient: "Exemple", gross_cents: 3500, refunded_cents: 0, cents: 3500 };
+  savingsRows.phase2_savings_purchase_lines = [
+    line,
   ];
   try {
     const read = async () => (await realReadInputs(h.client, h.householdId, "2026-10")).inputs.declaredOutflows
       .find(item => item.annualGoalRef === "cagnotte:gift");
     assert.equal((await read()).amount, "65.00");
-    savingsRows.phase2_savings_purchases = [];
+    savingsRows.phase2_savings_purchase_lines = [{ ...line, refunded_cents: 1000, cents: 2500 }];
+    assert.equal((await read()).amount, "75.00");
+    savingsRows.phase2_savings_purchase_lines = [];
     assert.equal((await read()).amount, "100.00");
   } finally {
     savingsRows.phase2_savings_goal_month_entries = [];
-    savingsRows.phase2_savings_purchases = [];
+    savingsRows.phase2_savings_purchase_lines = [];
   }
 });
 await test("SAVE-015", async () => {

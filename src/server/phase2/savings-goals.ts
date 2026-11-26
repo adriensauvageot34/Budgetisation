@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { savingsAllocationsAfterPurchases, savingsEuros, savingsGoalRef, type SavingsGoal, type SavingsGoalAllocation, type SavingsMonthEntry, type SavingsPurchase } from "@/domain/phase2/savings-goals";
+import { savingsAllocationsAfterPurchases, savingsEuros, savingsGoalRef, type SavingsGoal, type SavingsGoalAllocation, type SavingsMonthEntry, type SavingsPurchase, type SavingsPurchaseItem } from "@/domain/phase2/savings-goals";
 import type { DeclaredSavingsInput } from "@/domain/phase2/savings-allocations";
 
 type GoalRow = {
@@ -11,18 +11,33 @@ type MonthRow = Pick<GoalRow, "goal_id" | "label" | "project" | "deadline"> &
   Omit<SavingsGoalAllocation, "month"> & { target_month: string };
 
 const columns = "goal_id,label,project,target_cents,deadline,template_key,travel_topic,revision,allocations";
-export async function readSavingsPurchases(client: SupabaseClient, householdId: string, filter?: { operationId: string } | { goalId: string } | { month: string }): Promise<SavingsPurchase[]> {
-  let query = client.from("phase2_savings_purchases").select("operation_id,goal_id,payment_date,payment_label,cents").eq("household_id", householdId);
-  if (filter && "operationId" in filter) query = query.eq("operation_id", filter.operationId);
+const itemColumns = "line_id,goal_id,article,recipient,gross_cents,refunded_cents";
+type ItemRow = { line_id: string; goal_id: string | null; article: string; recipient: string | null; gross_cents: number; refunded_cents: number };
+function purchaseItem(row: ItemRow): SavingsPurchaseItem {
+  return { id: row.line_id, goalId: row.goal_id, article: row.article, recipient: row.recipient,
+    grossCents: row.gross_cents, refundedCents: row.refunded_cents };
+}
+
+export async function readSavingsPurchaseItems(client: SupabaseClient, householdId: string, operationId: string) {
+  const { data, error } = await client.from("phase2_savings_purchase_lines").select(itemColumns)
+    .eq("household_id", householdId).eq("operation_id", operationId).order("position");
+  if (error) throw error;
+  return (data as ItemRow[]).map(purchaseItem);
+}
+
+export async function readSavingsPurchases(client: SupabaseClient, householdId: string, filter?: { goalId: string } | { month: string }): Promise<SavingsPurchase[]> {
+  let query = client.from("phase2_savings_purchase_lines").select(`operation_id,payment_date,payment_label,cents,${itemColumns}`)
+    .eq("household_id", householdId).not("goal_id", "is", null);
   if (filter && "goalId" in filter) query = query.eq("goal_id", filter.goalId);
   if (filter && "month" in filter) {
     const start = new Date(`${filter.month}-01T00:00:00Z`);
     start.setUTCMonth(start.getUTCMonth() + 1);
     query = query.gte("payment_date", `${filter.month}-01`).lt("payment_date", start.toISOString().slice(0, 10));
   }
-  const { data, error } = await query.order("payment_date", { ascending: false }).order("operation_id").order("goal_id");
+  const { data, error } = await query.order("payment_date", { ascending: false }).order("operation_id").order("position");
   if (error) throw error;
-  return data.map(row => ({ operationId: row.operation_id, goalId: row.goal_id, date: row.payment_date, label: row.payment_label, cents: row.cents }));
+  return data.map(row => ({ ...purchaseItem(row as ItemRow), operationId: row.operation_id, goalId: row.goal_id,
+    date: row.payment_date, label: row.payment_label, cents: row.cents }));
 }
 function fromRow(row: GoalRow): SavingsGoal {
   return { goalId: row.goal_id, label: row.label, project: row.project, targetCents: row.target_cents,
