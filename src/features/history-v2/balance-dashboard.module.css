@@ -519,3 +519,129 @@
   .dashboard[data-detail-open="true"] .detailColumns { grid-auto-columns: minmax(min(100%, 225px), 1fr); }
   .dashboard[data-detail-open="true"] .detailGroup { align-self: start; }
 }
+
+.panelSummary {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition: grid-template-rows 240ms cubic-bezier(.24,.72,.24,1), opacity 160ms ease;
+}
+.panelSummaryClip { min-height: 0; min-width: 0; overflow: clip; }
+.panel[data-collapsed="true"] {
+  align-self: start;
+  transition: padding 200ms ease, border-radius 200ms ease;
+}
+.panel[data-collapsed="true"] .panelSummary { grid-template-rows: 0fr; opacity: 0; }
+.dashboard:is([data-detail-deep="true"], :has(.disclosure[data-open="true"] [data-spending-expanded="true"])) .panel[data-collapsed="true"] {
+  padding-block: 3px;
+  border-radius: 13px;
+}
+.dashboard:is([data-detail-deep="true"], :has(.disclosure[data-open="true"] [data-spending-expanded="true"])) .panel[data-collapsed="true"] .panelHeading {
+  min-height: 26px;
+  font-size: .85rem;
+}
+.dashboard:is([data-detail-deep="true"], :has(.disclosure[data-open="true"] [data-spending-expanded="true"])) .panel[data-collapsed="true"] .panelIcon {
+  width: 23px;
+  height: 23px;
+  border-radius: 8px;
+}
+.spendingGrid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(min(100%, 218px), 1fr);
+  align-items: start;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 5px;
+  scrollbar-width: thin;
+  scroll-snap-type: inline proximity;
+}
+.spendingAxis {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fff;
+  scroll-snap-align: start;
+}
+.spendingAxis h3 { margin: 0 0 3px; font-size: .85rem; font-weight: 800; line-height: 1.2; }
+.spendingBucket {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 2px 5px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+.spendingBucket:last-child { border-bottom: 0; }
+.spendingBucket > .amountBar { grid-column: 1 / -1; gap: 3px; }
+.spendingBucket .amountText { font-size: .76rem; }
+.spendingBucket .amountText > span:first-child { font-weight: 760; }
+.spendingBucket .barTrack { height: 4px; }
+.spendingBucket > .spendingContributors { grid-column: 1 / -1; }
+.spendingBucket[data-expanded="true"] { border-bottom-color: #c4ade4; }
+.spendingContributors {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  margin: 0;
+  padding: 1px 0 0 3px;
+  list-style: none;
+  font-size: .72rem;
+  line-height: 1.15;
+  color: var(--muted-label);
+}
+.spendingContributors li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 4px;
+}
+.spendingContributors li > span { white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.spendingContributors strong { color: var(--strong); white-space: nowrap; font-weight: 680; }
+.spendingToggle {
+  grid-column: 1 / -1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 18px;
+  padding-inline: 3px;
+  border-radius: 5px;
+  color: var(--primary);
+  font-size: .68rem;
+  line-height: 1.15;
+  font-weight: 720;
+  cursor: pointer;
+}
+.spendingToggle:hover { background: #eee3f9; }
+.spendingToggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.spendingFold {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 230ms cubic-bezier(.24,.72,.24,1);
+}
+.spendingFold[data-open="true"] { grid-template-rows: 1fr; }
+.spendingFold > div { min-height: 0; overflow: clip; }
+.spendingMatrix .spendingBucket > .amountBar { grid-column: 1; }
+.spendingMatrix .spendingToggle { grid-column: 2; grid-row: 1; }
+.spendingMatrix .spendingToggle { font-size: 0; min-width: 18px; justify-content: center; }
+@media (max-width: 670px) {
+  .dashboard:is([data-detail-deep="true"], :has(.disclosure[data-open="true"] [data-spending-expanded="true"])) .panel[data-collapsed="true"] .panelHeading { font-size: .74rem; }
+  .spendingGrid { grid-auto-columns: minmax(min(100%, 224px), 1fr); }
+}
+@media (max-height: 670px) {
+  .spendingAxis { padding: 5px 6px; }
+  .spendingBucket { gap: 1px 4px; padding-block: 3px; }
+  .spendingToggle { min-height: 15px; }
+  .spendingBucket .barTrack { height: 3px; }
+  .spendingContributors { font-size: .67rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panelSummary, .panel[data-collapsed="true"], .spendingFold { transition: none; }
+}
