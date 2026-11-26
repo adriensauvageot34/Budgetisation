@@ -8,6 +8,17 @@
 .toolbar:empty { display: none; }
 .period { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
 .account { margin-inline-start: auto; flex: none; }
+.logoMenu { position: relative; z-index: 40; flex: none; }
+.logoButton { display: flex; align-items: center; gap: 7px; cursor: pointer; list-style: none; }
+.logoButton::-webkit-details-marker { display: none; }
+.logoDropdown {
+  position: absolute; inset-inline-start: 0; top: calc(100% + 6px); min-width: 180px;
+  border: 1px solid #e1d3ef; border-radius: 13px; background: #fffaff;
+  padding: 5px; box-shadow: 0 9px 24px #522e7726;
+}
+.logoDropdown a { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px; color: #563580; font-weight: 750; }
+.logoDropdown :is(a:hover, a[aria-current]) { background: #f0e5fa; }
+.logoDropdown p { max-width: 230px; padding: 6px; font-size: .8rem; color: #773d29; }
 .clayShell {
   --ui-color-surface-canvas: #f4edf9;
   --ui-color-surface-base: #fffdfd;

@@ -15,6 +15,7 @@ import { makeAsOfContext } from "./forecast-opportunities";
 import { projectBankCashAsOf, resolveRealBankBalance, resolveIncomeOccurrences, type BankCashProjection } from "./bank-cash-projection";
 
 import { parseSavingsMetadata, type DeclaredSavingsInput, type SavingsAllocation } from "@/domain/phase2/savings-allocations";
+import { savingsGoalRef } from "@/domain/phase2/savings-goals";
 
 import { parseMonthlyBenefitWallets, validateWalletMonth, benefitResourceKey, type MonthlyBenefitWalletInputs } from "@/domain/phase2/benefit-wallets";
 
@@ -88,7 +89,10 @@ export const monthInputsSchema = { parse(value: unknown): MonthInputs {
     }));
   if (Object.keys(fixedAmountOverrides).length > 30) throw new TypeError("MONTH_INPUT_FIXED_OVERRIDE_LIMIT");
   const rawOutflows = input.declaredOutflows ?? [];
-  if (!Array.isArray(rawOutflows) || rawOutflows.length > 20) throw new TypeError("MONTH_INPUT_DECLARED_OUTFLOWS_INVALID");
+  if (!Array.isArray(rawOutflows) || rawOutflows.filter(item => {
+    const ref = record(item).annualGoalRef;
+    return typeof ref !== "string" || !ref.startsWith(savingsGoalRef);
+  }).length > 20) throw new TypeError("MONTH_INPUT_DECLARED_OUTFLOWS_INVALID");
   const declaredResources = parseAmounts(input.declaredResources, key => key === "benefit:swile" || key === "benefit:edenred");
   const benefitWallets = parseMonthlyBenefitWallets(input.benefitWallets, {
     currentBalance: parseDated(benefit.currentBalance, "asOfDate"),

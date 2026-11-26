@@ -4,6 +4,7 @@ import { visualFamily } from "./cluster-rules";
 import type { AtomicNode, ClusterFamily, ComposerPresentationNode, ContentDensity, SpatialFamily, VisualClusterNode } from "./node-types";
 import { stableVisualIdentity } from "../planner-icons/visual-identity";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
+import { savingsGoalRef } from "@/domain/phase2/savings-goals";
 import { barClosedWidth } from "./bar-closed-width";
 
 const clusterLook: Readonly<Record<ClusterFamily, Pick<VisualClusterNode, "title" | "iconKey" | "width" | "height" | "spatialFamily">>> = {
@@ -61,6 +62,8 @@ export function semanticRank(node: ComposerPresentationNode): number {
 /** Reversible, deterministic projection of the existing Board. No DTO or state mutation. */
 export function composePresentationNodes(model: ComposerUiModel, showMonthCards = true, clusterContexts = true): ComposerPresentationNode[] {
   const available = new Set(model.presentation.availableReservationRefs ?? []);
+  const controls = showMonthCards ? [...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings]
+    : model.board.savings.filter(card => typeof card.value.annualGoalRef === "string" && card.value.annualGoalRef.startsWith(savingsGoalRef));
   const roots: AtomicNode[] = [
     ...model.board.contexts.filter(context => !context.parentContextOccurrenceId).map(context => {
       const density = contextDensity(context, model), template = context.templateKey;
@@ -77,8 +80,7 @@ export function composePresentationNodes(model: ComposerUiModel, showMonthCards 
         width:bar ? barClosedWidth(context,model) : ["short-stay", "night-out", "home-project"].includes(template) ? 250 : 225,
         height:bar ? barHeight : density === "SPARSE" ? 118 : 148 };
     }),
-    ...(showMonthCards ? [...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings] : [])
-      .filter(control => !available.has(control.targetRef)).map(control => {
+    ...controls.filter(control => !available.has(control.targetRef)).map(control => {
         const view = model.presentation.objects[control.targetRef], density = controlDensity(control, model);
         const spatialFamily = controlFamily(control, view.iconKey);
         return { id:control.targetRef, kind:"CONTROL" as const, control, density, spatialFamily, iconKey:view.iconKey,
