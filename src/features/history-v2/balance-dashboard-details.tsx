@@ -8,19 +8,16 @@ import {
   queryResourceKeys,
   type CategoryMonthSummary,
   type EconomicExpenseSummary,
-  type MonthBalanceSummaryReadModel,
-  type MonthCategoriesReadModel,
   type MonthLifeMoneyReadModel,
-  type MonthSpendingNatureReadModel,
 } from "@/query-api";
-import { SpendingBreakdown } from "./balance-dashboard-spending";
+
 import { AmountBars, DetailGroup, PagedRows, chartMaximum, formatDelta, metricValue, moneyAmount, visibleValue } from "./balance-dashboard-widgets";
-import { expenseDisplayTitle, formatCount, formatFrenchDate, formatFrenchDateRange, formatHistoricalRank, spendingPresentationLabel } from "./presentation";
+import { expenseDisplayTitle, formatCount, formatFrenchDate, formatFrenchDateRange, spendingPresentationLabel } from "./presentation";
 import { CollectionState, DisplayState, MoneyMetric, StateBoundary, formatMoney } from "./renderers";
 import type { HistoryOverlayTarget } from "./types";
 import styles from "./balance-dashboard.module.css";
 
-export type BalanceTarget = HistoryOverlayTarget | { readonly kind: "summary" | "minimal" | "categories" | "spending" | "life" };
+export type BalanceTarget = HistoryOverlayTarget | { readonly kind: "minimal" };
 export type DetailSelection = { readonly target: BalanceTarget; readonly label: string };
 export type OpenDetail = (selection: DetailSelection) => void;
 type HistoryScope = ReturnType<typeof monthScope>;
@@ -34,28 +31,25 @@ function monthTitle(month: YearMonth) {
   return monthFormatter.format(new Date(`${month}-01T00:00:00Z`));
 }
 
-export function BalanceDetail({ selection, month, summary, categories, spending, life, subcategoryLabels, onOpen }: {
+export function BalanceDetail({ selection, month, subcategoryLabels, onOpen }: {
   readonly selection: DetailSelection;
   readonly month: YearMonth;
-  readonly summary?: MonthBalanceSummaryReadModel;
-  readonly categories?: MonthCategoriesReadModel;
-  readonly spending?: MonthSpendingNatureReadModel;
-  readonly life?: MonthLifeMoneyReadModel;
+
   readonly subcategoryLabels: Readonly<Record<string, string>>;
   readonly onOpen: OpenDetail;
 }) {
   const { target } = selection;
   const scope = monthScope(month);
-  const missing = <p className={styles.note}>Données indisponibles pour ce mois.</p>;
+
   switch (target.kind) {
-    case "summary": return summary ? <ReferenceDetail model={summary} onOpen={onOpen} /> : missing;
+
     case "bridge": return <BankDetail scope={scope} />;
     case "minimal": return <MinimalDetail scope={scope} />;
-    case "categories": return categories ? <CategoriesDetail model={categories} onOpen={onOpen} /> : missing;
+
     case "category": return <CategoryDetail scope={scope} id={target.categoryId} labels={subcategoryLabels} />;
-    case "spending": return spending ? <SpendingBreakdown model={spending} month={month} /> : missing;
+
     case "segment": return <SegmentDetail scope={scope} params={target.params} />;
-    case "life": return life ? <LifeDetail model={life} onOpen={onOpen} /> : missing;
+
     case "activity": return <ActivityDetail scope={scope} id={target.activityTypeKey} onOpen={onOpen} />;
     case "moment": return <MomentDetail scope={scope} id={target.momentId} />;
     case "place": return <PlaceDetail scope={scope} id={target.placeId} />;
@@ -73,52 +67,34 @@ function DetailRow({ label, children }: { readonly label: string; readonly child
   return <div className={styles.detailRow}><span title={label}>{label}</span><strong>{children}</strong></div>;
 }
 
-function ReferenceDetail({ model, onOpen }: { readonly model: MonthBalanceSummaryReadModel; readonly onOpen: OpenDetail }) {
-  const actual = visibleValue(model.actualValue);
-  const typical = visibleValue(model.typicalValue);
-  const minimal = visibleValue(model.minimalValue);
-  const zone = metricValue(visibleValue(model.usualZone));
-  const rank = metricValue(visibleValue(model.historicalRank));
-  return <div className={styles.detailColumns}>
-    <DetailGroup title="Les dépenses face aux repères">
-      <AmountBars rows={[
-        ...(actual ? [{ id: "actual", label: "Dépenses du mois", amount: actual }] : []),
-        ...(typical ? [{ id: "typical", label: "Mois habituel", amount: typical, tone: "secondary" as const }] : []),
-        ...(metricValue(minimal) !== undefined ? [{ id: "minimum", label: "Minimum estimé", amount: minimal!, tone: "neutral" as const }] : []),
-      ]} />
-      {metricValue(minimal) !== undefined && <DetailLink label="Voir le détail du minimum estimé" onClick={() => onOpen({ target: { kind: "minimal" }, label: "Minimum estimé" })} />}
-    </DetailGroup>
-    <DetailGroup title="Ce que dit l’historique">
-      {zone ? <DetailRow label="Fourchette habituelle">{formatMoney(zone.lowerBound)} à {formatMoney(zone.upperBound)}</DetailRow> : <p className={styles.note}>Fourchette en cours d’établissement.</p>}
-      {rank?.presentation === "RANKED" && <p className={styles.note}>{formatHistoricalRank(rank.rank, rank.universeCount)}</p>}
-      <DetailLink label="Comprendre l’écart avec mon compte" onClick={() => onOpen({ target: { kind: "bridge" }, label: "Écart avec mon compte" })} />
-    </DetailGroup>
-    {model.importedSummary.text && <DetailGroup title={model.importedSummary.freshness === "STALE" ? "Résumé à actualiser" : "Résumé du mois"}>
-      <PagedRows size={1} label="Résumé du mois" items={model.importedSummary.text.match(/.{1,210}(?:\s+|$)|\S+/gu) ?? [model.importedSummary.text]}>
-        {rows => <p className={styles.longNote}>{rows[0]}</p>}
-      </PagedRows>
-    </DetailGroup>}
-  </div>;
+export function BalanceBankDetail({ month, headingId }: { readonly month: YearMonth; readonly headingId: string }) {
+  return <section className={styles.panelExtension} aria-labelledby={headingId}>
+    <h3 id={headingId} tabIndex={-1}>Écart avec mon compte</h3>
+    <BankDetail scope={monthScope(month)} />
+  </section>;
 }
 
 function BankDetail({ scope }: { readonly scope: HistoryScope }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyBankEconomyBridge, scope, params: {} });
-  return <StateBoundary state={state}>{model => <DisplayState node={model.bridge}>{bridge =>
-    <div className={styles.detailColumns}>
-      <DetailGroup title="Débits et dépenses du mois">
-        <AmountBars rows={[
-          { id: "bank", label: "Débits du compte", amount: moneyAmount(bridge.bankOutflows), tone: "secondary" },
-          { id: "actual", label: "Dépenses du mois", amount: moneyAmount(bridge.actual) },
-        ]} />
+  return <StateBoundary state={state}>{model => <DisplayState node={model.bridge}>{bridge => {
+    const maximum = Math.max(1, ...bridge.lines.map(line => Math.abs(Number(line.signedAmount))));
+    return <div className={styles.detailColumns}>
+      <DetailGroup title="Du compte au bilan">
+        <DetailRow label="Débits du compte">{formatMoney(bridge.bankOutflows)}</DetailRow>
+        <DetailRow label="Dépenses du mois">{formatMoney(bridge.actual)}</DetailRow>
         <DetailRow label="Écart">{formatDelta(bridge.gap)}</DetailRow>
       </DetailGroup>
       <DetailGroup title="Les mouvements qui expliquent l’écart">
-        <PagedRows label="Mouvements" items={bridge.lines}>{rows => rows.map(row =>
-          <DetailRow key={row.lineId} label={row.label}>{formatDelta(row.signedAmount)}</DetailRow>
-        )}</PagedRows>
+        {bridge.lines.length ? <PagedRows label="Mouvements" items={bridge.lines}>{rows => <ul className={styles.adjustments}>
+          {rows.map(row => <li key={row.lineId}>
+            <span title={row.label}>{row.label}</span><strong>{formatDelta(row.signedAmount)}</strong>
+            <span className={styles.adjustmentTrack} aria-hidden="true"><i data-negative={Number(row.signedAmount) < 0}
+              style={{ width: `${Math.abs(Number(row.signedAmount)) / maximum * 50}%` }} /></span>
+          </li>)}
+        </ul>}</PagedRows> : <p className={styles.note}>Aucun ajustement détaillé.</p>}
       </DetailGroup>
-    </div>
-  }</DisplayState>}</StateBoundary>;
+    </div>;
+  }}</DisplayState>}</StateBoundary>;
 }
 
 function MinimalDetail({ scope }: { readonly scope: HistoryScope }) {
@@ -137,34 +113,7 @@ function MinimalDetail({ scope }: { readonly scope: HistoryScope }) {
   }</DisplayState>}</StateBoundary>;
 }
 
-function CategoriesDetail({ model, onOpen }: { readonly model: MonthCategoriesReadModel; readonly onOpen: OpenDetail }) {
-  const other = visibleValue(model.otherAmount);
-  const unclassified = visibleValue(model.unclassifiedAmount);
-  return <div className={styles.detailColumns}>
-    <DetailGroup title="Postes détaillés">
-      <DisplayState node={model.categories}>{collection => <CollectionState collection={collection}>{items =>
-        <PagedRows label="Catégories" items={items}>{rows => rows.map(item =>
-          <DetailLink key={item.categoryId} label={item.label} end={<MoneyMetric metric={item.actual} />}
-            onClick={() => onOpen({ target: { kind: "category", categoryId: item.categoryId }, label: item.label })} />
-        )}</PagedRows>
-      }</CollectionState>}</DisplayState>
-    </DetailGroup>
-    <DetailGroup title="Écarts à l’habitude" note="Différence entre ce mois et le montant habituel.">
-      <DisplayState node={model.categories}>{collection => <CollectionState collection={collection}>{items =>
-        <PagedRows label="Écarts à l’habitude" items={items}>{rows => rows.map(item => {
-          const delta = metricValue(item.delta);
-          return <DetailLink key={item.categoryId} label={item.label} end={delta === undefined ? "Sans repère" : formatDelta(delta)}
-            onClick={() => onOpen({ target: { kind: "category", categoryId: item.categoryId }, label: item.label })} />;
-        })}</PagedRows>
-      }</CollectionState>}</DisplayState>
-    </DetailGroup>
-    <DetailGroup title="Lecture des dépenses">
-      {other && Number(metricValue(other) ?? 0) !== 0 && <DetailRow label="Autres catégories"><MoneyMetric metric={other} /></DetailRow>}
-      {unclassified && Number(metricValue(unclassified) ?? 0) !== 0 && <DetailRow label="Non classé"><MoneyMetric metric={unclassified} /></DetailRow>}
-      <p className={styles.note}>Ouvre un poste pour le comparer à son montant habituel et voir le détail.</p>
-    </DetailGroup>
-  </div>;
-}
+
 
 export function subcategoryLabel(id: string, labels: Readonly<Record<string, string>>): string {
   if (id === "__UNDETERMINED__") return "Non classé";
@@ -260,7 +209,7 @@ function SegmentDetail({ scope, params }: { readonly scope: HistoryScope; readon
   }</StateBoundary>;
 }
 
-function LifeDetail({ model, onOpen }: { readonly model: MonthLifeMoneyReadModel; readonly onOpen: OpenDetail }) {
+export function BalanceLifeDetails({ model, onOpen }: { readonly model: MonthLifeMoneyReadModel; readonly onOpen: OpenDetail }) {
   return <div className={styles.detailColumns}>
     <DetailGroup title="Activités du mois">
       <DisplayState node={model.activities}>{collection => <CollectionState collection={collection}>{items =>

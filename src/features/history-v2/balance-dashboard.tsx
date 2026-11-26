@@ -6,10 +6,11 @@ import type { YearMonth } from "@/core/time";
 import type { MetricValue } from "@/core/history-v2";
 import type { Money } from "@/core/money";
 import type { MonthBalanceSummaryReadModel, MonthCategoriesReadModel, MonthLifeMoneyReadModel, MonthSpendingNatureReadModel } from "@/query-api";
-import { BalanceDetail, type BalanceTarget, type DetailSelection, type OpenDetail } from "./balance-dashboard-details";
-import { AmountBar, chartMaximum, metricValue, stateValue, visibleValue } from "./balance-dashboard-widgets";
+import { BalanceBankDetail, BalanceDetail, BalanceLifeDetails, type BalanceTarget, type DetailSelection, type OpenDetail } from "./balance-dashboard-details";
+import { AmountBar, PagedRows, chartMaximum, formatDelta, metricValue, stateValue, visibleValue } from "./balance-dashboard-widgets";
 import { CategoryRing, MonthTimeline, SpendingComparison, categoryColors } from "./balance-dashboard-charts";
-import { formatCount, formatFrenchDateRange } from "./presentation";
+import { formatCount, formatFrenchDateRange, formatHistoricalRank } from "./presentation";
+import { SpendingBreakdown } from "./balance-dashboard-spending";
 import { publicationMetasAreCoherent } from "./publication-coherence";
 import { MoneyMetric, formatMoney } from "./renderers";
 import { overlayTargetKey } from "./route-state";
@@ -17,12 +18,7 @@ import type { HistoryOverlayTarget, HistoryV2InitialState } from "./types";
 import { useHistoryPageState } from "./use-history-page-state";
 import styles from "./balance-dashboard.module.css";
 
-const baseDetailLabels = {
-  summary: "Le mois face à vos habitudes",
-  categories: "Dépenses par catégorie",
-  spending: "Répartition des dépenses",
-  life: "Vie et argent",
-} as const;
+type PanelKind = "summary" | "categories" | "spending" | "life";
 
 const linkedDetailLabels: Record<HistoryOverlayTarget["kind"], string> = {
   bridge: "Écart avec mon compte",
@@ -36,27 +32,19 @@ const linkedDetailLabels: Record<HistoryOverlayTarget["kind"], string> = {
 
 function detailKey(target: BalanceTarget) {
   switch (target.kind) {
-    case "summary":
-    case "categories":
-    case "spending":
-    case "minimal":
-    case "life":
-      return target.kind;
+    case "minimal": return target.kind;
     default:
       return overlayTargetKey(target);
   }
 }
 
-function panelFor(target?: BalanceTarget) {
+function panelFor(target?: BalanceTarget): PanelKind | undefined {
   switch (target?.kind) {
-    case "summary":
     case "bridge":
     case "minimal":
       return "summary";
-    case "categories":
     case "category":
       return "categories";
-    case "spending":
     case "segment":
       return "spending";
     case undefined:
@@ -74,17 +62,13 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
   readonly subcategoryLabels: Readonly<Record<string, string>>;
 }) {
   const state = useHistoryPageState(month, initialState);
-  const initialPanel = panelFor(initialDetail);
-  const initialLane = initialPanel === "summary" || initialPanel === "categories" ? "top" : "bottom";
-  const [openLane, setOpenLane] = useState<"top" | "bottom" | null>(initialDetail ? initialLane : null);
-  const [stacks, setStacks] = useState<Readonly<Record<"top" | "bottom", readonly DetailSelection[]>>>(() => {
-    const initial = initialDetail ? [{ label: linkedDetailLabels[initialDetail.kind], target: initialDetail }] : [];
-    return { top: initialLane === "top" ? initial : [], bottom: initialLane === "bottom" ? initial : [] };
-  });
-  const detailId = useId();
-  const detailHeaders = useRef<Partial<Record<"top" | "bottom", HTMLHeadingElement>>>({});
+  const [activePanel, setActivePanel] = useState<PanelKind | undefined>(() => panelFor(initialDetail));
+  const [stack, setStack] = useState<readonly DetailSelection[]>(() =>
+    initialDetail && initialDetail.kind !== "bridge" ? [{ target: initialDetail, label: linkedDetailLabels[initialDetail.kind] }] : []);
+  const id = useId();
   const opener = useRef<HTMLElement | null>(null);
-  const activePanel = panelFor(openLane === null ? undefined : stacks[openLane].at(-1)?.target);
+  const nestedTitle = useRef<HTMLHeadingElement>(null);
+  const current = stack.at(-1);
   if (state.kind !== "balance") return null;
 
   const summary = stateValue(state.summary);
@@ -97,106 +81,113 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
   }
 
   function close() {
-    setOpenLane(null);
+    setActivePanel(undefined);
+    setStack([]);
     requestAnimationFrame(() => opener.current?.focus({ preventScroll: true }));
   }
 
-  function focusDetail(lane: "top" | "bottom") {
-    requestAnimationFrame(() => detailHeaders.current[lane]?.focus({ preventScroll: true }));
-  }
-
-  function togglePanel(selection: DetailSelection) {
-    const panel = panelFor(selection.target);
-    const lane = panel === "summary" || panel === "categories" ? "top" : "bottom";
-    const current = stacks[lane].at(-1);
-    if (openLane === lane && current && detailKey(current.target) === detailKey(selection.target)) {
+  function selectPanel(panel: PanelKind) {
+    if (activePanel === panel) {
       close();
       return;
     }
     if (document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
-    setStacks(views => ({ ...views, [lane]: [selection] }));
-    setOpenLane(lane);
-    focusDetail(lane);
+    setActivePanel(panel);
+    setStack([]);
   }
 
-  function renderDetail(lane: "top" | "bottom") {
-    const stack = stacks[lane];
-    const current = stack.at(-1);
-    const panel = panelFor(current?.target);
-    const open = openLane === lane;
-    return <div className={styles.disclosure} data-open={open} data-anchor={panel} inert={!open} aria-hidden={!open}
-      id={`${detailId}-${lane}`}>
-      <div className={styles.disclosureClip}>
-        {current && <section className={styles.detail} aria-labelledby={`${detailId}-${lane}-title`}>
-          <div className={styles.detailHeader}>
-            {stack.length > 1 && <button type="button" aria-label="Revenir au détail précédent" onClick={() => {
-              setStacks(views => ({ ...views, [lane]: views[lane].slice(0, -1) }));
-              focusDetail(lane);
-            }}><ArrowLeft aria-hidden size={17} /></button>}
-            <h2 id={`${detailId}-${lane}-title`} ref={node => {
-              if (node) detailHeaders.current[lane] = node;
-              else delete detailHeaders.current[lane];
-            }} tabIndex={-1}>{current.label}</h2>
-            <button type="button" className={styles.close} aria-label="Replier le détail" onClick={close}><X aria-hidden size={18} /></button>
-          </div>
-          <BalanceDetail key={detailKey(current.target)} selection={current} month={month}
-            summary={summary} categories={categories} spending={spending} life={life}
-            subcategoryLabels={subcategoryLabels} onOpen={selection => {
-              setStacks(views => ({ ...views, [lane]: [...views[lane], selection] }));
-              focusDetail(lane);
-            }} />
-        </section>}
-      </div>
-    </div>;
-  }
-
-  const topId = `${detailId}-top`;
-  const bottomId = `${detailId}-bottom`;
-  const activeTarget = openLane === null ? undefined : stacks[openLane].at(-1)?.target;
-  return <div className={styles.dashboard} data-detail-open={openLane !== null}
-    data-detail-deep={openLane !== null && stacks[openLane].length > 1} onKeyDown={event => {
-    if (event.key === "Escape" && openLane !== null) {
-      event.preventDefault();
-      close();
+  function showDetail(selection: DetailSelection) {
+    const panel = panelFor(selection.target);
+    if (!panel) return;
+    if (activePanel !== panel && document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
+    setActivePanel(panel);
+    if (selection.target.kind === "bridge") {
+      setStack([]);
+      requestAnimationFrame(() => document.getElementById(`${id}-bank-heading`)?.focus({ preventScroll: true }));
+      return;
     }
-  }}>
+    if (current && detailKey(current.target) === detailKey(selection.target)) {
+      setStack([]);
+      return;
+    }
+    setStack([selection]);
+    requestAnimationFrame(() => nestedTitle.current?.focus({ preventScroll: true }));
+  }
+
+  function renderPanel(panel: PanelKind, title: string, icon: ReactNode, body: ReactNode, extra?: ReactNode) {
+    const selected = activePanel === panel;
+    const detailId = `${id}-${panel}`;
+    return <Panel kind={panel} title={title} icon={icon} selected={selected} collapsed={activePanel !== undefined && !selected}
+      detailId={detailId} onOpen={() => selectPanel(panel)}>
+      {body}
+      {selected && extra}
+      {selected && current && <div id={`${detailId}-specific`} className={styles.inlineDetail} aria-labelledby={`${detailId}-item-title`}>
+        <div className={styles.detailHeader}>
+          {stack.length > 1 && <button type="button" aria-label="Revenir au détail précédent"
+            onClick={() => setStack(items => items.slice(0, -1))}><ArrowLeft aria-hidden size={16} /></button>}
+          <h3 id={`${detailId}-item-title`} ref={nestedTitle} tabIndex={-1}>{current.label}</h3>
+          <button type="button" aria-label="Replier ce détail" className={styles.close} onClick={() => {
+            setStack([]);
+            requestAnimationFrame(() => document.getElementById(`${detailId}-heading`)?.focus({ preventScroll: true }));
+          }}><X aria-hidden size={17} /></button>
+        </div>
+        <BalanceDetail key={detailKey(current.target)} selection={current} month={month} subcategoryLabels={subcategoryLabels}
+          onOpen={selection => {
+            setStack(items => [...items, selection]);
+            requestAnimationFrame(() => nestedTitle.current?.focus({ preventScroll: true }));
+          }} />
+      </div>}
+    </Panel>;
+  }
+
+  return <div className={styles.dashboard} data-detail-open={activePanel !== undefined} data-detail-deep={current !== undefined}
+    onKeyDown={event => {
+      if (event.key !== "Escape" || activePanel === undefined) return;
+      event.preventDefault();
+      if (current) {
+        setStack(items => items.slice(0, -1));
+        requestAnimationFrame(() => document.getElementById(`${id}-${activePanel}-heading`)?.focus({ preventScroll: true }));
+      } else close();
+    }}>
     <header className={styles.pageHeader}>
       <h1>Bilan du mois</h1>
       <span>{monthName}</span>
     </header>
 
-    <div className={styles.pair}>
-      <Panel kind="summary" title="Dépenses du mois" icon={<Wallet size={19} aria-hidden />} selected={activePanel === "summary"} collapsed={activePanel !== undefined && activePanel !== "summary"}
-        detailId={topId} onOpen={() => activePanel === "summary" ? close() : togglePanel({ target: { kind: "summary" }, label: baseDetailLabels.summary })}>
-        {summary ? <SummaryCard model={summary} onOpen={togglePanel} /> : <DataStatus failed={state.summary.status === "error"} />}
-      </Panel>
-
-      <Panel kind="categories" title="Dépenses par catégorie" icon={<ChartNoAxesColumn size={19} aria-hidden />} selected={activePanel === "categories"} collapsed={activePanel !== undefined && activePanel !== "categories"}
-        detailId={topId} onOpen={() => activePanel === "categories" ? close() : togglePanel({ target: { kind: "categories" }, label: baseDetailLabels.categories })}>
-        {categories ? <CategoryCard model={categories} total={metricValue(visibleValue(summary?.actualValue))}
-          activeId={activeTarget?.kind === "category" ? activeTarget.categoryId : undefined}
-          onOpen={togglePanel} detailId={topId} /> : <DataStatus failed={state.categories.status === "error"} />}
-      </Panel>
-      {renderDetail("top")}
-    </div>
-
-    <div className={styles.pair}>
-      <Panel kind="spending" title="Marges du mois" icon={<SlidersHorizontal size={19} aria-hidden />} selected={activePanel === "spending"} collapsed={activePanel !== undefined && activePanel !== "spending"}
-        detailId={bottomId} onOpen={() => activePanel === "spending" ? close() : togglePanel({ target: { kind: "spending" }, label: baseDetailLabels.spending })}>
-        {spending ? <MarginCard model={spending} /> : <DataStatus failed={state.spendingNature.status === "error"} />}
-      </Panel>
-
-      <Panel kind="life" title="Vie et argent" icon={<Sparkles size={19} aria-hidden />} selected={activePanel === "life"} collapsed={activePanel !== undefined && activePanel !== "life"}
-        detailId={bottomId} onOpen={() => activePanel === "life" ? close() : togglePanel({ target: { kind: "life" }, label: baseDetailLabels.life })}>
-        {life ? <LifeCard model={life} month={month} activeId={activeTarget?.kind === "moment" ? activeTarget.momentId : undefined} onOpen={togglePanel} /> : <DataStatus failed={state.lifeMoney.status === "error"} />}
-      </Panel>
-      {renderDetail("bottom")}
+    <div className={styles.panelGrid}>
+      {renderPanel("summary", "Dépenses du mois", <Wallet size={19} aria-hidden />,
+        summary ? <SummaryCard model={summary} expanded={activePanel === "summary"} onOpen={showDetail} /> : <DataStatus failed={state.summary.status === "error"} />,
+        summary && <>
+          <BalanceBankDetail month={month} headingId={`${id}-bank-heading`} />
+          {summary.importedSummary.text && <section className={styles.panelExtension} aria-labelledby={`${id}-editorial-heading`}>
+            <h3 id={`${id}-editorial-heading`}>{summary.importedSummary.freshness === "STALE" ? "Résumé à actualiser" : "Résumé du mois"}</h3>
+            <PagedRows size={1} label="Résumé du mois" items={summary.importedSummary.text.match(/.{1,210}(?:\s+|$)|\S+/gu) ?? [summary.importedSummary.text]}>
+              {rows => <p className={styles.longNote}>{rows[0]}</p>}
+            </PagedRows>
+          </section>}
+        </>)}
+      {renderPanel("categories", "Dépenses par catégorie", <ChartNoAxesColumn size={19} aria-hidden />,
+        categories ? <CategoryCard model={categories} total={metricValue(visibleValue(summary?.actualValue))}
+          expanded={activePanel === "categories"} activeId={current?.target.kind === "category" ? current.target.categoryId : undefined}
+          onOpen={showDetail} onExpand={() => selectPanel("categories")} detailId={`${id}-categories-specific`} />
+          : <DataStatus failed={state.categories.status === "error"} />)}
+      {renderPanel("spending", "Marges du mois", <SlidersHorizontal size={19} aria-hidden />,
+        spending ? <MarginCard model={spending} /> : <DataStatus failed={state.spendingNature.status === "error"} />,
+        spending && <section className={styles.panelExtension} aria-labelledby={`${id}-spending-breakdown`}>
+          <h3 id={`${id}-spending-breakdown`}>Répartition des dépenses</h3>
+          <SpendingBreakdown model={spending} month={month} />
+        </section>)}
+      {renderPanel("life", "Vie et argent", <Sparkles size={19} aria-hidden />,
+        life ? <LifeCard model={life} month={month} expanded={activePanel === "life"}
+          activeId={current?.target.kind === "moment" ? current.target.momentId : undefined}
+          onOpen={showDetail} /> : <DataStatus failed={state.lifeMoney.status === "error"} />,
+        life && <BalanceLifeDetails model={life} onOpen={showDetail} />)}
     </div>
   </div>;
 }
 
 function Panel({ kind, title, icon, selected, collapsed, onOpen, detailId, children }: {
-  readonly kind: string;
+  readonly kind: PanelKind;
   readonly title: string;
   readonly icon: ReactNode;
   readonly selected: boolean;
@@ -205,12 +196,12 @@ function Panel({ kind, title, icon, selected, collapsed, onOpen, detailId, child
   readonly detailId: string;
   readonly children: ReactNode;
 }) {
-  return <section className={styles.panel} data-panel={kind} data-selected={selected} data-collapsed={collapsed}>
-    <h2><button type="button" className={styles.panelHeading} onClick={onOpen} aria-controls={detailId} aria-expanded={selected}>
+  return <section key={kind} className={styles.panel} data-panel={kind} data-selected={selected} data-collapsed={collapsed}>
+    <h2><button type="button" className={styles.panelHeading} id={`${detailId}-heading`} onClick={onOpen} aria-controls={detailId} aria-expanded={selected}>
       <span className={styles.panelIcon}>{icon}</span><span>{title}</span>
       <ChevronDown className={styles.chevron} size={16} aria-hidden />
     </button></h2>
-    <div className={styles.panelSummary} aria-hidden={collapsed} inert={collapsed}>
+    <div className={styles.panelSummary} id={detailId} aria-hidden={collapsed} inert={collapsed}>
       <div className={styles.panelSummaryClip}><div className={styles.panelBody}>{children}</div></div>
     </div>
   </section>;
@@ -220,45 +211,67 @@ function DataStatus({ failed }: { readonly failed: boolean }) {
   return <p role="status" className={styles.note}>{failed ? "Données indisponibles pour ce mois." : "Chargement…"}</p>;
 }
 
-function SummaryCard({ model, onOpen }: { readonly model: MonthBalanceSummaryReadModel; readonly onOpen: OpenDetail }) {
+function SummaryCard({ model, expanded, onOpen }: {
+  readonly model: MonthBalanceSummaryReadModel;
+  readonly expanded: boolean;
+  readonly onOpen: OpenDetail;
+}) {
   const actual = visibleValue(model.actualValue);
   const typical = visibleValue(model.typicalValue);
   const comparison = metricValue(visibleValue(model.actualVsTypical));
   const delta = comparison?.delta;
   const direction = delta === undefined ? undefined : Math.sign(Number(delta));
   const zone = metricValue(visibleValue(model.usualZone));
-  return <>
-    <div className={styles.spentHeader}>
-      {actual ? <MoneyMetric metric={actual} className={styles.bigAmount} /> : <strong>Dépenses à confirmer</strong>}
-      {delta !== undefined && <span className={styles.delta} data-direction={direction}>
-        {direction === -1 ? <ArrowDownRight size={15} aria-hidden /> : direction === 1 ? <ArrowUpRight size={15} aria-hidden /> : null}
-        {direction === 0 ? "Au niveau habituel" : `${formatMoney((Number(delta) < 0 ? delta.slice(1) : delta) as typeof delta)} ${direction === -1 ? "sous" : "au-dessus de"} l’habitude`}
-      </span>}
+  const rank = metricValue(visibleValue(model.historicalRank));
+  const minimum = metricValue(visibleValue(model.minimalValue));
+  return <div className={styles.overviewLayout}>
+    <div className={styles.overviewGraph}>
+      <div className={styles.spentHeader}>
+        {actual ? <MoneyMetric metric={actual} className={styles.bigAmount} /> : <strong>Dépenses à confirmer</strong>}
+        {delta !== undefined && <span className={styles.delta} data-direction={direction}>
+          {direction === -1 ? <ArrowDownRight size={15} aria-hidden /> : direction === 1 ? <ArrowUpRight size={15} aria-hidden /> : null}
+          {direction === 0 ? "Au niveau habituel" : `${formatMoney((Number(delta) < 0 ? delta.slice(1) : delta) as typeof delta)} ${direction === -1 ? "sous" : "au-dessus de"} l’habitude`}
+        </span>}
+      </div>
+      <SpendingComparison actual={metricValue(actual)} typical={metricValue(typical)} range={zone} />
+      {!expanded && <div className={styles.panelFoot}>
+        {zone && <span className={styles.zone}>Fourchette habituelle <strong>{formatMoney(zone.lowerBound)} – {formatMoney(zone.upperBound)}</strong></span>}
+        <button type="button" className={styles.textButton} onClick={() => onOpen({ target: { kind: "bridge" }, label: "Écart avec mon compte" })}>
+          <Landmark size={14} aria-hidden /> Écart avec mon compte
+        </button>
+      </div>}
     </div>
-    <SpendingComparison actual={metricValue(actual)} typical={metricValue(typical)} range={zone} />
-    <div className={styles.panelFoot}>
-      {zone && <span className={styles.zone}>Fourchette habituelle <strong>{formatMoney(zone.lowerBound)} – {formatMoney(zone.upperBound)}</strong></span>}
-      <button type="button" className={styles.textButton} onClick={() => onOpen({ target: { kind: "bridge" }, label: "Écart avec mon compte" })}>
-        <Landmark size={14} aria-hidden /> Écart avec mon compte
-      </button>
-    </div>
-  </>;
+    {expanded && (zone || rank?.presentation === "RANKED" || minimum !== undefined) && <dl className={styles.overviewFacts}>
+      {zone && <div><dt>Fourchette habituelle</dt><dd>{formatMoney(zone.lowerBound)} à {formatMoney(zone.upperBound)}</dd></div>}
+      {rank?.presentation === "RANKED" && <div><dt>Place dans l’historique</dt><dd>{formatHistoricalRank(rank.rank, rank.universeCount)}</dd>
+        <div className={styles.rankTicks} aria-hidden="true">
+          {Array.from({ length: rank.universeCount }, (_, index) => <span key={index} data-current={index + 1 === rank.rank} />)}
+        </div>
+      </div>}
+      {minimum !== undefined && <div><dt>Minimum estimé</dt><dd>{formatMoney(minimum)}
+        <button type="button" className={styles.textButton} onClick={() => onOpen({ target: { kind: "minimal" }, label: "Minimum estimé" })}>Voir les postes</button>
+      </dd></div>}
+    </dl>}
+  </div>;
 }
 
-function CategoryCard({ model, total, activeId, onOpen, detailId }: {
+function CategoryCard({ model, total, expanded, activeId, onOpen, onExpand, detailId }: {
   readonly model: MonthCategoriesReadModel;
   readonly total?: Money;
+  readonly expanded: boolean;
   readonly activeId?: string;
   readonly onOpen: OpenDetail;
+  readonly onExpand: () => void;
   readonly detailId: string;
 }) {
   const collection = visibleValue(model.categories);
   const items = collection?.status === "KNOWN" || collection?.status === "PARTIAL" ? collection.items : [];
-  const rows = items.slice(0, 4).map(item => ({
-    id: item.categoryId, label: item.label, amount: item.actual, share: metricValue(item.shareOfActual),
+  const rows = (expanded ? items : items.slice(0, 4)).map(item => ({
+    id: item.categoryId, label: item.label, amount: item.actual, share: metricValue(item.shareOfActual), delta: metricValue(item.delta),
   }));
   const maximum = chartMaximum(rows);
   const other = visibleValue(model.otherAmount);
+  const unclassified = visibleValue(model.unclassifiedAmount);
   return <>
     {!rows.length && <p className={styles.note}>Aucun poste détaillé pour ce mois.</p>}
     {rows.length > 0 && <div className={styles.categoryChart}>
@@ -266,19 +279,25 @@ function CategoryCard({ model, total, activeId, onOpen, detailId }: {
         const amount = metricValue(row.amount);
         return amount === undefined ? undefined : Number(amount) / Number(total);
       })} />}
-      <ul className={styles.categoryPlot}>
-        {rows.map((row, index) => <li key={row.id}>
-          <button type="button" onClick={() => onOpen({ target: { kind: "category", categoryId: row.id }, label: row.label })}
-            aria-controls={detailId} aria-expanded={activeId === row.id}>
-            <i style={{ backgroundColor: categoryColors[index] }} aria-hidden />
-            <AmountBar row={row} maximum={maximum} /><ChevronDown size={14} aria-hidden />
-          </button>
-        </li>)}
-      </ul>
+      <div className={styles.categoryLedger}>
+        {expanded && rows.some(row => row.delta !== undefined) && <p className={styles.note}>Les écarts signés comparent les dépenses au mois habituel.</p>}
+        <ul className={styles.categoryPlot}>
+          {rows.map((row, index) => <li key={row.id}>
+            <button type="button" onClick={() => onOpen({ target: { kind: "category", categoryId: row.id }, label: row.label })}
+              aria-controls={activeId === row.id ? detailId : undefined} aria-expanded={activeId === row.id}>
+              <i style={{ backgroundColor: categoryColors[index % categoryColors.length] }} aria-hidden />
+              <AmountBar row={row} maximum={maximum} />
+              {expanded && row.delta !== undefined && <small className={styles.categoryDelta} data-above={Number(row.delta) > 0}>{formatDelta(row.delta)}</small>}
+              <ChevronDown size={14} aria-hidden />
+            </button>
+          </li>)}
+        </ul>
+      </div>
     </div>}
     <div className={styles.panelFoot}>
       {other && Number(metricValue(other) ?? 0) !== 0 && <span className={styles.zone}>Autres catégories <strong><MoneyMetric metric={other} /></strong></span>}
-      {items.length > rows.length && <button type="button" className={styles.textButton} onClick={() => onOpen({ target: { kind: "categories" }, label: baseDetailLabels.categories })}>
+      {expanded && unclassified && Number(metricValue(unclassified) ?? 0) !== 0 && <span className={styles.zone}>Non classé <strong><MoneyMetric metric={unclassified} /></strong></span>}
+      {!expanded && items.length > rows.length && <button type="button" className={styles.textButton} onClick={onExpand}>
         Voir les {items.length} postes détaillés
       </button>}
     </div>
@@ -319,11 +338,12 @@ function MarginAmount({ metric }: { readonly metric?: MetricValue<Money> }) {
   </span>;
 }
 
-function LifeCard({ model, month, activeId, onOpen }: {
+function LifeCard({ model, month, activeId, onOpen, expanded }: {
   readonly model: MonthLifeMoneyReadModel;
   readonly month: YearMonth;
   readonly activeId?: string;
   readonly onOpen: OpenDetail;
+  readonly expanded: boolean;
 }) {
   const activities = visibleValue(model.activities);
   const moments = visibleValue(model.moments);
@@ -335,7 +355,7 @@ function LifeCard({ model, month, activeId, onOpen }: {
   return <>
     <MonthTimeline month={month} moments={momentList} activeId={activeId}
       onOpen={item => onOpen({ target: { kind: "moment", momentId: item.momentId }, label: item.title })} />
-    <ul className={styles.lifeRows}>
+    {!expanded && <ul className={styles.lifeRows}>
     {moment && <li><button type="button" onClick={() => onOpen({ target: { kind: "moment", momentId: moment.momentId }, label: moment.title })}>
       <Sparkles size={16} aria-hidden /><span><small>Moment marquant</small><strong title={moment.title}>{moment.title}</strong></span>
       <span>{metricValue(moment.causalCost) === undefined ? formatFrenchDateRange(moment.startDate, moment.endDate, false) : <MoneyMetric metric={moment.causalCost} />}</span>
@@ -349,6 +369,6 @@ function LifeCard({ model, month, activeId, onOpen }: {
       <span>{formatCount(place.presenceDays, "jour")}</span>
     </button></li>}
     {!moment && !activity && !place && <li className={styles.note}>Aucune activité, aucun moment ni lieu renseigné.</li>}
-    </ul>
+    </ul>}
   </>;
 }
