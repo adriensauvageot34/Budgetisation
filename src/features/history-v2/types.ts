@@ -1,5 +1,6 @@
 import type { LocalDate, YearMonth } from "@/core/time";
-import type { CalendarFilterSelection } from "@/core/history-v2";
+import type { CalendarFilterSelection, MetricValue } from "@/core/history-v2";
+import type { Money } from "@/core/money";
 import type {
   MonthCalendarReadModel,
   MonthBalanceSummaryReadModel,
@@ -13,6 +14,15 @@ import type {
 import type { UiTransportState } from "@/ui";
 
 export type HistoryV2View = "calendar" | "balance";
+
+export type BalanceDailySeries = {
+  readonly publicationMeta: MonthCalendarReadModel["publicationMeta"];
+  readonly days: readonly {
+    readonly date: LocalDate;
+    readonly total?: MetricValue<Money>;
+    readonly withoutFixed?: MetricValue<Money>;
+  }[];
+};
 
 export type HistoryCalendarFilterState = CalendarFilterSelection & {
   readonly customSelection?: true;
