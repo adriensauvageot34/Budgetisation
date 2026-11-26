@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { Children, useState, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQueryRuntime } from "@/components/runtime/query-client";
 import type { Money } from "@/core/money";
 import { yearMonthOf, type YearMonth } from "@/core/time";
@@ -8,10 +9,8 @@ import {
   queryResourceKeys,
   type CategoryMonthSummary,
   type EconomicExpenseSummary,
-  type MonthLifeMoneyReadModel,
 } from "@/query-api";
 
-import { daysInBalanceMonth } from "./balance-dashboard-charts";
 import { AmountBars, DetailGroup, PagedRows, chartMaximum, formatDelta, metricValue, moneyAmount, visibleValue } from "./balance-dashboard-widgets";
 import { expenseDisplayTitle, formatCount, formatFrenchDate, formatFrenchDateRange, spendingPresentationLabel } from "./presentation";
 import { CollectionState, DisplayState, MoneyMetric, StateBoundary, formatMoney } from "./renderers";
@@ -58,17 +57,34 @@ export function BalanceDetail({ selection, month, subcategoryLabels, onOpen }: {
   }
 }
 
-function DetailLink({ label, end, onClick, fraction }: {
+
+function DetailColumns({ children }: { readonly children: ReactNode }) {
+  const groups = Children.toArray(children);
+  const [offset, setOffset] = useState(0);
+  const pageSize = 2;
+  const lastPage = Math.max(0, Math.ceil(groups.length / pageSize) - 1);
+  const page = Math.min(offset, lastPage);
+  return <>
+    <div className={styles.detailColumns}>{groups.slice(page * pageSize, (page + 1) * pageSize)}</div>
+    {lastPage > 0 && <div className={styles.pagination} aria-label="Informations du détail">
+      <button type="button" onClick={() => setOffset(page - 1)} disabled={page === 0} aria-label="Informations précédentes">
+        <ChevronLeft size={15} aria-hidden />
+      </button>
+      <span aria-live="polite">{page + 1} / {lastPage + 1}</span>
+      <button type="button" onClick={() => setOffset(page + 1)} disabled={page === lastPage} aria-label="Informations suivantes">
+        <ChevronRight size={15} aria-hidden />
+      </button>
+    </div>}
+  </>;
+}
+function DetailLink({ label, end, onClick }: {
   readonly label: string;
   readonly end?: React.ReactNode;
   readonly onClick: () => void;
-  readonly fraction?: number;
 }) {
   return <button type="button" className={styles.detailLink} onClick={onClick}>
     <span title={label}>{label}</span>{end}<ChevronRight size={14} aria-hidden />
-    {fraction !== undefined && <span className={`${styles.barTrack} ${styles.lifeMeter}`} aria-hidden>
-      <span style={{ width: `${Math.max(0, Math.min(1, fraction)) * 100}%` }} />
-    </span>}
+
   </button>;
 }
 
@@ -76,18 +92,11 @@ function DetailRow({ label, children }: { readonly label: string; readonly child
   return <div className={styles.detailRow}><span title={label}>{label}</span><strong>{children}</strong></div>;
 }
 
-export function BalanceBankDetail({ month, headingId }: { readonly month: YearMonth; readonly headingId: string }) {
-  return <section className={styles.panelExtension} aria-labelledby={headingId}>
-    <h3 id={headingId} tabIndex={-1}>Écart avec mon compte</h3>
-    <BankDetail scope={monthScope(month)} />
-  </section>;
-}
-
 function BankDetail({ scope }: { readonly scope: HistoryScope }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyBankEconomyBridge, scope, params: {} });
   return <StateBoundary state={state}>{model => <DisplayState node={model.bridge}>{bridge => {
     const maximum = Math.max(1, ...bridge.lines.map(line => Math.abs(Number(line.signedAmount))));
-    return <div className={styles.detailColumns}>
+    return <DetailColumns>
       <DetailGroup title="Du compte au bilan">
         <DetailRow label="Débits du compte">{formatMoney(bridge.bankOutflows)}</DetailRow>
         <DetailRow label="Dépenses du mois">{formatMoney(bridge.actual)}</DetailRow>
@@ -102,14 +111,14 @@ function BankDetail({ scope }: { readonly scope: HistoryScope }) {
           </li>)}
         </ul>}</PagedRows> : <p className={styles.note}>Aucun ajustement détaillé.</p>}
       </DetailGroup>
-    </div>;
+    </DetailColumns>;
   }}</DisplayState>}</StateBoundary>;
 }
 
 function MinimalDetail({ scope }: { readonly scope: HistoryScope }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyMinimalPreview, scope, params: {} });
   return <StateBoundary state={state}>{model => <DisplayState node={model.preview}>{preview =>
-    <div className={styles.detailColumns}>
+    <DetailColumns>
       <DetailGroup title="Postes du minimum estimé">
         <AmountBars rows={preview.families.map((family) => ({ id: family.family, label: spendingPresentationLabel(family.family), amount: moneyAmount(family.amount) }))} />
       </DetailGroup>
@@ -118,7 +127,7 @@ function MinimalDetail({ scope }: { readonly scope: HistoryScope }) {
           <DetailRow key={row.componentId} label={row.label}>{formatMoney(row.amount)}</DetailRow>
         )}</PagedRows>
       </DetailGroup>
-    </div>
+    </DetailColumns>
   }</DisplayState>}</StateBoundary>;
 }
 
@@ -145,7 +154,7 @@ function CategoryDetail({ scope, id, labels }: { readonly scope: HistoryScope; r
       label: subcategoryLabel(key, resolvedLabels),
       amount,
     })).toSorted((a, b) => Number(metricValue(b.amount) ?? 0) - Number(metricValue(a.amount) ?? 0));
-    return <div className={styles.detailColumns}>
+    return <DetailColumns>
       <DetailGroup title={category.label}>
         <CategoryComparison category={category} />
         {explanation && <PagedRows size={2} label="Écarts par poste" items={explanation.drivers}>{rows => rows.map(row =>
@@ -161,7 +170,7 @@ function CategoryDetail({ scope, id, labels }: { readonly scope: HistoryScope; r
       <CategoryAxis label="Nécessité" axis={visibleValue(model.classificationViews.necessity)} />
       <CategoryAxis label="Fixes et variables" axis={visibleValue(model.classificationViews.behavior)} />
       <CategoryAxis label="Quotidien et hors quotidien" axis={visibleValue(model.classificationViews.lifeScope)} />
-    </div>;
+    </DetailColumns>;
   }}</StateBoundary>;
 }
 
@@ -198,7 +207,7 @@ function CategoryAxis({ label, axis }: { readonly label: string; readonly axis?:
 function SegmentDetail({ scope, params }: { readonly scope: HistoryScope; readonly params: Extract<HistoryOverlayTarget, { kind: "segment" }>["params"] }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historySpendingSegmentDetail, scope, params });
   return <StateBoundary state={state}>{model =>
-    <div className={styles.detailColumns}>
+    <DetailColumns>
       <DetailGroup title="Montant du poste">
         <DisplayState node={model.amount}>{amount => <MoneyMetric metric={amount} className={styles.detailTotal} />}</DisplayState>
         <DisplayState node={model.otherAmount}>{metric => Number(metricValue(metric)) === 0 ? null :
@@ -214,48 +223,8 @@ function SegmentDetail({ scope, params }: { readonly scope: HistoryScope; readon
           }))} />}</PagedRows>
         }</CollectionState>}</DisplayState>
       </DetailGroup>
-    </div>
+    </DetailColumns>
   }</StateBoundary>;
-}
-
-export function BalanceLifeDetails({ model, month, onOpen, pageSize }: {
-  readonly model: MonthLifeMoneyReadModel;
-  readonly month: YearMonth;
-  readonly onOpen: OpenDetail;
-  readonly pageSize: number;
-}) {
-  const days = daysInBalanceMonth(month);
-  return <div className={`${styles.detailColumns} ${styles.lifeIndex}`}>
-    <DetailGroup title="Activités du mois">
-      <DisplayState node={model.activities}>{collection => <CollectionState collection={collection}>{items => {
-        const maximum = Math.max(1, ...items.map(row => row.occurrences));
-        return <PagedRows label="Activités" items={items} size={pageSize}>{rows => rows.map(row =>
-          <DetailLink key={row.activityTypeKey} label={row.label} end={formatCount(row.occurrences, "fois", "fois")}
-            fraction={row.occurrences / maximum}
-            onClick={() => onOpen({ target: { kind: "activity", activityTypeKey: row.activityTypeKey }, label: row.label })} />
-        )}</PagedRows>;
-      }}</CollectionState>}</DisplayState>
-    </DetailGroup>
-    <DetailGroup title="Moments marquants">
-      <DisplayState node={model.moments}>{collection => <CollectionState collection={collection}>{items =>
-        <PagedRows label="Moments" items={items} size={pageSize}>{rows => rows.map(row =>
-          <DetailLink key={row.momentId} label={row.title} end={<span className={styles.momentFigures}>
-            {formatFrenchDateRange(row.startDate, row.endDate, false)}
-            {metricValue(row.causalCost) !== undefined && <MoneyMetric metric={row.causalCost} partialDisplay="value-only" />}
-          </span>}
-            onClick={() => onOpen({ target: { kind: "moment", momentId: row.momentId }, label: row.title })} />
-        )}</PagedRows>
-      }</CollectionState>}</DisplayState>
-    </DetailGroup>
-    <DetailGroup title="Lieux fréquentés">
-      <DisplayState node={model.places}>{collection => <CollectionState collection={collection}>{items =>
-        <PagedRows label="Lieux" items={items} size={pageSize}>{rows => rows.map(row =>
-          <DetailLink key={row.placeId} label={row.label} end={formatCount(row.presenceDays, "jour")} fraction={row.presenceDays / days}
-            onClick={() => onOpen({ target: { kind: "place", placeId: row.placeId }, label: row.label })} />
-        )}</PagedRows>
-      }</CollectionState>}</DisplayState>
-    </DetailGroup>
-  </div>;
 }
 
 function ExpenseGroup({ label, node }: { readonly label: string; readonly node: import("@/core/history-v2").DisplayNode<import("@/core/history-v2").CollectionValue<EconomicExpenseSummary>> }) {
@@ -274,7 +243,7 @@ function ExpenseGroup({ label, node }: { readonly label: string; readonly node: 
 function ActivityDetail({ scope, id, onOpen }: { readonly scope: HistoryScope; readonly id: string; readonly onOpen: OpenDetail }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyActivityDetail, scope, params: { activityTypeKey: id } });
   return <StateBoundary state={state}>{model =>
-    <div className={styles.detailColumns}>
+    <DetailColumns>
       <DetailGroup title="Dates de l’activité">
         <DisplayState node={model.occurrences}>{collection => <CollectionState collection={collection}>{items =>
           <PagedRows label="Dates" items={items}>{rows => rows.map(row => <DetailLink key={row.occurrenceId}
@@ -285,40 +254,40 @@ function ActivityDetail({ scope, id, onOpen }: { readonly scope: HistoryScope; r
       </DetailGroup>
       <ExpenseGroup label="Dépenses liées" node={model.causalExpenses} />
       <ExpenseGroup label="Dépenses associées" node={model.associatedExpenses} />
-    </div>
+    </DetailColumns>
   }</StateBoundary>;
 }
 
 function JournalDetail({ date }: { readonly date: Extract<HistoryOverlayTarget, { kind: "journal" }>["date"] }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyDayJournal, scope: monthScope(yearMonthOf(date)), params: { date } });
   return <StateBoundary state={state}>{model =>
-    <div className={styles.detailColumns}>
+    <DetailColumns>
       <DetailGroup title="Dépenses du jour">
         <DisplayState node={model.economicAmount}>{amount => <MoneyMetric metric={amount} className={styles.detailTotal} />}</DisplayState>
       </DetailGroup>
       <ExpenseGroup label="Autres dépenses du jour" node={model.otherMovements.otherExpenses} />
-    </div>
+    </DetailColumns>
   }</StateBoundary>;
 }
 
 function MomentDetail({ scope, id }: { readonly scope: HistoryScope; readonly id: string }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyMomentDetail, scope, params: { momentId: id } });
   return <StateBoundary state={state}>{model =>
-    <div className={styles.detailColumns}>
+    <DetailColumns>
       <DetailGroup title="Budget du moment" note={formatFrenchDateRange(model.moment.startDate, model.moment.endDate)}>
         <DisplayState node={model.causalCost}>{amount => <DetailRow label="Dépenses liées"><MoneyMetric metric={amount} /></DetailRow>}</DisplayState>
         <DisplayState node={model.spentDuring}>{amount => <DetailRow label="Dépenses sur la période"><MoneyMetric metric={amount} /></DetailRow>}</DisplayState>
       </DetailGroup>
       <ExpenseGroup label="Achats liés au moment" node={model.causalExpenses} />
       <ExpenseGroup label="Autres achats sur la période" node={model.spentDuringExpenses} />
-    </div>
+    </DetailColumns>
   }</StateBoundary>;
 }
 
 function PlaceDetail({ scope, id }: { readonly scope: HistoryScope; readonly id: string }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyPlaceDetail, scope, params: { placeId: id } });
   return <StateBoundary state={state}>{model =>
-    <div className={styles.detailColumns}>
+    <DetailColumns>
       <DetailGroup title={model.place.label}>
         <DetailRow label="Jours de présence">{model.place.presenceDays}</DetailRow>
         <DisplayState node={model.localizedAmount}>{amount => <DetailRow label="Dépenses localisées"><MoneyMetric metric={amount} /></DetailRow>}</DisplayState>
@@ -330,6 +299,6 @@ function PlaceDetail({ scope, id }: { readonly scope: HistoryScope; readonly id:
           )}</PagedRows>
         }</CollectionState>}</DisplayState>
       </DetailGroup>
-    </div>
+    </DetailColumns>
   }</StateBoundary>;
 }
