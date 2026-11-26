@@ -3,7 +3,7 @@ import type { RealizedBoard, RealizedCard, RealizedCardGroup, RealizedPayment } 
 import type { RealizedPlace } from "@/server/phase2/planner/realized-places";
 import type { RealizedWork, RealizedWorkItem } from "@/server/phase2/planner/realized-work";
 import { realizedCardViews, type RealizedCardView } from "./realized-card-view";
-import { cardCaption, paymentSearch, searchableDate, searchText } from "./realized-card-text";
+import { cardCaption, paymentPresentation, paymentSearch, realizedFlowLabels, searchableDate, searchText } from "./realized-card-text";
 import { packRealizedOverview } from "./realized-overview-wire";
 
 type Category = Pick<RealizedCardGroup, "id" | "label" | "shortLabel">;
@@ -14,6 +14,8 @@ export type RealizedCardSummary = Pick<RealizedCard,
   pilotSourceId?: string;
   categoryId?: Category["id"];
   caption?: string;
+  displayTitle?: string;
+  flowKinds?: readonly RealizedPayment["flow"][];
   dialogCaption: string;
   sortDate?: string;
   paymentIds: readonly string[];
@@ -44,10 +46,14 @@ function summarize({ card, source, operation }: RealizedCardView, category?: Cat
     ...(card.occurrences ?? []).map(item => item.date),
     ...(card.relatedPayments ?? []).map(payment => payment.date),
   ].sort()[0];
-  const operationCaption = operation?.category ?? source.label;
+  const payment = operation ?? (card.section !== "events" && card.payments.length === 1 ? card.payments[0] : undefined);
+  const presentation = payment && paymentPresentation(payment, source.label);
+  const flowKinds = [...new Set(card.payments.map(payment => payment.flow))];
   const dialogCaption = cardCaption(card);
   const search = [
     searchText(label, date, endDate, searchableDate(date), dialogCaption, participant),
+    ...(presentation ? [searchText(label, presentation.title, presentation.context)] : []),
+    ...flowKinds.map(flow => searchText(label, realizedFlowLabels[flow])),
     ...(card.places ?? []).map(place => searchText(label, place.label, place.address, searchableDate(date))),
     ...(card.work?.items ?? []).map(item => searchText(label, item.label, searchableDate(date))),
     searchText(source.label, category?.label, category?.shortLabel),
@@ -69,7 +75,9 @@ function summarize({ card, source, operation }: RealizedCardView, category?: Cat
   return {
     id, section, label, art, date, endDate, eventStatus, amount, pilotStatus, participant, mobilityNote,
     sourceId: source.id, pilotSourceId: source.pilotSourceId, categoryId: category?.id, sortDate, dialogCaption,
-    caption: operation ? operationCaption === label ? undefined : operationCaption : cardCaption(card, null),
+    caption: presentation ? presentation.context : cardCaption(card, null),
+    displayTitle: presentation?.title !== label ? presentation?.title : undefined,
+    flowKinds,
     paymentIds: card.payments.map(payment => payment.id),
     badges: card.work ? [] : [...new Map(card.payments.flatMap(payment => payment.badge
       ? [[payment.badge.label, payment.badge] as const] : [])).values()],

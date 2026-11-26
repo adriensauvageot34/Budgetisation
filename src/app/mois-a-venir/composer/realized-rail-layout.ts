@@ -3,6 +3,7 @@
 import { useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { packRealizedCards, packRealizedCategories, type PackedCardPosition } from "./realized-card-view";
 import type { RealizedCardSummary } from "./realized-overview";
+import { usefulMobilityNote } from "./realized-card-text";
 
 type Entry = { card: RealizedCardSummary };
 type Group = { id: string; entries: readonly Entry[] };
@@ -34,26 +35,23 @@ export function preserveRealizedRailOffset(
 }
 
 function estimatedHeight(card: RealizedCardSummary, width: number) {
-  const textWidth = Math.max(90, width - (card.badges.length > 1 ? 90 : 68));
+  const textWidth = Math.max(90, width - 64);
   const lines = (text: string, lineHeight: number, maxLines = Infinity) =>
     Math.min(maxLines, Math.max(1, Math.ceil(text.length * 7 / textWidth))) * lineHeight;
-  const text = 18 + lines(card.label, 20, 2) + (card.pilotStatus ? 19 : 0)
-    + (card.amount === null ? 0 : card.hasTransfers ? 42 : 26)
-    + (card.places?.[0] ? lines(card.places[0].label, 17, 2) : 0)
-    + (card.caption ? lines(card.caption, 16) : 0)
-    + (card.amount === null && (card.relatedCount || !card.trip) ? 18 : 0);
-  const badgeRows = card.badges.length > 1 ? Math.ceil(Math.min(card.badges.length, 6) / 2) : card.badges.length;
-  const visual = 42 + badgeRows * 33;
-  const details = (card.trip ? 29 : 0) + (card.travel ? 29 : 0)
-    + (card.mobilityNote ? lines(card.mobilityNote, 16) + 4 : 0);
-  const footer = card.work ? 9 + Math.max(31, Math.ceil(card.work.items.length / 2) * 29) : card.participant ? 36 : 0;
-  return 19 + Math.max(text, visual) + details + footer;
+  const title = Math.min(2, Math.max(1, Math.ceil((card.displayTitle ?? card.label).length * 7 / Math.max(65, textWidth - 48)))) * 19;
+  const text = title + (card.amount === null ? 18 : 24)
+    + (card.places?.[0] ? lines(card.places[0].label, 16, 2) : 0)
+    + (card.caption ? lines(card.caption, 15, 2) : 0);
+  const details = card.trip ? 34 : usefulMobilityNote(card.travel ?? card.mobilityNote) ? 32 : 0;
+  const work = card.work ? 9 + Math.ceil(card.work.items.length / 2) * 29 : 0;
+  const footer = card.participant || card.work || card.pilotStatus ? 29 : card.categoryId ? 23 : 0;
+  return 19 + Math.max(text, card.badges.length ? 62 : 38) + details + work + footer;
 }
 
 type Geometry = { width: number; viewport: number; height: number; gap: number; inset: number; heading: number };
 
 export function useRealizedRailLayout(
-  rail: RefObject<HTMLDivElement | null>, groups: readonly Group[], viewKey: string, byCategory: boolean, fillColumns: boolean,
+  rail: RefObject<HTMLDivElement | null>, groups: readonly Group[], viewKey: string, byCategory: boolean,
 ) {
   const probe = useRef<HTMLSpanElement>(null);
   const [geometry, setGeometry] = useState<Geometry>();
@@ -74,8 +72,8 @@ export function useRealizedRailLayout(
       id: card.id, height: sizes?.get(card.id) ?? estimatedHeight(card, geometry.width),
     })) }));
     return byCategory ? packRealizedCategories(measured, geometry.height, geometry.gap, geometry.inset, geometry.heading)
-      : packRealizedCards(measured[0]!.cards, geometry.height, geometry.gap, fillColumns);
-  }, [groups, measurements, measurementKey, geometry, byCategory, fillColumns]);
+      : packRealizedCards(measured[0]!.cards, geometry.height, geometry.gap);
+  }, [groups, measurements, measurementKey, geometry, byCategory]);
 
   useLayoutEffect(() => {
     const node = rail.current, widthProbe = probe.current;

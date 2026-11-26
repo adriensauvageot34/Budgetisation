@@ -6,6 +6,7 @@ const fields = [
   "id", "section", "label", "amount", "art", "search", "sortDate", "date", "caption", "dialogCaption",
   "sourceId", "categoryId", "pilotStatus", "pilotSourceId", "participant", "paymentIds", "badges",
   "places", "relatedCount", "hasTransfers", "endDate", "eventStatus", "mobilityNote", "work", "trip", "travel",
+  "displayTitle", "flowKinds",
 ] as const satisfies readonly (keyof RealizedCardSummary)[];
 type Field = typeof fields[number];
 type EncodedRow = readonly (RealizedCardSummary[Field] | null)[];

@@ -22,6 +22,39 @@ export function paymentSearch(payment: RealizedPayment) {
     payment.place?.label, payment.place?.address, payment.amount, money(payment.amount), ...payment.components.map(component => component.label));
 }
 
+export const realizedFlowLabels = {
+  expense: "Dépense", income: "Revenu", refund: "Remboursement", transfer: "Transfert", other: "Autre mouvement",
+} satisfies Record<RealizedPayment["flow"], string>;
+
+const genericPurchaseUse = /^(a classer|achats? personnels?|depenses? diverses?|contenu connu.*|composant de depense|non classe|inconnu)$/u;
+
+export function paymentPresentation(payment: RealizedPayment, context?: string) {
+  const { label, flow, category } = payment;
+  const type = searchText(category, payment.preciseType);
+  const direction = Number(payment.amount) < 0 ? "Vers" : "De";
+  if (flow === "income" && /\bsalaire\b|revenu professionnel/u.test(type)) {
+    return { title: /^salaire\b/u.test(searchText(label)) ? label : `Salaire · ${label}`,
+      context: payment.participant ? `Bénéficiaire · ${payment.participant}` : undefined };
+  }
+  if (flow === "transfer" || (flow === "other" && /\bvirement\b/u.test(type))) {
+    return { title: direction === "Vers" ? "Virement envoyé" : "Virement reçu",
+      context: /^virement\b/u.test(searchText(label)) ? category ?? label : `${direction} ${label}` };
+  }
+  if (flow === "refund") {
+    return { title: "Remboursement", context: /^remboursement\b/u.test(searchText(label)) ? category ?? label : `De ${label}` };
+  }
+  const knownUses = [...new Set(payment.components.map(item => item.label).filter(use =>
+    !genericPurchaseUse.test(searchText(use)) && searchText(use) !== searchText(label)))];
+  const usage = flow === "expense" && (knownUses.length === 1 ? knownUses[0] : payment.purchaseUse);
+  const caption = [usage || undefined, category, context].find(value =>
+    value && !genericPurchaseUse.test(searchText(value)) && searchText(value) !== searchText(label));
+  return { title: label, context: caption };
+}
+
+export function usefulMobilityNote(note?: string) {
+  return note && !/(?<![\d,.])0(?:[,.]0{1,2})?\s*€\s*estimés?(?=\s|[.,;·)]|$)/iu.test(note) ? note : undefined;
+}
+
 export function matches(text: string, terms: readonly string[]) {
   return terms.every(term => text.includes(term));
 }
