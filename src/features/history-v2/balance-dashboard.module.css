@@ -321,6 +321,34 @@
 .dashboard button:focus-visible { outline: 2px solid #7246ae; outline-offset: 1px; }
 .unavailable { padding: 13px; border-radius: 12px; background: #fff4f3; color: #703c53; }
 
+@media (max-width: 670px) {
+  .dashboard { gap: 6px; }
+  .pair { column-gap: 6px; }
+  .panel { padding-inline: 6px; border-radius: 14px; }
+  .panelHeading { gap: 4px; font-size: .78rem; }
+  .panelIcon { width: 23px; height: 23px; border-radius: 7px; }
+  .panelIcon svg { width: 14px; height: 14px; }
+  .panelHeading .chevron { width: 12px; }
+  .amountText { font-size: .74rem; }
+  .amountText > span:last-child small { display: none; }
+  .categoryPlot button { gap: 3px; padding: 3px 2px; }
+  .categoryPlot button > svg { width: 10px; }
+  .panelFoot .zone { font-size: .68rem; }
+  .marginStats { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .marginStats > div {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 5px;
+  }
+  .marginStats > div > :first-child { font-size: .68rem; }
+  .marginStats > div > :last-child { white-space: nowrap; font-size: .73rem; }
+  .marginCompact { display: inline; }
+  .marginFull { display: none; }
+  .legend { gap: 3px 9px; font-size: .71rem; }
+  .lifeRows button { gap: 4px; padding: 4px; }
+  .lifeRows button > span:last-child { display: none; }
+}
 @media (max-height: 650px) {
   .dashboard { gap: 6px; }
   .pageHeader h1 { font-size: clamp(1.18rem, 2vw, 1.6rem); }
