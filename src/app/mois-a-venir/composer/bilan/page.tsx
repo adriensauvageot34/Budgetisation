@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { readHistoryBalance } from "@/app/history-balance-data";
+import { readBalanceDailySeries, readHistoryBalance } from "@/app/history-balance-data";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { parseYearMonth } from "@/core/time";
 import { ARCHIVED_REALIZED_MONTHS, JULY_COMPOSER_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
@@ -29,6 +29,7 @@ export default async function ComposerBalancePage({
       : JULY_COMPOSER_HREF);
   }
   const month = parseYearMonth(archivedMonth);
+  const dailySeries = readBalanceDailySeries(month);
   const [initialState, subcategoryLabels] = await Promise.all([
     readHistoryBalance(month),
     withProductAuthentication(readAuthenticatedSubcategoryLabels),
@@ -44,6 +45,6 @@ export default async function ComposerBalancePage({
       </nav>
     </AppToolbarContent>
     <ComposerBalanceDashboard key={month} month={month} monthName={monthLabel(month)} initialState={initialState}
-      subcategoryLabels={subcategoryLabels} initialDetail={parseHistoryOverlaySearch(search)} />
+      subcategoryLabels={subcategoryLabels} initialDetail={parseHistoryOverlaySearch(search)} dailySeries={dailySeries} />
   </div>;
 }

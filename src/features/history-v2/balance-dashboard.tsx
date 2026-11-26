@@ -1,20 +1,20 @@
 "use client";
 
-import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Suspense, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowDownRight, ArrowLeft, ArrowUpRight, ChartNoAxesColumn, ChevronDown, Landmark, MapPin, SlidersHorizontal, Sparkles, Wallet, X } from "lucide-react";
 import type { YearMonth } from "@/core/time";
 import type { MetricValue } from "@/core/history-v2";
 import type { Money } from "@/core/money";
-import type { MonthBalanceSummaryReadModel, MonthCategoriesReadModel, MonthLifeMoneyReadModel, MonthSpendingNatureReadModel } from "@/query-api";
+import type { MonthBalanceSummaryReadModel, MonthCategoriesReadModel, MonthLifeMoneyReadModel, MonthQuickOverviewReadModel, MonthSpendingNatureReadModel } from "@/query-api";
 import { BalanceBankDetail, BalanceDetail, BalanceLifeDetails, type BalanceTarget, type DetailSelection, type OpenDetail } from "./balance-dashboard-details";
 import { AmountBar, PagedRows, chartMaximum, formatDelta, metricValue, stateValue, visibleValue } from "./balance-dashboard-widgets";
-import { CategoryRing, MonthTimeline, SpendingComparison, categoryColors } from "./balance-dashboard-charts";
+import { CategoryRing, DailySpendingTrend, MonthTimeline, SpendingComparison, categoryColors } from "./balance-dashboard-charts";
 import { formatCount, formatFrenchDateRange, formatHistoricalRank, spendingPresentationLabel } from "./presentation";
 import { SpendingBreakdown } from "./balance-dashboard-spending";
 import { publicationMetasAreCoherent } from "./publication-coherence";
 import { MoneyMetric, formatMoney } from "./renderers";
 import { overlayTargetKey } from "./route-state";
-import type { HistoryOverlayTarget, HistoryV2InitialState } from "./types";
+import type { BalanceDailySeries, HistoryOverlayTarget, HistoryV2InitialState } from "./types";
 import { useHistoryPageState } from "./use-history-page-state";
 import styles from "./balance-dashboard.module.css";
 
@@ -54,12 +54,13 @@ function panelFor(target?: BalanceTarget): PanelKind | undefined {
   }
 }
 
-export function ComposerBalanceDashboard({ month, monthName, initialState, initialDetail, subcategoryLabels }: {
+export function ComposerBalanceDashboard({ month, monthName, initialState, initialDetail, subcategoryLabels, dailySeries }: {
   readonly month: YearMonth;
   readonly monthName: string;
   readonly initialState: Extract<HistoryV2InitialState, { kind: "balance" }>;
   readonly initialDetail?: HistoryOverlayTarget;
   readonly subcategoryLabels: Readonly<Record<string, string>>;
+  readonly dailySeries: Promise<BalanceDailySeries | null>;
 }) {
   const state = useHistoryPageState(month, initialState);
   const [activePanel, setActivePanel] = useState<PanelKind | undefined>(() => panelFor(initialDetail));
@@ -84,11 +85,12 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
       element.animate([{ transform: `translate(${x}px, ${y}px)` }, { transform: "none" }],
         { duration: 280, easing: "cubic-bezier(.22,.75,.22,1)" });
     });
-  }, [activePanel]);
+  }, [activePanel, current]);
 
   if (state.kind !== "balance") return null;
 
   const summary = stateValue(state.summary);
+  const overview = stateValue(state.overview);
   const categories = stateValue(state.categories);
   const spending = stateValue(state.spendingNature);
   const life = stateValue(state.lifeMoney);
@@ -128,8 +130,8 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
   function showDetail(selection: DetailSelection) {
     const panel = panelFor(selection.target);
     if (!panel) return;
+    captureHeadingPositions();
     if (activePanel !== panel) {
-      captureHeadingPositions();
       if (document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
       setActivePanel(panel);
     }
@@ -171,15 +173,20 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
           <div id={`${detailId}-specific`} className={styles.inlineDetail} aria-labelledby={`${detailId}-item-title`}>
             <div className={styles.detailHeader}>
               {stack.length > 1 && <button type="button" aria-label="Revenir au détail précédent"
-                onClick={() => setStack(items => items.slice(0, -1))}><ArrowLeft aria-hidden size={16} /></button>}
+                onClick={() => {
+                  captureHeadingPositions();
+                  setStack(items => items.slice(0, -1));
+                }}><ArrowLeft aria-hidden size={16} /></button>}
               <h3 id={`${detailId}-item-title`} ref={nestedTitle} tabIndex={-1}>{current.label}</h3>
               <button type="button" aria-label="Replier ce détail" className={styles.close} onClick={() => {
+                captureHeadingPositions();
                 setStack([]);
                 requestAnimationFrame(() => document.getElementById(`${detailId}-heading`)?.focus({ preventScroll: true }));
               }}><X aria-hidden size={17} /></button>
             </div>
             <BalanceDetail selection={current} month={month} subcategoryLabels={subcategoryLabels}
               onOpen={selection => {
+                captureHeadingPositions();
                 setStack(items => [...items, selection]);
                 requestAnimationFrame(() => nestedTitle.current?.focus({ preventScroll: true }));
               }} />
@@ -189,11 +196,12 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
     </Panel>;
   }
 
-  return <div ref={dashboard} className={styles.dashboard} data-detail-open={activePanel !== undefined}
+  return <div ref={dashboard} className={styles.dashboard} data-detail-open={activePanel !== undefined} data-active-panel={activePanel}
     onKeyDown={event => {
       if (event.key !== "Escape" || activePanel === undefined) return;
       event.preventDefault();
       if (current) {
+        captureHeadingPositions();
         setStack(items => items.slice(0, -1));
         requestAnimationFrame(() => document.getElementById(`${id}-${activePanel}-heading`)?.focus({ preventScroll: true }));
       } else close();
@@ -205,7 +213,8 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
 
     <div className={styles.panelGrid}>
       {renderPanel("summary", "Dépenses du mois", <Wallet size={19} aria-hidden />,
-        summary ? <SummaryCard model={summary} expanded={activePanel === "summary"} onOpen={showDetail} /> : <DataStatus failed={state.summary.status === "error"} />,
+        summary ? <SummaryCard model={summary} expanded={activePanel === "summary"} onOpen={showDetail}
+          dailySeries={dailySeries} overview={overview} /> : <DataStatus failed={state.summary.status === "error"} />,
         summary && <div className={styles.summaryDetails}>
           <BalanceBankDetail month={month} headingId={`${id}-bank-heading`} />
           {summary.importedSummary.text && <section className={styles.panelExtension} aria-labelledby={`${id}-editorial-heading`}>
@@ -231,7 +240,7 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
         life ? <LifeCard model={life} month={month} expanded={activePanel === "life"}
           activeId={current?.target.kind === "moment" ? current.target.momentId : undefined}
           onOpen={showDetail} /> : <DataStatus failed={state.lifeMoney.status === "error"} />,
-        life && <BalanceLifeDetails model={life} month={month} onOpen={showDetail} pageSize={current ? 3 : 5} />)}
+        life && <BalanceLifeDetails model={life} month={month} onOpen={showDetail} pageSize={current ? 2 : 3} />)}
     </div>
   </div>;
 }
@@ -263,10 +272,12 @@ function DataStatus({ failed }: { readonly failed: boolean }) {
   return <p role="status" className={styles.note}>{failed ? "Données indisponibles pour ce mois." : "Chargement…"}</p>;
 }
 
-function SummaryCard({ model, expanded, onOpen }: {
+function SummaryCard({ model, expanded, onOpen, dailySeries, overview }: {
   readonly model: MonthBalanceSummaryReadModel;
   readonly expanded: boolean;
   readonly onOpen: OpenDetail;
+  readonly dailySeries: Promise<BalanceDailySeries | null>;
+  readonly overview?: MonthQuickOverviewReadModel;
 }) {
   const actual = visibleValue(model.actualValue);
   const typical = visibleValue(model.typicalValue);
@@ -276,6 +287,9 @@ function SummaryCard({ model, expanded, onOpen }: {
   const zone = metricValue(visibleValue(model.usualZone));
   const rank = metricValue(visibleValue(model.historicalRank));
   const minimum = metricValue(visibleValue(model.minimalValue));
+  const flows = publicationMetasAreCoherent([model.publicationMeta, overview?.publicationMeta]) ? overview?.flows : undefined;
+  const bankInflows = visibleValue(flows?.bankInflows);
+  const bankOutflows = visibleValue(flows?.bankOutflows);
   return <div className={styles.overviewLayout}>
     <div className={styles.overviewGraph}>
       <div className={styles.spentHeader}>
@@ -286,18 +300,21 @@ function SummaryCard({ model, expanded, onOpen }: {
         </span>}
       </div>
       <SpendingComparison actual={metricValue(actual)} typical={metricValue(typical)} range={zone} />
+      <Suspense fallback={<div className={styles.dailyTrend} role="status"><p className={styles.note}>Chargement des dépenses par jour…</p></div>}>
+        <DailySpendingTrend series={dailySeries} reference={model.publicationMeta} />
+      </Suspense>
+      {!expanded && (metricValue(bankInflows) !== undefined || metricValue(bankOutflows) !== undefined) && <dl className={styles.bankFlows}>
+        {bankInflows && metricValue(bankInflows) !== undefined && <div><dt>Crédits bancaires</dt><dd><MoneyMetric metric={bankInflows} /></dd></div>}
+        {bankOutflows && metricValue(bankOutflows) !== undefined && <div><dt>Débits bancaires</dt><dd><MoneyMetric metric={bankOutflows} /></dd></div>}
+      </dl>}
       {!expanded && <div className={styles.panelFoot}>
-        <div className={styles.summaryReferences}>
-          {zone && <span className={styles.zone}>Fourchette habituelle <strong>{formatMoney(zone.lowerBound)} – {formatMoney(zone.upperBound)}</strong></span>}
-          {rank?.presentation === "RANKED" && <span className={styles.zone}>{formatHistoricalRank(rank.rank, rank.universeCount)}</span>}
-        </div>
+        {rank?.presentation === "RANKED" && <span className={styles.zone}>{formatHistoricalRank(rank.rank, rank.universeCount)}</span>}
         <button type="button" className={styles.textButton} onClick={() => onOpen({ target: { kind: "bridge" }, label: "Écart avec mon compte" })}>
           <Landmark size={14} aria-hidden /> Écart avec mon compte
         </button>
       </div>}
     </div>
-    {expanded && (zone || rank?.presentation === "RANKED" || minimum !== undefined) && <dl className={styles.overviewFacts}>
-      {zone && <div><dt>Fourchette habituelle</dt><dd>{formatMoney(zone.lowerBound)} à {formatMoney(zone.upperBound)}</dd></div>}
+    {expanded && (rank?.presentation === "RANKED" || minimum !== undefined) && <dl className={styles.overviewFacts}>
       {rank?.presentation === "RANKED" && <div><dt>Place dans l’historique</dt><dd>{formatHistoricalRank(rank.rank, rank.universeCount)}</dd>
         <div className={styles.rankTicks} aria-hidden="true">
           {Array.from({ length: rank.universeCount }, (_, index) => <span key={index} data-current={index + 1 === rank.rank} />)}
