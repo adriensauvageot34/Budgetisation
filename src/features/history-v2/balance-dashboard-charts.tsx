@@ -1,6 +1,6 @@
 import { use, useState, type CSSProperties } from "react";
 import type { Money } from "@/core/money";
-import type { YearMonth } from "@/core/time";
+import type { LocalDate, YearMonth } from "@/core/time";
 import type { MomentLifeMoneySummary } from "@/query-api";
 import { formatFrenchDate, formatFrenchDateRange } from "./presentation";
 import { MoneyMetric, formatMoney } from "./renderers";
@@ -38,16 +38,20 @@ export function SpendingComparison({ actual, typical, range }: {
   </figure>;
 }
 
-export function DailySpendingTrend({ series, reference }: {
+export function DailySpendingTrend({ series, reference, onInspect }: {
   readonly series: Promise<BalanceDailySeries | null>;
   readonly reference: BalanceDailySeries["publicationMeta"];
+  readonly onInspect: (date: LocalDate, label: string) => void;
 }) {
   const data = use(series);
   if (!data || !publicationMetasAreCoherent([reference, data.publicationMeta])) return null;
-  return <DailyAmounts days={data.days} />;
+  return <DailyAmounts days={data.days} onInspect={onInspect} />;
 }
 
-function DailyAmounts({ days }: { readonly days: BalanceDailySeries["days"] }) {
+function DailyAmounts({ days, onInspect }: {
+  readonly days: BalanceDailySeries["days"];
+  readonly onInspect: (date: LocalDate, label: string) => void;
+}) {
   const [view, setView] = useState<"total" | "withoutFixed">("withoutFixed");
   const [focusedIndex, setFocusedIndex] = useState<number>();
   const hasFixedBreakdown = days.some(day => metricValue(day.withoutFixed) !== undefined);
@@ -78,7 +82,10 @@ function DailyAmounts({ days }: { readonly days: BalanceDailySeries["days"] }) {
         return <button type="button" key={day.date} aria-pressed={index === selected} tabIndex={index === selected ? 0 : -1} data-index={index}
           data-missing={value === undefined} data-negative={amount < 0}
           aria-label={`${formatFrenchDate(day.date, false)} · ${value === undefined ? "montant indisponible" : formatMoney(value)}`}
-          onFocus={() => setFocusedIndex(index)} onClick={() => setFocusedIndex(index)}
+          onFocus={() => setFocusedIndex(index)} onClick={() => {
+            setFocusedIndex(index);
+            onInspect(day.date, formatFrenchDate(day.date, false));
+          }}
           onKeyDown={event => {
             if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
             event.preventDefault();
@@ -113,7 +120,7 @@ export function CategoryRing({ shares }: { readonly shares: readonly (number | u
   }}><span>Part<br />du total</span></div>;
 }
 
-export function daysInBalanceMonth(month: YearMonth) {
+function daysInBalanceMonth(month: YearMonth) {
   const first = new Date(`${month}-01T00:00:00Z`);
   return new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
 }

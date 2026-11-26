@@ -71,7 +71,7 @@ export function DetailGroup({ title, note, children }: {
   </section>;
 }
 
-const compactPageQuery = "(max-height: 670px)";
+const compactPageQuery = "(max-height: 785px)";
 function subscribeToCompactPages(onChange: () => void) {
   const media = window.matchMedia(compactPageQuery);
   media.addEventListener("change", onChange);
