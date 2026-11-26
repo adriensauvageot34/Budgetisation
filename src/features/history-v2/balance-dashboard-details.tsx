@@ -225,6 +225,10 @@ function CategoryAxis({ label, axis }: { readonly label: string; readonly axis?:
   if (!buckets?.length) return null;
   return <div className={styles.classification}>
     <h4>{label}</h4>
+    <div className={styles.axisTrack} aria-hidden="true">
+      {buckets.map((bucket, index) => bucket.shareOfActual === undefined ? null :
+        <span key={bucket.key} data-series={index} style={{ width: `${Math.max(0, Math.min(100, bucket.shareOfActual * 100))}%` }} />)}
+    </div>
     <p>{buckets.map(bucket => `${spendingPresentationLabel(bucket.key)} ${bucket.shareOfActual === undefined ? formatMoney(bucket.amount) : `${Math.round(bucket.shareOfActual * 100)} %`}`).join(" · ")}</p>
     {axis && Number(axis.unclassifiedAmount) !== 0 && <small>{formatMoney(axis.unclassifiedAmount)} non classés</small>}
   </div>;
@@ -314,9 +318,14 @@ function LifeDetail({ model, onOpen }: { readonly model: MonthLifeMoneyReadModel
 
 function ExpenseGroup({ label, node }: { readonly label: string; readonly node: import("@/core/history-v2").DisplayNode<import("@/core/history-v2").CollectionValue<EconomicExpenseSummary>> }) {
   return <DetailGroup title={label}>
-    <DisplayState node={node}>{collection => <CollectionState collection={collection}>{items =>
-      <PagedRows label={label} items={items}>{rows => rows.map(row => <DetailRow key={row.expenseEventId} label={expenseDisplayTitle(row)}>{formatMoney(row.amount)}</DetailRow>)}</PagedRows>
-    }</CollectionState>}</DisplayState>
+    <DisplayState node={node}>{collection => <CollectionState collection={collection}>{items => {
+      const amounts = items.map(row => ({
+        id: row.expenseEventId,
+        label: expenseDisplayTitle(row),
+        amount: moneyAmount(row.amount),
+      }));
+      return <PagedRows label={label} items={amounts}>{rows => <AmountBars rows={rows} maximum={chartMaximum(amounts)} />}</PagedRows>;
+    }}</CollectionState>}</DisplayState>
   </DetailGroup>;
 }
 

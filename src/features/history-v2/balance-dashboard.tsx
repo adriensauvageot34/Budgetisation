@@ -7,7 +7,8 @@ import type { MetricValue } from "@/core/history-v2";
 import type { Money } from "@/core/money";
 import type { MonthBalanceSummaryReadModel, MonthCategoriesReadModel, MonthLifeMoneyReadModel, MonthSpendingNatureReadModel } from "@/query-api";
 import { BalanceDetail, type BalanceTarget, type DetailSelection, type OpenDetail } from "./balance-dashboard-details";
-import { AmountBar, AmountBars, chartMaximum, metricValue, stateValue, visibleValue } from "./balance-dashboard-widgets";
+import { AmountBar, chartMaximum, metricValue, stateValue, visibleValue } from "./balance-dashboard-widgets";
+import { CategoryRing, MonthTimeline, SpendingComparison, categoryColors } from "./balance-dashboard-charts";
 import { formatCount, formatFrenchDateRange } from "./presentation";
 import { publicationMetasAreCoherent } from "./publication-coherence";
 import { MoneyMetric, formatMoney } from "./renderers";
@@ -73,14 +74,17 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
   readonly subcategoryLabels: Readonly<Record<string, string>>;
 }) {
   const state = useHistoryPageState(month, initialState);
-  const [stack, setStack] = useState<readonly DetailSelection[]>(() =>
-    initialDetail ? [{ label: linkedDetailLabels[initialDetail.kind], target: initialDetail }] : [],
-  );
+  const initialPanel = panelFor(initialDetail);
+  const initialLane = initialPanel === "summary" || initialPanel === "categories" ? "top" : "bottom";
+  const [openLane, setOpenLane] = useState<"top" | "bottom" | null>(initialDetail ? initialLane : null);
+  const [stacks, setStacks] = useState<Readonly<Record<"top" | "bottom", readonly DetailSelection[]>>>(() => {
+    const initial = initialDetail ? [{ label: linkedDetailLabels[initialDetail.kind], target: initialDetail }] : [];
+    return { top: initialLane === "top" ? initial : [], bottom: initialLane === "bottom" ? initial : [] };
+  });
   const detailId = useId();
-  const detailHeader = useRef<HTMLHeadingElement>(null);
+  const detailHeaders = useRef<Partial<Record<"top" | "bottom", HTMLHeadingElement>>>({});
   const opener = useRef<HTMLElement | null>(null);
-  const current = stack.at(-1);
-  const activePanel = panelFor(current?.target);
+  const activePanel = panelFor(openLane === null ? undefined : stacks[openLane].at(-1)?.target);
   if (state.kind !== "balance") return null;
 
   const summary = stateValue(state.summary);
@@ -93,32 +97,64 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
   }
 
   function close() {
-    setStack([]);
+    setOpenLane(null);
     requestAnimationFrame(() => opener.current?.focus({ preventScroll: true }));
   }
 
-  function focusDetail() {
-    requestAnimationFrame(() => detailHeader.current?.focus({ preventScroll: true }));
+  function focusDetail(lane: "top" | "bottom") {
+    requestAnimationFrame(() => detailHeaders.current[lane]?.focus({ preventScroll: true }));
   }
 
   function togglePanel(selection: DetailSelection) {
-    if (current && detailKey(current.target) === detailKey(selection.target)) {
+    const panel = panelFor(selection.target);
+    const lane = panel === "summary" || panel === "categories" ? "top" : "bottom";
+    const current = stacks[lane].at(-1);
+    if (openLane === lane && current && detailKey(current.target) === detailKey(selection.target)) {
       close();
       return;
     }
     if (document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
-    setStack([selection]);
-    focusDetail();
+    setStacks(views => ({ ...views, [lane]: [selection] }));
+    setOpenLane(lane);
+    focusDetail(lane);
   }
 
-  function openNested(selection: DetailSelection) {
-    setStack(views => [...views, selection]);
-    focusDetail();
+  function renderDetail(lane: "top" | "bottom") {
+    const stack = stacks[lane];
+    const current = stack.at(-1);
+    const panel = panelFor(current?.target);
+    const open = openLane === lane;
+    return <div className={styles.disclosure} data-open={open} data-anchor={panel} inert={!open} aria-hidden={!open}
+      id={`${detailId}-${lane}`}>
+      <div className={styles.disclosureClip}>
+        {current && <section className={styles.detail} aria-labelledby={`${detailId}-${lane}-title`}>
+          <div className={styles.detailHeader}>
+            {stack.length > 1 && <button type="button" aria-label="Revenir au détail précédent" onClick={() => {
+              setStacks(views => ({ ...views, [lane]: views[lane].slice(0, -1) }));
+              focusDetail(lane);
+            }}><ArrowLeft aria-hidden size={17} /></button>}
+            <h2 id={`${detailId}-${lane}-title`} ref={node => {
+              if (node) detailHeaders.current[lane] = node;
+              else delete detailHeaders.current[lane];
+            }} tabIndex={-1}>{current.label}</h2>
+            <button type="button" className={styles.close} aria-label="Replier le détail" onClick={close}><X aria-hidden size={18} /></button>
+          </div>
+          <BalanceDetail key={detailKey(current.target)} selection={current} month={month}
+            summary={summary} categories={categories} spending={spending} life={life}
+            subcategoryLabels={subcategoryLabels} onOpen={selection => {
+              setStacks(views => ({ ...views, [lane]: [...views[lane], selection] }));
+              focusDetail(lane);
+            }} />
+        </section>}
+      </div>
+    </div>;
   }
 
-  const expanded = current !== undefined;
-  return <div className={styles.dashboard} data-expanded={expanded} onKeyDown={event => {
-    if (event.key === "Escape" && expanded) {
+  const topId = `${detailId}-top`;
+  const bottomId = `${detailId}-bottom`;
+  const activeTarget = openLane === null ? undefined : stacks[openLane].at(-1)?.target;
+  return <div className={styles.dashboard} onKeyDown={event => {
+    if (event.key === "Escape" && openLane !== null) {
       event.preventDefault();
       close();
     }
@@ -128,54 +164,40 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
       <span>{monthName}</span>
     </header>
 
-    <div className={styles.panels}>
+    <div className={styles.pair}>
       <Panel kind="summary" title="Dépenses du mois" icon={<Wallet size={19} aria-hidden />} selected={activePanel === "summary"}
-        detailId={detailId} onOpen={() => activePanel === "summary" ? close() : togglePanel({ target: { kind: "summary" }, label: baseDetailLabels.summary })}
-        value={summary && <MoneyMetric metric={visibleValue(summary.actualValue) ?? { status: "UNKNOWN" }} partialDisplay="value-only" />}>
+        detailId={topId} onOpen={() => activePanel === "summary" ? close() : togglePanel({ target: { kind: "summary" }, label: baseDetailLabels.summary })}>
         {summary ? <SummaryCard model={summary} onOpen={togglePanel} /> : <DataStatus failed={state.summary.status === "error"} />}
       </Panel>
 
       <Panel kind="categories" title="Dépenses par catégorie" icon={<ChartNoAxesColumn size={19} aria-hidden />} selected={activePanel === "categories"}
-        detailId={detailId} onOpen={() => activePanel === "categories" ? close() : togglePanel({ target: { kind: "categories" }, label: baseDetailLabels.categories })}>
-        {categories ? <CategoryCard model={categories} onOpen={togglePanel} detailId={detailId} /> : <DataStatus failed={state.categories.status === "error"} />}
+        detailId={topId} onOpen={() => activePanel === "categories" ? close() : togglePanel({ target: { kind: "categories" }, label: baseDetailLabels.categories })}>
+        {categories ? <CategoryCard model={categories} total={metricValue(visibleValue(summary?.actualValue))}
+          activeId={activeTarget?.kind === "category" ? activeTarget.categoryId : undefined}
+          onOpen={togglePanel} detailId={topId} /> : <DataStatus failed={state.categories.status === "error"} />}
       </Panel>
+      {renderDetail("top")}
+    </div>
 
+    <div className={styles.pair}>
       <Panel kind="spending" title="Marges du mois" icon={<SlidersHorizontal size={19} aria-hidden />} selected={activePanel === "spending"}
-        detailId={detailId} onOpen={() => activePanel === "spending" ? close() : togglePanel({ target: { kind: "spending" }, label: baseDetailLabels.spending })}>
+        detailId={bottomId} onOpen={() => activePanel === "spending" ? close() : togglePanel({ target: { kind: "spending" }, label: baseDetailLabels.spending })}>
         {spending ? <MarginCard model={spending} /> : <DataStatus failed={state.spendingNature.status === "error"} />}
       </Panel>
 
       <Panel kind="life" title="Vie et argent" icon={<Sparkles size={19} aria-hidden />} selected={activePanel === "life"}
-        detailId={detailId} onOpen={() => activePanel === "life" ? close() : togglePanel({ target: { kind: "life" }, label: baseDetailLabels.life })}>
-        {life ? <LifeCard model={life} onOpen={togglePanel} /> : <DataStatus failed={state.lifeMoney.status === "error"} />}
+        detailId={bottomId} onOpen={() => activePanel === "life" ? close() : togglePanel({ target: { kind: "life" }, label: baseDetailLabels.life })}>
+        {life ? <LifeCard model={life} month={month} activeId={activeTarget?.kind === "moment" ? activeTarget.momentId : undefined} onOpen={togglePanel} /> : <DataStatus failed={state.lifeMoney.status === "error"} />}
       </Panel>
+      {renderDetail("bottom")}
     </div>
-
-    <section className={styles.detail} id={detailId} hidden={!current} aria-labelledby={`${detailId}-title`}>
-      {current && <>
-        <div className={styles.detailHeader}>
-          {stack.length > 1 && <button type="button" aria-label="Revenir au détail précédent" onClick={() => {
-            setStack(views => views.slice(0, -1));
-            focusDetail();
-          }}><ArrowLeft aria-hidden size={17} /></button>}
-          <h2 id={`${detailId}-title`} ref={detailHeader} tabIndex={-1}>{current.label}</h2>
-          <button type="button" className={styles.close} aria-label="Replier le détail" onClick={close}><X aria-hidden size={18} /></button>
-        </div>
-        <div className={styles.detailBody}>
-          <BalanceDetail key={detailKey(current.target)} selection={current} month={month}
-            summary={summary} categories={categories} spending={spending} life={life}
-            subcategoryLabels={subcategoryLabels} onOpen={openNested} />
-        </div>
-      </>}
-    </section>
   </div>;
 }
 
-function Panel({ kind, title, icon, value, selected, onOpen, detailId, children }: {
+function Panel({ kind, title, icon, selected, onOpen, detailId, children }: {
   readonly kind: string;
   readonly title: string;
   readonly icon: ReactNode;
-  readonly value?: ReactNode;
   readonly selected: boolean;
   readonly onOpen: () => void;
   readonly detailId: string;
@@ -184,7 +206,6 @@ function Panel({ kind, title, icon, value, selected, onOpen, detailId, children 
   return <section className={styles.panel} data-panel={kind} data-selected={selected}>
     <h2><button type="button" className={styles.panelHeading} onClick={onOpen} aria-controls={detailId} aria-expanded={selected}>
       <span className={styles.panelIcon}>{icon}</span><span>{title}</span>
-      {value && <strong className={styles.panelHeadingValue}>{value}</strong>}
       <ChevronDown className={styles.chevron} size={16} aria-hidden />
     </button></h2>
     <div className={styles.panelBody}>{children}</div>
@@ -210,10 +231,7 @@ function SummaryCard({ model, onOpen }: { readonly model: MonthBalanceSummaryRea
         {direction === 0 ? "Au niveau habituel" : `${formatMoney((Number(delta) < 0 ? delta.slice(1) : delta) as typeof delta)} ${direction === -1 ? "sous" : "au-dessus de"} l’habitude`}
       </span>}
     </div>
-    <AmountBars rows={[
-      ...(actual ? [{ id: "current", label: "Ce mois", amount: actual }] : []),
-      ...(metricValue(typical) !== undefined ? [{ id: "usual", label: "Mois habituel", amount: typical!, tone: "secondary" as const }] : []),
-    ]} />
+    <SpendingComparison actual={metricValue(actual)} typical={metricValue(typical)} range={zone} />
     <div className={styles.panelFoot}>
       {zone && <span className={styles.zone}>Fourchette habituelle <strong>{formatMoney(zone.lowerBound)} – {formatMoney(zone.upperBound)}</strong></span>}
       <button type="button" className={styles.textButton} onClick={() => onOpen({ target: { kind: "bridge" }, label: "Écart avec mon compte" })}>
@@ -223,7 +241,13 @@ function SummaryCard({ model, onOpen }: { readonly model: MonthBalanceSummaryRea
   </>;
 }
 
-function CategoryCard({ model, onOpen, detailId }: { readonly model: MonthCategoriesReadModel; readonly onOpen: OpenDetail; readonly detailId: string }) {
+function CategoryCard({ model, total, activeId, onOpen, detailId }: {
+  readonly model: MonthCategoriesReadModel;
+  readonly total?: Money;
+  readonly activeId?: string;
+  readonly onOpen: OpenDetail;
+  readonly detailId: string;
+}) {
   const collection = visibleValue(model.categories);
   const items = collection?.status === "KNOWN" || collection?.status === "PARTIAL" ? collection.items : [];
   const rows = items.slice(0, 4).map(item => ({
@@ -233,14 +257,21 @@ function CategoryCard({ model, onOpen, detailId }: { readonly model: MonthCatego
   const other = visibleValue(model.otherAmount);
   return <>
     {!rows.length && <p className={styles.note}>Aucun poste détaillé pour ce mois.</p>}
-    <ul className={styles.categoryPlot}>
-      {rows.map(row => <li key={row.id}>
-        <button type="button" onClick={() => onOpen({ target: { kind: "category", categoryId: row.id }, label: row.label })}
-          aria-controls={detailId} aria-expanded={false}>
-          <AmountBar row={row} maximum={maximum} /><ChevronDown size={14} aria-hidden />
-        </button>
-      </li>)}
-    </ul>
+    {rows.length > 0 && <div className={styles.categoryChart}>
+      {Number(total) > 0 && <CategoryRing shares={rows.map(row => {
+        const amount = metricValue(row.amount);
+        return amount === undefined ? undefined : Number(amount) / Number(total);
+      })} />}
+      <ul className={styles.categoryPlot}>
+        {rows.map((row, index) => <li key={row.id}>
+          <button type="button" onClick={() => onOpen({ target: { kind: "category", categoryId: row.id }, label: row.label })}
+            aria-controls={detailId} aria-expanded={activeId === row.id}>
+            <i style={{ backgroundColor: categoryColors[index] }} aria-hidden />
+            <AmountBar row={row} maximum={maximum} /><ChevronDown size={14} aria-hidden />
+          </button>
+        </li>)}
+      </ul>
+    </div>}
     <div className={styles.panelFoot}>
       {other && Number(metricValue(other) ?? 0) !== 0 && <span className={styles.zone}>Autres catégories <strong><MoneyMetric metric={other} /></strong></span>}
       {items.length > rows.length && <button type="button" className={styles.textButton} onClick={() => onOpen({ target: { kind: "categories" }, label: baseDetailLabels.categories })}>
@@ -265,7 +296,7 @@ function MarginCard({ model }: { readonly model: MonthSpendingNatureReadModel })
       </div>
       <div className={styles.legend}>
         {fixedVariable.map(bucket => <span key={bucket.key} data-variable={bucket.key === "VARIABLE"}>
-          <i aria-hidden /> {bucket.key === "FIXED" ? "Fixes" : "Variables"} <strong>{formatMoney(bucket.amount)}</strong>
+          <i aria-hidden /> {bucket.key === "FIXED" ? "Fixes" : "Variables"} <strong>{formatMoney(bucket.amount)}</strong>{bucket.shareOfActual !== undefined && <small>{Math.round(bucket.shareOfActual * 100)} %</small>}
         </span>)}
       </div>
     </div> : <p className={styles.note}>Répartition fixe et variable indisponible.</p>}
@@ -284,14 +315,23 @@ function MarginAmount({ metric }: { readonly metric?: MetricValue<Money> }) {
   </span>;
 }
 
-function LifeCard({ model, onOpen }: { readonly model: MonthLifeMoneyReadModel; readonly onOpen: OpenDetail }) {
+function LifeCard({ model, month, activeId, onOpen }: {
+  readonly model: MonthLifeMoneyReadModel;
+  readonly month: YearMonth;
+  readonly activeId?: string;
+  readonly onOpen: OpenDetail;
+}) {
   const activities = visibleValue(model.activities);
   const moments = visibleValue(model.moments);
   const places = visibleValue(model.places);
   const activity = activities?.status === "KNOWN" || activities?.status === "PARTIAL" ? activities.items[0] : undefined;
-  const moment = moments?.status === "KNOWN" || moments?.status === "PARTIAL" ? moments.items[0] : undefined;
+  const momentList = moments?.status === "KNOWN" || moments?.status === "PARTIAL" ? moments.items : [];
+  const moment = momentList[0];
   const place = places?.status === "KNOWN" || places?.status === "PARTIAL" ? places.items[0] : undefined;
-  return <ul className={styles.lifeRows}>
+  return <>
+    <MonthTimeline month={month} moments={momentList} activeId={activeId}
+      onOpen={item => onOpen({ target: { kind: "moment", momentId: item.momentId }, label: item.title })} />
+    <ul className={styles.lifeRows}>
     {moment && <li><button type="button" onClick={() => onOpen({ target: { kind: "moment", momentId: moment.momentId }, label: moment.title })}>
       <Sparkles size={16} aria-hidden /><span><small>Moment marquant</small><strong title={moment.title}>{moment.title}</strong></span>
       <span>{metricValue(moment.causalCost) === undefined ? formatFrenchDateRange(moment.startDate, moment.endDate, false) : <MoneyMetric metric={moment.causalCost} />}</span>
@@ -305,5 +345,6 @@ function LifeCard({ model, onOpen }: { readonly model: MonthLifeMoneyReadModel; 
       <span>{formatCount(place.presenceDays, "jour")}</span>
     </button></li>}
     {!moment && !activity && !place && <li className={styles.note}>Aucune activité, aucun moment ni lieu renseigné.</li>}
-  </ul>;
+    </ul>
+  </>;
 }
