@@ -267,7 +267,7 @@ check(() => assert.match(pageSource, /12 mois analysés/u));
 check(() => assert.match(pageSource, /> Méthode</u));
 check(() => assert.doesNotMatch(pageSource, /ANALYSE GLOBALE · NOUVELLE ARCHITECTURE|synthèse non importée|Non importée/u));
 check(() => assert.doesNotMatch(pageSource, /role="tablist"|role="tabpanel"|<OverlayFrame/u));
-check(() => assert.match(pageSource, /useContentDensity\(\)[\s\S]*data-global-section[\s\S]*name="heading"/u));
+check(() => assert.match(pageSource, /useContentDensity\([\s\S]*data-global-section[\s\S]*name="heading"/u));
 check(() => assert.match(pageSource, /<AtomicSection slot="spending"[\s\S]*<AtomicSection slot="life"[\s\S]*<AtomicSection slot="categories"[\s\S]*<AtomicSection slot="profiles"/u));
 check(() => assert.match(pageSource, /<AtomicDetailPages[\s\S]*<AtomicQueryDetail/u));
 const detailNavigationSource = fs.readFileSync(path.join(root, "src/features/global-v2/atomic-detail-pages.tsx"), "utf8");

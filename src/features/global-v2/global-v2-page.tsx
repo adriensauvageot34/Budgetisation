@@ -827,7 +827,7 @@ function Atom(props: Omit<ComponentProps<typeof DensityAtom>, "className" | "mot
 }
 
 function AtomicSection({ slot, children, detail }: { readonly slot: AtomicSlot; readonly children: ReactNode; readonly detail?: ReactNode }) {
-  const { region, flow } = useContentDensity();
+  const { region, flow } = useContentDensity(`.${atomic.detailViewport}`);
   const { id, title, icon } = atomicSections[slot];
   return <section className={atomic.section} data-global-section={slot} data-focused={detail !== undefined} id={id} aria-labelledby={`${id}-title`} ref={region}>
     <div ref={flow} className={atomic.flow}>
@@ -932,7 +932,7 @@ function AtomicTimeline({ model, open, selectedEvent, onPeriodChange }: {
       <div className={atomic.timelineSummary}>
         <div className={atomic.historyTitle}><h3>Événements par mois</h3><span>{current ? capitalize(frenchMonth(current.key)) : "Période entière"} · {events.length} {events.length === 1 ? "événement" : "événements"}</span></div>
         <div className={atomic.ruler}>{months.map(({ key, events }) =>
-          <button key={key} type="button" aria-pressed={current?.key === key} aria-label={`${capitalize(frenchMonth(key))} · ${events.length} événements`}
+          <button key={key} type="button" aria-pressed={current?.key === key} aria-label={`${capitalize(frenchMonth(key))} · ${events.length} ${events.length === 1 ? "événement" : "événements"}`}
             onClick={() => {
               setSelected((month) => month === key ? undefined : key);
               onPeriodChange();
@@ -1154,7 +1154,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
                   {selectedMonth && <Link className={atomic.monthLink} href={`/mois-a-venir/composer?month=${encodeURIComponent(selectedMonth)}`}>Cartes de {frenchMonth(selectedMonth)} <ChevronRight size={13} aria-hidden /></Link>}
                 </section>}
           </Atom>
-          {evolution && <Atom name="trend" priority={75} minimum={1}><SpendingSignals model={evolution} /></Atom>}
+          {evolution && <Atom name="trend" priority={75} minimum={activeRecurrence ? 0 : 1}><SpendingSignals model={evolution} /></Atom>}
           <Atom name="recurring-payments" priority={66} minimum={1}>
             {recurring ? <RecurringPayments model={recurring} active={activeRecurrence} onSelect={(row) => {
               if (activeRecurrence === row.entityRef) { close(); return; }
@@ -1193,7 +1193,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
                   </li>;
                 })}</ul>}
           </Atom>
-          {(coverage || leadingChange) && <Atom name="category-context" priority={59} minimum={1}><div className={atomic.dataCards}>
+          {(coverage || leadingChange) && <Atom name="category-context" priority={59} minimum={focus?.slot === "profiles" ? 0 : 1}><div className={atomic.dataCards}>
             {coverage && <button type="button" aria-expanded={focus?.kind === "query" && focus.slot === "categories" && focus.target.initialSection === "PATTERNS"}
               onClick={() => selectSection("categories", "CATEGORIES_NEEDS", "PATTERNS", "Besoins renseignés")}>
               <span>Besoins renseignés</span><strong>{formatM2Ratio(m2TypedNumber(coverage))}</strong>

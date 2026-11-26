@@ -39,14 +39,14 @@
 .column[data-side="left"]:has(> :nth-child(2)) { grid-template-rows: minmax(min(246px,60%), 1.22fr) minmax(0,.78fr); }
 .column[data-side="right"]:has(> :nth-child(2)) { grid-template-rows: minmax(min(170px,52%), 1.22fr) minmax(0,.78fr); }
 .grid[data-focus] { --primary: 1.25fr; --secondary: .75fr; --large: 1.36fr; --small: .64fr; }
-.grid[data-focus-size="compact"] { --primary: 1.10fr; --secondary: .90fr; --large: 1.22fr; --small: .78fr; }
+.grid[data-focus-size="compact"] { --primary: 1.10fr; --secondary: .90fr; --large: 1.36fr; --small: .64fr; }
 .grid:is([data-focus="spending"], [data-focus="life"]) { grid-template-columns: minmax(0,var(--primary)) minmax(0,var(--secondary)); }
 .grid:is([data-focus="categories"], [data-focus="profiles"]) { grid-template-columns: minmax(0,var(--secondary)) minmax(0,var(--primary)); }
 .grid[data-focus="spending"] .column[data-side="left"]:has(> :nth-child(2)),
 .grid[data-focus="categories"] .column[data-side="right"]:has(> :nth-child(2)) { grid-template-rows: minmax(0,var(--large)) minmax(145px,var(--small)); }
 .grid[data-focus="life"] .column[data-side="left"]:has(> :nth-child(2)) { grid-template-rows: minmax(min(235px,58%),var(--small)) minmax(0,var(--large)); }
 .grid[data-focus="profiles"] .column[data-side="right"]:has(> :nth-child(2)) { grid-template-rows: minmax(min(158px,44%),var(--small)) minmax(0,var(--large)); }
-.section { min-height: 0; min-width: 0; overflow: clip; padding: clamp(5px, 1.3dvh, 13px) 0; border-top: 1px solid var(--atomic-line); }
+.section { min-height: 0; min-width: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: clamp(5px, 1dvh, 13px) 0; border-top: 1px solid var(--atomic-line); }
 .section:is([data-global-section="categories"], [data-global-section="profiles"]) { border-inline-start: 1px solid var(--atomic-line); padding-inline-start: clamp(9px, 1.7vw, 28px); }
 .flow { display: grid; gap: clamp(3px, .73dvh, 8px); }
 .atom, .motion { min-width: 0; }
@@ -135,7 +135,7 @@
 .detailHeader button {
   display: inline-grid; place-items: center; min-height: 21px; padding: 1px 4px; border: 1px solid var(--atomic-line); border-radius: 6px; color: var(--atomic-primary); background: #f8efff; cursor: pointer;
 }
-.detailViewport { max-height: var(--detail); overflow: auto; overscroll-behavior: contain; }
+.detailViewport { max-height: min(var(--detail), var(--balanced-detail-height, var(--detail))); overflow: auto; overscroll-behavior: contain; }
 .detailColumns { font-size: .78rem; line-height: 1.38; }
 .detailColumns :is(p, dl, ul) { margin-block: 0 5px; }
 .detailColumns :is(h3, h4) { margin-block: 0 4px; break-after: avoid; }
