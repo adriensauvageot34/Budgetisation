@@ -1,7 +1,7 @@
 "use client";
 
-import { Activity, useId, useRef, useState, type KeyboardEvent } from "react";
-import { ArrowRight, ChartNoAxesColumn, ChevronLeft, ChevronRight, LayoutGrid, SlidersHorizontal, Sparkles } from "lucide-react";
+import { useId, useState } from "react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import type {
   ActivityLifeMoneySummary,
   CategoryMonthSummary,
@@ -13,7 +13,6 @@ import type {
   PlaceLifeMoneySummary,
 } from "@/query-api";
 import type { UiTransportState } from "@/ui";
-import material from "@/app/mois-a-venir/month-material.module.css";
 import { publicationMetasAreCoherent } from "./publication-coherence";
 import {
   formatCount,
@@ -26,12 +25,6 @@ import { HistorySemanticIcon } from "./semantic-icon";
 import type { HistoryOverlayTarget } from "./types";
 import styles from "./history-v2.module.css";
 
-const balanceSections = [
-  { id: "overview", tab: "Vue d’ensemble", title: "Le mois en un coup d’œil", icon: LayoutGrid },
-  { id: "categories", tab: "Catégories", title: "Ce qui explique le mois", icon: ChartNoAxesColumn },
-  { id: "margins", tab: "Marges", title: "Nature des dépenses et marges", icon: SlidersHorizontal },
-  { id: "life", tab: "Vie et argent", title: "Vie et argent", icon: Sparkles },
-] as const;
 export function BalanceMonthView({
   summary,
   categories,
@@ -39,7 +32,6 @@ export function BalanceMonthView({
   lifeMoney,
   onOverlay,
   onMinimal,
-  glass = false,
 }: {
   readonly summary: UiTransportState<MonthBalanceSummaryReadModel>;
   readonly categories: UiTransportState<MonthCategoriesReadModel>;
@@ -47,27 +39,8 @@ export function BalanceMonthView({
   readonly lifeMoney: UiTransportState<MonthLifeMoneyReadModel>;
   readonly onOverlay: (target: HistoryOverlayTarget) => void;
   readonly onMinimal: () => void;
-  readonly glass?: boolean;
 }) {
   const id = useId();
-  const [activeTab, setActiveTab] = useState(0);
-  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
-
-  function handleTabKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    const count = balanceSections.length;
-    let next: number;
-    switch (event.key) {
-      case "ArrowLeft": next = (index - 1 + count) % count; break;
-      case "ArrowRight": next = (index + 1) % count; break;
-      case "Home": next = 0; break;
-      case "End": next = count - 1; break;
-      default: return;
-    }
-    event.preventDefault();
-    setActiveTab(next);
-    buttons.current[next]?.focus();
-  }
-
   const moduleData = [summary, categories, spendingNature, lifeMoney].flatMap((state) => {
     const data = state.status === "success" ? state.response.data : state.status === "error" ? state.previousData?.data : undefined;
     return data === undefined ? [] : [data];
@@ -81,41 +54,19 @@ export function BalanceMonthView({
   const panels = [
     <StateBoundary state={summary}>{(model) => <BalanceSummary model={model} onBridge={() => onOverlay({ kind: "bridge" })} onMinimal={onMinimal} />}</StateBoundary>,
     <StateBoundary state={categories}>{(model) => <CategoryAnalysis model={model} onCategory={(categoryId) => onOverlay({ kind: "category", categoryId })} />}</StateBoundary>,
-    <StateBoundary state={spendingNature}>{(model) => <SpendingNature workspace={glass} model={model} onSegment={(params) => onOverlay({ kind: "segment", params })} />}</StateBoundary>,
-    <StateBoundary state={lifeMoney}>{(model) => <LifeMoney workspace={glass} model={model} onOverlay={onOverlay} />}</StateBoundary>,
+    <StateBoundary state={spendingNature}>{(model) => <SpendingNature model={model} onSegment={(params) => onOverlay({ kind: "segment", params })} />}</StateBoundary>,
+    <StateBoundary state={lifeMoney}>{(model) => <LifeMoney model={model} onOverlay={onOverlay} />}</StateBoundary>,
   ];
-  return (
-    <div className={glass ? styles.glassBalance : styles.balanceSurface}>
-      {glass && <div className={styles.balanceTabs} role="tablist" aria-label="Sections du bilan">
-        {balanceSections.map(({ id: sectionId, tab, icon: Icon }, index) => (
-          <button key={sectionId} type="button" role="tab" id={`${id}-tab-${sectionId}`}
-            ref={(element) => { buttons.current[index] = element; }}
-            aria-controls={`${id}-panel-${sectionId}`} aria-selected={index === activeTab}
-            tabIndex={index === activeTab ? 0 : -1}
-            onKeyDown={(event) => handleTabKey(event, index)} onClick={() => setActiveTab(index)}>
-            <Icon aria-hidden size={16} />{tab}
-          </button>
-        ))}
-      </div>}
-      {balanceSections.map(({ id: sectionId, title }, index) => {
-        const headingId = `${id}-heading-${sectionId}`;
-        if (!glass) return <section key={sectionId} className={styles.balanceModule} aria-labelledby={headingId}>
-          <header><h2 id={headingId}>{title}</h2></header>
-          {panels[index]}
-        </section>;
-
-        return <Activity key={sectionId} mode={index === activeTab ? "visible" : "hidden"}>
-          <section className={`${styles.glassModule} ${material.glassPremium}`} role="tabpanel"
-            id={`${id}-panel-${sectionId}`} aria-labelledby={`${id}-tab-${sectionId}`}>
-            <header><h2 id={headingId}>{title}</h2></header>
-            <div className={styles.balanceContent} role="region" aria-labelledby={headingId} tabIndex={0}>
-              {panels[index]}
-            </div>
-          </section>
-        </Activity>;
-      })}
-    </div>
-  );
+  const headings = ["Le mois en un coup d’œil", "Ce qui explique le mois", "Nature des dépenses et marges", "Vie et argent"];
+  return <div className={styles.balanceSurface}>
+    {headings.map((title, index) => {
+      const headingId = `${id}-heading-${index}`;
+      return <section key={title} className={styles.balanceModule} aria-labelledby={headingId}>
+        <header><h2 id={headingId}>{title}</h2></header>
+        {panels[index]}
+      </section>;
+    })}
+  </div>;
 }
 
 function BalanceSummary({ model, onBridge, onMinimal }: { readonly model: MonthBalanceSummaryReadModel; readonly onBridge: () => void; readonly onMinimal: () => void }) {
@@ -173,7 +124,7 @@ function spendingSegmentKey(segment: import("@/query-api").HistorySpendingSegmen
     : `matrix:${segment.necessity}:${segment.behavior}`;
 }
 
-function SpendingNature({ model, onSegment, workspace }: { readonly model: MonthSpendingNatureReadModel; readonly workspace: boolean; readonly onSegment: (params: import("@/query-api").HistorySpendingSegmentDetailParams) => void }) {
+function SpendingNature({ model, onSegment }: { readonly model: MonthSpendingNatureReadModel; readonly onSegment: (params: import("@/query-api").HistorySpendingSegmentDetailParams) => void }) {
   const [matrixOpen, setMatrixOpen] = useState(false);
   const axes = [["Nécessité", "necessity", model.necessity], ["Comportement", "behavior", model.behavior], ["Périmètre de vie", "lifeScope", model.lifeScope]] as const;
   const projections = "segments" in model
@@ -189,10 +140,10 @@ function SpendingNature({ model, onSegment, workspace }: { readonly model: Month
         const projection = projections.get(spendingSegmentKey(segment));
         return <div key={bucket.key} className={styles.spendingBucket}>
           <button type="button" onClick={() => onSegment(segment)}>
-            <span className={workspace ? styles.segmentLabel : undefined}>{spendingPresentationLabel(bucket.key)}{workspace && <ArrowRight size={13} aria-hidden />}</span>
+            <span>{spendingPresentationLabel(bucket.key)}</span>
             <span><strong>{formatMoney(bucket.amount)}</strong><small>{bucket.shareOfActual === undefined ? "Part indisponible" : `${Math.round(bucket.shareOfActual * 100)} % du mois`}</small></span>
           </button>
-          {!workspace && <SpendingContributors projection={projection} />}
+          <SpendingContributors projection={projection} />
         </div>;
       })}</div>} />
       {Number(data.unclassifiedAmount) === 0 ? null : <p>{formatMoney(data.unclassifiedAmount)} non classés</p>}
@@ -201,14 +152,14 @@ function SpendingNature({ model, onSegment, workspace }: { readonly model: Month
 
   return (
     <div className={styles.spendingNature}>
-      {!workspace && breakdown}
+      {breakdown}
       <DisplayState node={model.matrix}>{(matrix) => <article className={styles.marginMatrix}>
         <div className={styles.marginValues}>
           <MarginMetric label="Marge ajustable maintenant" metric={matrix.immediateMargin} />
           <MarginMetric label="Marge ajustable à moyen terme" metric={matrix.mediumMargin} />
         </div>
         <button type="button" className={styles.matrixToggle} aria-expanded={matrixOpen} onClick={() => setMatrixOpen((open) => !open)}>
-          {matrixOpen ? (workspace ? "Revenir à la répartition" : "Masquer le détail des combinaisons") : "Voir le détail des combinaisons"}
+          {matrixOpen ? "Masquer le détail des combinaisons" : "Voir le détail des combinaisons"}
         </button>
         {matrixOpen && <div className={styles.matrixGrid} aria-label="Détail nécessité et comportement">
           {matrix.cells.map((cell) => {
@@ -217,15 +168,14 @@ function SpendingNature({ model, onSegment, workspace }: { readonly model: Month
             const projection = projections.get(spendingSegmentKey(segment));
             return <div key={cell.key} className={styles.spendingBucket}>
               <button type="button" onClick={() => onSegment(segment)}>
-                <span className={workspace ? styles.segmentLabel : undefined}>{spendingPresentationLabel(cell.key)}{workspace && <ArrowRight size={13} aria-hidden />}</span>
+                <span>{spendingPresentationLabel(cell.key)}</span>
                 <span><strong>{formatMoney(cell.amount)}</strong><small>{cell.shareOfActual === undefined ? "Part indisponible" : `${Math.round(cell.shareOfActual * 100)} % du mois`}</small></span>
               </button>
-              {!workspace && <SpendingContributors projection={projection} />}
+              <SpendingContributors projection={projection} />
             </div>;
           })}
         </div>}
       </article>}</DisplayState>
-      {workspace && !matrixOpen && breakdown}
     </div>
   );
 }
@@ -239,12 +189,12 @@ function MarginMetric({ label, metric }: { readonly label: string; readonly metr
   return <div className={styles.marginMetric}><span>{label}</span><MetricState metric={metric} partialDisplay="value-only" format={(value) => <strong>Au moins {formatMoney(value)}</strong>} /><PartialDataNote metric={metric} /></div>;
 }
 
-function LifeMoney({ model, onOverlay, workspace }: { readonly model: MonthLifeMoneyReadModel; readonly workspace: boolean; readonly onOverlay: (target: HistoryOverlayTarget) => void }) {
+function LifeMoney({ model, onOverlay }: { readonly model: MonthLifeMoneyReadModel; readonly onOverlay: (target: HistoryOverlayTarget) => void }) {
   return (
     <div className={styles.lifeMoney}>
-      <DisplayState node={model.activities}>{(collection) => <CollectionState collection={collection}>{(items) => <section><h3>Activités</h3><div className={workspace ? styles.lifeRail : styles.activityGrid}>{items.map((activity) => <ActivityCard key={activity.activityTypeKey} item={activity} onClick={() => onOverlay({ kind: "activity", activityTypeKey: activity.activityTypeKey })} />)}</div></section>}</CollectionState>}</DisplayState>
-      <DisplayState node={model.moments}>{(collection) => <CollectionState collection={collection}>{(items) => <MomentSection workspace={workspace} items={items} onOpen={(momentId) => onOverlay({ kind: "moment", momentId })} />}</CollectionState>}</DisplayState>
-      <DisplayState node={model.places}>{(collection) => <CollectionState collection={collection}>{(items) => <PlaceSection workspace={workspace} items={items} onOpen={(placeId) => onOverlay({ kind: "place", placeId })} />}</CollectionState>}</DisplayState>
+      <DisplayState node={model.activities}>{(collection) => <CollectionState collection={collection}>{(items) => <section><h3>Activités</h3><div className={styles.activityGrid}>{items.map((activity) => <ActivityCard key={activity.activityTypeKey} item={activity} onClick={() => onOverlay({ kind: "activity", activityTypeKey: activity.activityTypeKey })} />)}</div></section>}</CollectionState>}</DisplayState>
+      <DisplayState node={model.moments}>{(collection) => <CollectionState collection={collection}>{(items) => <MomentSection items={items} onOpen={(momentId) => onOverlay({ kind: "moment", momentId })} />}</CollectionState>}</DisplayState>
+      <DisplayState node={model.places}>{(collection) => <CollectionState collection={collection}>{(items) => <PlaceSection items={items} onOpen={(placeId) => onOverlay({ kind: "place", placeId })} />}</CollectionState>}</DisplayState>
     </div>
   );
 }
@@ -253,16 +203,16 @@ function ActivityCard({ item, onClick }: { readonly item: ActivityLifeMoneySumma
   return <button type="button" className={styles.activityCard} onClick={onClick}><span className="eyebrow">{item.occurrences} fois ce mois</span><strong>{item.label}</strong>{item.costKind === "NONE" ? null : <><span>{item.costKind === "CAUSAL" ? "Dépenses liées" : "Dépenses associées"}</span><MoneyMetric metric={item.cost} /></>}</button>;
 }
 
-function MomentSection({ items, onOpen, workspace }: { readonly workspace: boolean; readonly items: readonly MomentLifeMoneySummary[]; readonly onOpen: (id: string) => void }) {
+function MomentSection({ items, onOpen }: { readonly items: readonly MomentLifeMoneySummary[]; readonly onOpen: (id: string) => void }) {
   const [offset, setOffset] = useState(0);
   if (items.length === 0) return null;
   const visible = items.length < 4 ? items : items.slice(offset, offset + 3).concat(offset + 3 > items.length ? items.slice(0, offset + 3 - items.length) : []);
-  return <section><div className={styles.railHeader}><h3>Moments</h3>{items.length >= 4 ? <div><button className={styles.iconButton} aria-label="Moments précédents" onClick={() => setOffset((value) => (value - 1 + items.length) % items.length)}><ChevronLeft aria-hidden size={18} /></button><button className={styles.iconButton} aria-label="Moments suivants" onClick={() => setOffset((value) => (value + 1) % items.length)}><ChevronRight aria-hidden size={18} /></button></div> : null}</div><div className={workspace ? styles.lifeRail : items.length === 1 ? styles.singleMoment : styles.momentRow}>{visible.map((moment) => <button type="button" className={styles.momentCard} key={moment.momentId} onClick={() => onOpen(moment.momentId)}><div className={styles.momentMedia} {...(moment.imageRef === undefined ? { "data-fallback": true } : { role: "img", "aria-label": `Média canonique de ${moment.title}`, style: { backgroundImage: `url(${JSON.stringify(moment.imageRef)})` } })}>{moment.imageRef === undefined ? <HistorySemanticIcon iconKey={moment.fallbackIconKey} size={32} /> : null}</div><strong>{moment.title}</strong><span>{formatFrenchDateRange(moment.startDate, moment.endDate, false)}</span><MoneyMetric metric={moment.causalCost} /></button>)}</div></section>;
+  return <section><div className={styles.railHeader}><h3>Moments</h3>{items.length >= 4 ? <div><button className={styles.iconButton} aria-label="Moments précédents" onClick={() => setOffset((value) => (value - 1 + items.length) % items.length)}><ChevronLeft aria-hidden size={18} /></button><button className={styles.iconButton} aria-label="Moments suivants" onClick={() => setOffset((value) => (value + 1) % items.length)}><ChevronRight aria-hidden size={18} /></button></div> : null}</div><div className={items.length === 1 ? styles.singleMoment : styles.momentRow}>{visible.map((moment) => <button type="button" className={styles.momentCard} key={moment.momentId} onClick={() => onOpen(moment.momentId)}><div className={styles.momentMedia} {...(moment.imageRef === undefined ? { "data-fallback": true } : { role: "img", "aria-label": `Média canonique de ${moment.title}`, style: { backgroundImage: `url(${JSON.stringify(moment.imageRef)})` } })}>{moment.imageRef === undefined ? <HistorySemanticIcon iconKey={moment.fallbackIconKey} size={32} /> : null}</div><strong>{moment.title}</strong><span>{formatFrenchDateRange(moment.startDate, moment.endDate, false)}</span><MoneyMetric metric={moment.causalCost} /></button>)}</div></section>;
 }
 
-function PlaceSection({ items, onOpen, workspace }: { readonly workspace: boolean; readonly items: readonly PlaceLifeMoneySummary[]; readonly onOpen: (id: string) => void }) {
+function PlaceSection({ items, onOpen }: { readonly items: readonly PlaceLifeMoneySummary[]; readonly onOpen: (id: string) => void }) {
   const [expanded, setExpanded] = useState(false);
   if (items.length === 0) return null;
-  const shown = workspace || expanded ? items : items.slice(0, 6);
-  return <section><h3>Lieux</h3><div className={workspace ? styles.lifeRail : items.length <= 3 ? styles.placeRow : styles.placeRail}>{shown.map((place) => <button type="button" className={styles.placeCard} key={place.placeId} onClick={() => onOpen(place.placeId)}><strong>{place.label}</strong><span>{formatCount(place.presenceDays, "jour")}</span><MoneyMetric metric={place.localizedAmount} /></button>)}</div>{!workspace && items.length > 6 && !expanded ? <button type="button" className="button-secondary" onClick={() => setExpanded(true)}>Voir tous les lieux</button> : null}</section>;
+  const shown = expanded ? items : items.slice(0, 6);
+  return <section><h3>Lieux</h3><div className={items.length <= 3 ? styles.placeRow : styles.placeRail}>{shown.map((place) => <button type="button" className={styles.placeCard} key={place.placeId} onClick={() => onOpen(place.placeId)}><strong>{place.label}</strong><span>{formatCount(place.presenceDays, "jour")}</span><MoneyMetric metric={place.localizedAmount} /></button>)}</div>{items.length > 6 && !expanded ? <button type="button" className="button-secondary" onClick={() => setExpanded(true)}>Voir tous les lieux</button> : null}</section>;
 }

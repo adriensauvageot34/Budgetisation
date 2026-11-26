@@ -4,7 +4,10 @@ import { readHistoryBalance } from "@/app/history-balance-data";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { parseYearMonth } from "@/core/time";
 import { ARCHIVED_REALIZED_MONTHS, JULY_COMPOSER_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
-import { HistoryV2Page, parseHistoryCalendarFilters, parseHistoryOverlaySearch } from "@/features/history-v2";
+import { parseHistoryOverlaySearch } from "@/features/history-v2";
+import { ComposerBalanceDashboard } from "@/features/history-v2/balance-dashboard";
+import { readAuthenticatedSubcategoryLabels } from "@/server/query/runtime";
+import { withProductAuthentication } from "@/app/product-query";
 import { composerCalendarHref, forecastWindowMonths } from "../../month-entry";
 import material from "../../month-material.module.css";
 import { monthLabel } from "../display";
@@ -26,11 +29,13 @@ export default async function ComposerBalancePage({
       : JULY_COMPOSER_HREF);
   }
   const month = parseYearMonth(archivedMonth);
-  const initialState = await readHistoryBalance(month);
+  const [initialState, subcategoryLabels] = await Promise.all([
+    readHistoryBalance(month),
+    withProductAuthentication(readAuthenticatedSubcategoryLabels),
+  ]);
   const button = styles.reconstructionLink;
 
   return <div className={`${material.page} h-full`}>
-    <h1 className="sr-only">Bilan du mois · {monthLabel(month)}</h1>
     <AppToolbarContent className={styles.compactToolbar}>
       <nav aria-label="Vues de Composer" className={styles.reconstructionModes}>
         <Link className={button} href={realizedComposerHref(month)}>Cartes</Link>
@@ -38,7 +43,7 @@ export default async function ComposerBalancePage({
         <span className={button} aria-current="page">Bilan du mois</span>
       </nav>
     </AppToolbarContent>
-    <HistoryV2Page key={month} month={month} view="balance" surface="composer" initialState={initialState}
-      filters={parseHistoryCalendarFilters({})} initialOverlay={parseHistoryOverlaySearch(search)} />
+    <ComposerBalanceDashboard key={month} month={month} monthName={monthLabel(month)} initialState={initialState}
+      subcategoryLabels={subcategoryLabels} initialDetail={parseHistoryOverlaySearch(search)} />
   </div>;
 }
