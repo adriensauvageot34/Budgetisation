@@ -10,7 +10,10 @@ export type SavingsTravelTopic = keyof typeof savingsTravelTopics;
 export const savingsStatuses = { planned: "Prévu", saved: "Sur le livret", purchased: "Acheté" } as const;
 export type SavingsStatus = keyof typeof savingsStatuses;
 export type SavingsGoalAllocation = { id: string; month: string; cents: number; status: SavingsStatus; accounted: boolean };
-export type SavingsPurchase = { operationId: string; goalId: string; date: string; label: string; cents: number };
+export type SavingsPurchaseItem = {
+  id: string; goalId: string | null; article: string; recipient: string | null; grossCents: number; refundedCents: number;
+};
+export type SavingsPurchase = SavingsPurchaseItem & { operationId: string; goalId: string; date: string; label: string; cents: number };
 export type SavingsGoal = {
   goalId: string; label: string; project: SavingsProject; targetCents: number | null; deadline: string | null;
   templateKey: string | null; travelTopic: SavingsTravelTopic | null; revision: number; allocations: SavingsGoalAllocation[];
@@ -30,6 +33,13 @@ export function parseSavingsCents(text: string) {
   const [whole, decimal = ""] = text.replace(",", ".").split(".");
   const value = Number(whole) * 100 + Number(decimal.padEnd(2, "0"));
   return value > 0 && value <= maxSavingsCents ? value : null;
+}
+
+export function savingsPurchaseTotals(items: readonly Pick<SavingsPurchaseItem, "goalId" | "grossCents" | "refundedCents">[], paymentCents: number) {
+  const described = items.reduce((sum, item) => sum + item.grossCents, 0);
+  const linked = items.reduce((sum, item) => sum + (item.goalId ? item.grossCents : 0), 0);
+  const refunded = items.reduce((sum, item) => sum + item.refundedCents, 0);
+  return { described, linked, outside: described - linked, remaining: paymentCents - described, refunded };
 }
 
 export function savingsAllocationsAfterPurchases<T extends SavingsGoalAllocation>(

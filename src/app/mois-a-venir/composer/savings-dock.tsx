@@ -1,17 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { PiggyBank, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { maxSavingsCents, parseSavingsCents, savingsEuros, savingsMoney, savingsProjects, savingsTravelTopics } from "@/domain/phase2/savings-goals";
+import { ArrowUpRight, PiggyBank, Plus, X } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { parseSavingsCents, savingsEuros, savingsMoney, savingsProjects, savingsPurchaseTotals, savingsTravelTopics,
+  type SavingsPurchaseItem } from "@/domain/phase2/savings-goals";
 import type { RealizedCard, RealizedPayment } from "@/server/phase2/planner/realized-month";
-import { loadSavingsChoices, saveSavingsChoice } from "./savings-dock-actions";
+import { loadSavingsChoices, saveSavingsPurchase } from "./savings-dock-actions";
 import styles from "./savings-dock.module.css";
 
-type Choice = NonNullable<Awaited<ReturnType<typeof loadSavingsChoices>>>[number];
+type Workspace = NonNullable<Awaited<ReturnType<typeof loadSavingsChoices>>>;
+type Choice = Workspace["choices"][number];
+type DraftItem = Omit<SavingsPurchaseItem, "grossCents" | "refundedCents" | "recipient"> & {
+  recipient: string; gross: string; refunded: string;
+};
 const normalize = (value: string) => value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase()
   .replace(/[^a-z0-9]+/gu, " ").trim();
 const paymentAmount = (payment: RealizedPayment) => parseSavingsCents(payment.amount.replace(/^-/, "")) ?? 0;
+const inputAmount = (cents: number) => cents ? savingsEuros(cents).replace(".", ",") : "";
 
 export function savingsPayments(card: RealizedCard | undefined, through?: string) {
   if (!card || card.pilotStatus && card.pilotStatus !== "confirmed") return [];
@@ -19,33 +25,41 @@ export function savingsPayments(card: RealizedCard | undefined, through?: string
     && paymentAmount(payment) > 0 && (!through || payment.date <= through));
 }
 
-function rank(choice: Choice, payment: RealizedPayment, cardLabel: string) {
-  const source = normalize([payment.label, payment.category, payment.preciseType, payment.recipient, cardLabel].filter(Boolean).join(" "));
+function rank(choice: Choice, payment: RealizedPayment, cardLabel: string, item: DraftItem) {
+  const source = normalize([item.article, payment.label, payment.category, payment.preciseType, cardLabel].filter(Boolean).join(" "));
   const tokens = new Set(source.split(" "));
   const label = normalize(choice.label);
-  const recipient = normalize(payment.recipient ?? "");
-  let score = choice.currentCents > 0 ? 1000 : 0;
+  const recipient = normalize(item.recipient);
+  let score = choice.id === item.goalId ? 1000 : 0;
   if (recipient && ` ${label} `.includes(` ${recipient} `)) score += 32;
   if (choice.topic === "documents" && /\b(passeport|visa|formalites|timbre)\b/u.test(source)) score += 36;
   if (choice.topic === "flights" && /\b(avion|vol|billet|airline|easyjet|ryanair|transavia)\b/u.test(source)) score += 36;
   if (choice.topic === "bags" && /\b(sac|valise|bagage)\b/u.test(source)) score += 28;
   if (choice.topic === "equipment" && /\b(materiel|equipement)\b/u.test(source)) score += 24;
-  if (choice.project === "christmas" && (/\bnoel\b/u.test(source) || /-12-/u.test(payment.date) && tokens.has("cadeau"))) score += 24;
+  if (choice.project === "christmas" && (tokens.has("noel") || payment.date.slice(5, 7) === "12"
+    && /\b(amazon|cadeau|cadeaux|coffret|jouet)\b/u.test(source))) score += 28;
   if (choice.project === "birthday" && tokens.has("anniversaire")) score += 24;
   if (choice.project === "travel" && tokens.has("voyage")) score += 12;
-  const matchingWords = [...new Set(label.split(" "))].filter(word => word.length > 3 && tokens.has(word));
-  return score + 3 * matchingWords.length;
+  if (choice.deadline) {
+    const days = (Date.parse(choice.deadline) - Date.parse(payment.date)) / 86_400_000;
+    if (days >= 0 && days <= 30) score += Math.ceil((31 - days) / 4);
+  }
+  return score + 3 * [...new Set(label.split(" "))].filter(word => word.length > 3 && tokens.has(word)).length;
 }
 
-export function SavingsDock({ cardLabel, payments, close }: {
-  cardLabel: string; payments: readonly RealizedPayment[]; close: () => void;
+export function savingsGoalHref(id: string) {
+  return `/cagnottes?goal=${id}#cagnotte-${id}`;
+}
+
+export function SavingsDock({ cardLabel, payments, close, onSaved }: {
+  cardLabel: string; payments: readonly RealizedPayment[]; close: () => void; onSaved?: () => void;
 }) {
   const [paymentId, setPaymentId] = useState(payments.length === 1 ? payments[0].id : "");
   const payment = payments.find(item => item.id === paymentId);
-  return <section className={styles.dock} aria-label="Affecter à une cagnotte">
+  return <section className={styles.dock} aria-label="Ventilation de l’achat">
     <div className={styles.header}>
-      <h3><PiggyBank size={17} aria-hidden /> Affecter à une cagnotte</h3>
-      <button className={styles.close} type="button" aria-label="Fermer le menu des cagnottes" onClick={close}><X size={17} aria-hidden /></button>
+      <h3><PiggyBank size={17} aria-hidden /> Ventiler l’achat</h3>
+      <button className={styles.close} type="button" aria-label="Fermer la ventilation" onClick={close}><X size={17} aria-hidden /></button>
     </div>
     {payments.length > 1 && <label className={styles.field}>Paiement
       <select autoFocus value={paymentId} onChange={event => setPaymentId(event.target.value)}>
@@ -53,100 +67,173 @@ export function SavingsDock({ cardLabel, payments, close }: {
         {payments.map(item => <option key={item.id} value={item.id}>{item.label} · {savingsMoney(paymentAmount(item))}</option>)}
       </select>
     </label>}
-    {payment && <SavingsChoices key={payment.id} payment={payment} cardLabel={cardLabel} focusSearch={payments.length === 1} />}
+    {payment && <PurchaseItems key={payment.id} payment={payment} cardLabel={cardLabel} onSaved={onSaved} />}
   </section>;
 }
 
-function SavingsChoices({ payment, cardLabel, focusSearch }: { payment: RealizedPayment; cardLabel: string; focusSearch: boolean }) {
-  const [choices, setChoices] = useState<Choice[] | null>();
+function PurchaseItems({ payment, cardLabel, onSaved }: { payment: RealizedPayment; cardLabel: string; onSaved?: () => void }) {
+  const cents = paymentAmount(payment);
+  const [workspace, setWorkspace] = useState<Workspace | null>();
+  const [rows, setRows] = useState<DraftItem[]>([]);
+  const [active, setActive] = useState<string>();
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<Choice>();
-  const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
-  const [response, setResponse] = useState("");
+  const [message, setMessage] = useState("");
+  const [stale, setStale] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const saving = useRef(false);
+  const recipientsId = useId();
   const search = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    let active = true;
-    void loadSavingsChoices(payment.id).then(value => { if (active) setChoices(value); }, () => { if (active) setChoices(null); });
-    return () => { active = false; };
-  }, [payment.id, attempt]);
-  useEffect(() => { if (focusSearch) search.current?.focus({ preventScroll: true }); }, [focusSearch]);
+    let mounted = true;
+    void loadSavingsChoices(payment.id).then(value => {
+      if (!mounted) return;
+      setWorkspace(value);
+      if (!value) return;
+      if (value.items.length) {
+        setRows(value.items.map(item => ({ ...item, recipient: item.recipient ?? "", gross: inputAmount(item.grossCents), refunded: inputAmount(item.refundedCents) })));
+        setActive(undefined);
+      } else {
+        const id = crypto.randomUUID();
+        setRows([{ id, article: payment.label.slice(0, 120), recipient: payment.recipient?.slice(0, 80) ?? "",
+          goalId: null, gross: inputAmount(cents), refunded: "" }]);
+        setActive(id);
+      }
+    }, () => { if (mounted) setWorkspace(null); });
+    return () => { mounted = false; };
+  }, [payment.id, payment.label, payment.recipient, cents, attempt]);
 
-  const remaining = paymentAmount(payment) - (choices ?? []).reduce((sum, choice) => sum + choice.currentCents, 0);
+  const activeRow = rows.find(row => row.id === active);
+  const parsed = rows.map(row => ({ id: row.id, goalId: row.goalId, article: row.article.trim(), recipient: row.recipient.trim() || null,
+    grossCents: parseSavingsCents(row.gross.trim()) ?? 0, refundedCents: parseSavingsCents(row.refunded.trim()) ?? 0 }));
+  const totals = savingsPurchaseTotals(parsed, cents);
+  const invalid = parsed.some((item, index) => !item.article || !item.grossCents
+    || Boolean(rows[index].refunded.trim()) && !/^(?:0(?:[,.]0{1,2})?)$/u.test(rows[index].refunded.trim()) && !item.refundedCents
+    || item.refundedCents > item.grossCents);
   const terms = normalize(query).split(" ").filter(Boolean);
-  const filtered = [...(choices ?? [])]
-    .filter(choice => {
-      const fields = normalize([choice.label, savingsProjects[choice.project], choice.topic && savingsTravelTopics[choice.topic]].filter(Boolean).join(" "));
-      return terms.every(term => fields.includes(term));
-    })
-    .map(choice => ({ choice, score: rank(choice, payment, cardLabel) }))
+  const ranked = activeRow && workspace ? workspace.choices
+    .filter(choice => (!choice.complete || choice.id === activeRow.goalId || terms.length > 0)
+      && terms.every(term => normalize([choice.label, savingsProjects[choice.project],
+        choice.topic && savingsTravelTopics[choice.topic]].filter(Boolean).join(" ")).includes(term)))
+    .map(choice => ({ choice, score: rank(choice, payment, cardLabel, activeRow) }))
     .sort((a, b) => b.score - a.score || (a.choice.deadline ?? "9999").localeCompare(b.choice.deadline ?? "9999")
-      || a.choice.label.localeCompare(b.choice.label, "fr"));
-  const visible = terms.length > 0 ? filtered : filtered.slice(0, 8);
+      || a.choice.label.localeCompare(b.choice.label, "fr")) : [];
+  const visible = terms.length ? ranked : ranked.slice(0, 8);
 
-  const reload = () => { setChoices(undefined); setAttempt(value => value + 1); };
-  const save = async (remove = false) => {
-    if (!selected || saving.current) return;
+  const update = (id: string, change: Partial<DraftItem>) => {
+    setRows(current => current.map(row => row.id === id ? { ...row, ...change } : row));
+    setMessage("");
+  };
+  const selectGoal = (id: string) => {
+    setQuery("");
+    setActive(active === id ? undefined : id);
+    if (active !== id) requestAnimationFrame(() => search.current?.focus({ preventScroll: true }));
+  };
+  const reload = () => { setStale(false); setMessage(""); setWorkspace(undefined); setAttempt(value => value + 1); };
+
+  const save = async () => {
+    if (!workspace || saving.current || invalid || totals.remaining < 0 || stale) return;
     saving.current = true;
     setBusy(true);
-    setResponse("");
+    setMessage("");
     try {
-      const result = await saveSavingsChoice({ operationId: payment.id, goalId: selected.id,
-        amount, previous: selected.currentCents, remove });
+      const result = await saveSavingsPurchase({ operationId: payment.id, previous: workspace.items, items: parsed });
       if (result === "saved") {
-        setResponse(remove ? "Affectation retirée." : `${selected.label} · ${savingsMoney(parseSavingsCents(amount) ?? 0)} affectés.`);
-        setSelected(undefined);
-        reload();
-        search.current?.focus();
+        setWorkspace({ ...workspace, items: parsed });
+        setMessage("Ventilation enregistrée.");
+        onSaved?.();
       } else if (result === "stale") {
-        setSelected(undefined);
-        setResponse("Cette affectation a changé. Choisis de nouveau la cagnotte.");
-        reload();
-      } else {
-        setResponse(result === "amount" ? "Le montant dépasse la part disponible de ce paiement." : "Impossible d’enregistrer. Réessaie.");
-      }
+        setStale(true);
+        setMessage("Cette ventilation a changé depuis son ouverture.");
+      } else if (result === "amount" || result === "invalid") {
+        setMessage("Vérifie les prix des articles et les montants remboursés.");
+      } else setMessage("Impossible d’enregistrer la ventilation. Réessaie.");
     } catch {
-      setResponse("Impossible d’enregistrer. Réessaie.");
+      setMessage("Impossible d’enregistrer la ventilation. Réessaie.");
     } finally {
       saving.current = false;
       setBusy(false);
     }
   };
 
-  return <>
-    <div className={styles.filters}>
-      <input ref={search} type="search" aria-label="Rechercher une cagnotte" placeholder="Rechercher une cagnotte"
-        value={query} onChange={event => setQuery(event.target.value)} />
-      {choices && <span>{savingsMoney(Math.max(0, remaining))} disponibles sur ce paiement</span>}
+  if (workspace === undefined) return <p role="status">Chargement de la ventilation…</p>;
+  if (workspace === null) return <p role="alert">Ventilation indisponible. <button type="button" onClick={reload}>Réessayer</button></p>;
+  return <form className={styles.form} onSubmit={event => { event.preventDefault(); void save(); }}>
+    <dl className={styles.totals}>
+      <div><dt>Débit</dt><dd>{savingsMoney(cents)}</dd></div>
+      <div><dt>Réparti</dt><dd>{savingsMoney(totals.described)}</dd></div>
+      <div data-over={totals.remaining < 0}><dt>{totals.remaining < 0 ? "Dépassement" : "Reste à répartir"}</dt><dd>{savingsMoney(Math.abs(totals.remaining))}</dd></div>
+      <div><dt>En cagnottes</dt><dd>{savingsMoney(totals.linked)}</dd></div>
+      {totals.outside > 0 && <div><dt>Hors cagnotte</dt><dd>{savingsMoney(totals.outside)}</dd></div>}
+      {totals.refunded > 0 && <div><dt>Remboursé</dt><dd>{savingsMoney(totals.refunded)}</dd></div>}
+    </dl>
+    <datalist id={recipientsId}>{workspace.recipients.map(name => <option key={name} value={name} />)}</datalist>
+    <ol className={styles.lines}>
+      {rows.map((row, index) => {
+        const choice = workspace.choices.find(goal => goal.id === row.goalId);
+        return <li key={row.id} className={styles.line} aria-label={`Article ${index + 1}`}>
+          <div className={styles.fields}>
+            <label>Article<input required maxLength={120} value={row.article} disabled={busy}
+              onChange={event => update(row.id, { article: event.target.value })} placeholder="Cadeau, billet…" /></label>
+            <label>Destinataire<input maxLength={80} list={recipientsId} value={row.recipient} disabled={busy}
+              onChange={event => update(row.id, { recipient: event.target.value })} placeholder="Facultatif" /></label>
+            <label>Prix (€)<input required inputMode="decimal" value={row.gross} disabled={busy}
+              onChange={event => update(row.id, { gross: event.target.value })} placeholder="0,00" /></label>
+            <button type="button" className={styles.close} disabled={busy} title="Retirer cette ligne" aria-label={`Retirer l’article ${index + 1}`}
+              onClick={() => { setRows(current => current.filter(item => item.id !== row.id)); setMessage(""); }}><X size={16} aria-hidden /></button>
+          </div>
+          <div className={styles.lineActions}>
+            <button type="button" disabled={busy} aria-expanded={active === row.id} onClick={() => selectGoal(row.id)}>
+              {choice ? choice.label : "Hors cagnotte · Choisir"}
+            </button>
+            {choice && <Link href={savingsGoalHref(choice.id)} prefetch={false}>
+              Ouvrir la cagnotte <ArrowUpRight size={13} aria-hidden />
+            </Link>}
+            <details className={styles.refund}>
+              <summary>{row.refunded && parsed[index].refundedCents > 0 ? `${savingsMoney(parsed[index].refundedCents)} remboursés` : "Remboursement"}</summary>
+              <label className={styles.field}>Total reçu (€)
+                <input inputMode="decimal" value={row.refunded} disabled={busy} placeholder="0,00"
+                  onChange={event => update(row.id, { refunded: event.target.value })} />
+              </label>
+              <button type="button" disabled={busy || !parsed[index].grossCents} onClick={() => update(row.id, { refunded: row.gross })}>
+                Article intégralement remboursé
+              </button>
+            </details>
+          </div>
+          {active === row.id && <div className={styles.picker}>
+            <div className={styles.filters}>
+              <input ref={search} type="search" aria-label="Rechercher une cagnotte" placeholder="Rechercher une cagnotte"
+                value={query} onChange={event => setQuery(event.target.value)} />
+              <button type="button" disabled={busy} onClick={() => { update(row.id, { goalId: null }); setActive(undefined); }}>
+                Laisser hors cagnotte
+              </button>
+            </div>
+            {!!visible.length && <ul className={styles.goals} aria-label={terms.length ? "Résultats de recherche" : "Cagnottes proposées"}>
+              {visible.map(({ choice: option }) => <li key={option.id}>
+                <button type="button" className={styles.goal} data-project={option.project} disabled={busy} aria-pressed={row.goalId === option.id}
+                  onClick={() => { update(row.id, { goalId: option.id }); setActive(undefined); }}>
+                  <small>{savingsProjects[option.project]}{option.topic && ` · ${savingsTravelTopics[option.topic]}`}</small>
+                  <strong>{option.label}</strong>
+                </button>
+              </li>)}
+            </ul>}
+            {!visible.length && <p>Aucune cagnotte à proposer. <Link href="/cagnottes">Voir les cagnottes</Link></p>}
+          </div>}
+        </li>;
+      })}
+    </ol>
+    <div className={styles.formActions}>
+      <button type="button" disabled={busy || rows.length >= 50} onClick={() => {
+        setRows(current => [...current, { id: crypto.randomUUID(), article: "", recipient: "", goalId: null,
+          gross: inputAmount(Math.max(0, totals.remaining)), refunded: "" }]);
+        setMessage("");
+      }}><Plus size={15} aria-hidden /> Ajouter un article</button>
+      <button type="submit" className={styles.primary} disabled={busy || invalid || totals.remaining < 0 || stale}>
+        {busy ? "Enregistrement…" : "Enregistrer la ventilation"}
+      </button>
     </div>
-    {choices === undefined && <p role="status">Chargement des cagnottes…</p>}
-    {choices === null && <p role="alert">Cagnottes indisponibles. <button type="button" onClick={reload}>Réessayer</button></p>}
-    {choices && !choices.length && <p>Aucune cagnotte ouverte. <Link href="/cagnottes">Voir les cagnottes</Link></p>}
-    {choices && choices.length > 0 && !visible.length && <p>Aucun résultat pour cette recherche.</p>}
-    {!!visible.length && <ul className={styles.goals} aria-label={terms.length ? "Résultats de la recherche" : "Cagnottes proposées"}>
-      {visible.map(({ choice }) => <li key={choice.id}><button type="button" className={styles.goal} data-project={choice.project}
-        disabled={busy || !choice.currentCents && remaining <= 0} aria-pressed={selected?.id === choice.id} onClick={() => {
-          setSelected(choice);
-          setAmount(savingsEuros(choice.currentCents || Math.min(remaining, maxSavingsCents)).replace(".", ","));
-          setResponse("");
-        }}>
-        <small>{savingsProjects[choice.project]}{choice.topic && ` · ${savingsTravelTopics[choice.topic]}`}</small>
-        <strong>{choice.label}</strong>
-        <span>{choice.currentCents ? `${savingsMoney(choice.currentCents)} liés à ce paiement`
-          : choice.targetCents ? `${savingsMoney(choice.fundedCents)} financés sur ${savingsMoney(choice.targetCents)}` : "Objectif à chiffrer"}</span>
-      </button></li>)}
-    </ul>}
-    {selected && <form className={styles.form} onSubmit={event => { event.preventDefault(); void save(); }}>
-      <label className={styles.field}>Montant en euros
-        <input name="amount" inputMode="decimal" value={amount} disabled={busy} onChange={event => setAmount(event.target.value)} />
-      </label>
-      <button className={styles.primary} type="submit" disabled={busy || (parseSavingsCents(amount) ?? 0) <= 0
-        || (parseSavingsCents(amount) ?? 0) > remaining + selected.currentCents}>{busy ? "En cours…" : "Enregistrer l’affectation"}</button>
-      {!!selected.currentCents && <button type="button" disabled={busy} onClick={() => void save(true)}>Retirer l’affectation</button>}
-    </form>}
-    {response && <p role="status">{response}</p>}
-  </>;
+    {invalid && <p className={styles.notice}>Renseigne chaque article et vérifie que son remboursement ne dépasse pas son prix.</p>}
+    {message && <p role="status">{message} {stale && <button type="button" onClick={reload}>Recharger la ventilation</button>}</p>}
+  </form>;
 }

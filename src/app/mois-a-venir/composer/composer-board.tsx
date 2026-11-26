@@ -169,7 +169,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
   const savingsPalette = payments.length > 0 && (savingsOpen
     ? <SavingsDock key={focused} cardLabel={focusedPurchase!.label} payments={payments} close={() => setSavingsTarget(undefined)} />
     : <button type="button" className={styles.savingsDockTrigger} onClick={() => setSavingsTarget(focused ?? undefined)}>
-      <PiggyBank size={15} aria-hidden /> Affecter à une cagnotte
+      <PiggyBank size={15} aria-hidden /> Ventiler l’achat
     </button>);
   const referencePalette = referenceTarget && focusedCard?.contextOccurrenceId === referenceTarget.id
     && <CardReferenceDock key={`${referenceTarget.id}:${referenceTarget.kind}`} card={focusedCard} model={model} kind={referenceTarget.kind}

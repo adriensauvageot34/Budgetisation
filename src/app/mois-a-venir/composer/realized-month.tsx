@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowLeft, ArrowRight, ExternalLink, MapPin, Pencil, PiggyBank, Search, Utensils, X } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, isImportedRealizedMonth, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
@@ -16,7 +17,8 @@ import { days, matches, paymentSearch, searchableDate, searchText } from "./real
 import type { InitialRealizedDetail, RealizedBoardOverview, RealizedCardSummary } from "./realized-overview";
 import { unpackRealizedOverview, type PackedRealizedOverview } from "./realized-overview-wire";
 import { useRealizedRailLayout } from "./realized-rail-layout";
-import { SavingsDock, savingsPayments } from "./savings-dock";
+import { SavingsDock, savingsGoalHref, savingsPayments } from "./savings-dock";
+import { readCardSavingsLinks } from "./savings-dock-actions";
 import styles from "./realized-month.module.css";
 
 const sortOptions = [
@@ -505,13 +507,28 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
 
 function SavingsFooter({ card }: { card: RealizedCard }) {
   const [expanded, setExpanded] = useState(false);
+  const [links, setLinks] = useState<Awaited<ReturnType<typeof readCardSavingsLinks>>>([]);
+  const [revision, setRevision] = useState(0);
   const trigger = useRef<HTMLButtonElement>(null);
-  const payments = savingsPayments(card);
+  const payments = useMemo(() => savingsPayments(card), [card]);
+  useEffect(() => {
+    if (!payments.length || payments.length > 100) return;
+    let mounted = true;
+    void readCardSavingsLinks(payments.map(payment => payment.id)).then(result => {
+      if (mounted) setLinks(result);
+    }, () => { if (mounted) setLinks([]); });
+    return () => { mounted = false; };
+  }, [payments, revision]);
   if (!payments.length) return null;
   return <footer className={styles.savingsFooter}>
-    <button ref={trigger} className={styles.editCard} type="button" hidden={expanded} aria-expanded={expanded}
-      onClick={() => setExpanded(true)}><PiggyBank size={16} aria-hidden /> Affecter à une cagnotte</button>
-    {expanded && <SavingsDock cardLabel={card.label} payments={payments} close={() => {
+    {!expanded && <div className={styles.savingsActions}>
+      <button ref={trigger} className={styles.editCard} type="button" aria-expanded={expanded}
+        onClick={() => setExpanded(true)}><PiggyBank size={16} aria-hidden /> Ventiler l’achat</button>
+      {!!links.length && <div className={styles.savingsLinks} aria-label="Cagnottes liées">
+        {links.map(goal => <Link key={goal.id} href={savingsGoalHref(goal.id)} prefetch={false}>{goal.label} <ExternalLink size={12} aria-hidden /></Link>)}
+      </div>}
+    </div>}
+    {expanded && <SavingsDock cardLabel={card.label} payments={payments} onSaved={() => setRevision(value => value + 1)} close={() => {
       setExpanded(false);
       requestAnimationFrame(() => trigger.current?.focus());
     }} />}

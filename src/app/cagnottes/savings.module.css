@@ -180,8 +180,12 @@
 .allocation small[data-status="saved"] { background: #e5e9f9; color: #3d4d85; }
 .allocation small[data-status="purchased"] { background: #dcf1e5; color: #256044; }
 .purchaseLinks { display:grid; gap:5px; list-style:none; margin:8px 0; padding:0; }
-.purchaseLinks li { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:3px 8px; padding:7px 9px; border-radius:9px; background:#f7f0fc; font-size:.78rem; }
-.purchaseLinks a { grid-column:1 / -1; overflow-wrap:anywhere; text-decoration:underline; }
+.linkedPayment { display:grid; gap:4px; padding:7px 9px; border-radius:9px; background:#f7f0fc; font-size:.78rem; }
+.linkedPayment time { color:#5b4a70; }
+.linkedPayment ul { display:grid; gap:5px; margin:0; padding:4px 0 0; list-style:none; }
+.linkedPayment li { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 8px; }
+.linkedPayment li small { grid-column:1 / -1; color:#5b4a70; }
+.purchaseLinks a { overflow-wrap:anywhere; text-decoration:underline; }
 .purchaseLinks a svg { display:inline; }
 .allocation .check { display: flex; align-items: center; gap: 5px; }
 .allocationFooter { justify-content: space-between; margin-top: 7px; }
