@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import { CalendarClock, CircleCheck, CircleHelp, ClockAlert } from "lucide-react";
 import { julyPilotLabels, type JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
 import { JULY_PILOT_DATE } from "@/domain/phase2/planner/realized-month-entry";
 import type { RealizedCard } from "@/server/phase2/planner/realized-month";
@@ -7,9 +8,11 @@ import styles from "./realized-month.module.css";
 
 export const ReconstructedCards = createContext<ReadonlyMap<string, RealizedCard> | undefined>(undefined);
 export const JulyPilotCardStatuses = createContext<ReadonlyMap<string, JulyPilotStatus[]> | undefined>(undefined);
+const statusIcons = { confirmed: CircleCheck, pending: ClockAlert, planned: CalendarClock, undated: CircleHelp };
 
 export function JulyPilotChip({ status }: { status: JulyPilotStatus }) {
-  return <span className={styles.pilotChip} data-pilot-chip={status}>{julyPilotLabels[status]}</span>;
+  const Icon = statusIcons[status];
+  return <span className={styles.pilotChip} data-pilot-chip={status}><Icon size={12} aria-hidden />{julyPilotLabels[status]}</span>;
 }
 
 export function DraftJulyStatus({ id, date }: { id: string; date: unknown }) {

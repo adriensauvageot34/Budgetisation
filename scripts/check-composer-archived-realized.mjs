@@ -284,7 +284,7 @@ const dense = { ...board, cards: Array.from({ length: 120 }, (_, index) => ({
 const denseHtml = renderToStaticMarkup(createElement(RealizedComposerMonth, realizedBoardOverview(dense)));
 assert.equal([...denseHtml.matchAll(/data-realized-card="/gu)].length, 18);
 assert.match(denseHtml, /120 cartes/u);
-const { matches, searchText } = require("@/app/mois-a-venir/composer/realized-card-text");
+const { matches, searchText, paymentPresentation, usefulMobilityNote } = require("@/app/mois-a-venir/composer/realized-card-text");
 const { unpackRealizedOverview } = require("@/app/mois-a-venir/composer/realized-overview-wire");
 const { overview: packed, initialDetail: linkedDetail } = realizedBoardOverview(reviewed, splitCard.id);
 const compact = unpackRealizedOverview(packed);
@@ -297,6 +297,15 @@ assert.equal(compactCard.amount, splitCard.amount);
 assert.ok(compactCard.search.some(line => matches(line, searchText("Avoir test").split(" "))));
 assert.ok(!("payments" in compactCard) && !("occurrences" in compactCard)
   && !("reviewNotes" in compactCard) && !("reviewReferences" in compactCard));
+assert.deepEqual(compactCard.flowKinds, ["expense"]);
+const movement = { flow: "transfer", amount: "-700.00", label: "Personne test", components: [] };
+assert.deepEqual(paymentPresentation(movement), { title: "Virement envoyé", context: "Vers Personne test" });
+assert.deepEqual(paymentPresentation({ ...movement, flow: "income", category: "Salaire / revenu professionnel", participant: "Adrien" }),
+  { title: "Salaire · Personne test", context: "Bénéficiaire · Adrien" });
+assert.deepEqual(paymentPresentation({ ...movement, flow: "expense", label: "Boutique", category: "Contenu connu – analyse par composants",
+  components: [{ label: "Matériel photo" }] }), { title: "Boutique", context: "Matériel photo" });
+assert.equal(usefulMobilityNote("Tram habituel · 0 € estimé"), undefined);
+assert.equal(usefulMobilityNote("Voiture · 10,00 € estimés"), "Voiture · 10,00 € estimés");
 const julyPayment = (id, date, amount, flow = "expense", activityDate) => ({
   id, date, activityDate, label: id, bankLabel: `Bancaire ${id}`, amount, flow, components: [],
 });
@@ -333,6 +342,8 @@ const pilotHtml = renderToStaticMarkup(createElement(RealizedComposerMonth, {
 assert.match(pilotHtml, /data-pilot-status="confirmed"/u);
 assert.match(pilotHtml, /data-pilot-status="pending"/u);
 assert.match(pilotHtml, /data-pilot-status="planned"/u);
+assert.match(pilotHtml, /Filtrer par type d’opération/u);
+assert.match(pilotHtml, /Montant à confirmer/u);
 assert.match(pilotHtml, /Éléments budgétés/u);
 assert.doesNotMatch(pilotHtml, /Bancaire Repas/u);
 const { readJulyBudget } = require("@/server/phase2/planner/july-budget");

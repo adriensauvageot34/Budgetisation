@@ -33,6 +33,7 @@ export type RealizedPayment = Readonly<{
   bankLabel: string;
   category: string | undefined;
   preciseType?: string;
+  purchaseUse?: string;
   amount: string;
   flow: Flow;
   badge: Badge | undefined;
@@ -729,11 +730,15 @@ async function readRealizedMonthData(bootstrap: RealizedBootstrap, month: YearMo
     const mobilityNote = detour
       ? `Détour estimé · ${travelNumber.format(Number(detour.distance))} km · ${travelMoney.format(Number(detour.fuel))} d’essence comprise dans le trajet`
       : shopper === "Adrien" && weekday > 0 && weekday < 6 && localShop ? "Tram habituel · 0 € estimé" : undefined;
+    const tags = tagKeysByOperation.get(operation.operationId);
+    const purchaseUse = flow === "expense" && tags?.some(tag => tag === "Contexte:projet_photo" || tag === "Contexte:projet_seance_photo")
+      ? "Projet photo" : undefined;
     const payment = {
       id: operation.operationId, date: row.bankDate, label: isCannabis ? "Retrait pour cannabis" : label, bankLabel: row.bankLabel,
       ...((july || imported) && purchaseDate ? { activityDate: purchaseDate } : {}),
       category: row.subcategory?.label ?? row.preciseType ?? row.category?.label, amount: operation.bankAmount, flow,
       ...(july && operation.preciseType ? { preciseType: operation.preciseType } : {}),
+      ...(purchaseUse ? { purchaseUse } : {}),
       badge: badgeSources.length ? { label, sources: badgeSources } : undefined,
       art: isCannabis ? cannabis : specialized[subcategoryKey]?.item ?? specialized[subcategoryKey]?.art,
       ...(place ? { place } : {}),

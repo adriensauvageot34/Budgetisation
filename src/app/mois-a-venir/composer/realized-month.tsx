@@ -13,7 +13,7 @@ import { RealizedBadge } from "./realized-badge";
 import { JulyPilotChip } from "./reconstructed-cards";
 import { JulyEditLink } from "./july-edit-link";
 import { realizedOperationCardId, type PackedCardPosition } from "./realized-card-view";
-import { days, matches, paymentSearch, searchableDate, searchText } from "./realized-card-text";
+import { days, matches, paymentPresentation, paymentSearch, realizedFlowLabels, searchableDate, searchText, usefulMobilityNote } from "./realized-card-text";
 import type { InitialRealizedDetail, RealizedBoardOverview, RealizedCardSummary } from "./realized-overview";
 import { unpackRealizedOverview, type PackedRealizedOverview } from "./realized-overview-wire";
 import { useRealizedRailLayout } from "./realized-rail-layout";
@@ -28,6 +28,10 @@ const sortOptions = [
   { id: "category", label: "Par catégorie" },
 ] as const;
 type SortOrder = typeof sortOptions[number]["id"];
+const flowFilters = [
+  ["", "Tout"], ["expense", "Dépenses"], ["income", "Revenus"], ["refund", "Remboursements"], ["transfer", "Transferts"],
+] as const;
+type FlowFilter = typeof flowFilters[number][0];
 const distance = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
 const carArtwork = "option:activity:transport:car";
 
@@ -43,6 +47,9 @@ function PlaceLink({ place, detail }: { place: RealizedPlace; detail?: boolean }
 }
 
 function RealizedElement({ payment, highlighted, estimated = false }: { payment: RealizedPayment; highlighted: boolean; estimated?: boolean }) {
+  const { title, context } = paymentPresentation(payment);
+  const beneficiary = payment.flow === "expense" ? payment.recipient
+    ?? (payment.participant === "Couple" && searchText(payment.category) === "courses alimentaires" ? "le Couple" : undefined) : undefined;
   return <li className={styles.element} data-realized-operation={payment.id} data-highlighted={highlighted || undefined} tabIndex={-1}>
     <div className={styles.elementVisual}>
       {payment.badge
@@ -51,14 +58,15 @@ function RealizedElement({ payment, highlighted, estimated = false }: { payment:
           iconKey={payment.art.iconKey} size={30} />}
     </div>
     <div className={styles.elementIdentity}>
-      <strong>{payment.label}</strong>
-      <span>{[days(estimated ? payment.activityDate ?? payment.date : payment.date), payment.category].filter(Boolean).join(" · ")}</span>
+      <strong>{title}</strong>
+      <span>{[days(estimated ? payment.activityDate ?? payment.date : payment.date), context].filter(Boolean).join(" · ")}</span>
       {!estimated && payment.bankLabel !== payment.label && <small>{payment.bankLabel}</small>}
       {payment.inferredEvent && <small>Rattachement estimé à cet événement</small>}
       {payment.place && <PlaceLink place={payment.place} detail />}
-      {payment.reviewActor ? <small>{payment.reviewActor}</small>
+      {!estimated && payment.reviewActor ? <small>{payment.reviewActor}</small>
         : payment.shopper && <small>{payment.shopperInferred ? "Courses probablement faites par" : "Courses faites par"} {payment.shopper}</small>}
-      {payment.recipient && <small>Cadeau pour {payment.recipient}</small>}
+      {beneficiary && <small>Pour {beneficiary}</small>}
+      {payment.flow === "expense" && payment.participant && !beneficiary && <small>Personne associée · {payment.participant}</small>}
       {payment.mobilityNote && <small>{payment.mobilityNote}</small>}
     </div>
     <b className={styles.amount}>{money(payment.amount)}</b>
@@ -85,14 +93,14 @@ function CardDate({ date, end }: { date: string; end?: string }) {
   </span>;
 }
 
-function ParticipantBadge({ name, portrait }: { name: string; portrait?: string }) {
-  return <span className={styles.workParticipant} data-realized-participant={name} title={`Participant · ${name}`}>
-    {portrait ? <img src={portrait} alt={name} width={29} height={29} />
-      : <span aria-label={name}>{name === "Manon et son père" ? "M+" : name.slice(0, 1)}</span>}
+function ParticipantBadge({ name, portrait, role = "Participant" }: { name: string; portrait?: string; role?: string }) {
+  return <span className={styles.workParticipant} data-realized-participant={name} title={`${role} · ${name}`}>
+    {portrait ? <img src={portrait} alt={`${role} · ${name}`} width={29} height={29} />
+      : <span aria-label={`${role} · ${name}`}>{name === "Manon et son père" ? "M+" : name.slice(0, 1)}</span>}
   </span>;
 }
 
-function WorkDayFooter({ work, portrait }: { work: NonNullable<RealizedCardSummary["work"]>; portrait?: string }) {
+function WorkDayFooter({ work }: { work: NonNullable<RealizedCardSummary["work"]> }) {
   return <span className={styles.workFooter}>
     <span className={styles.workItems}>
       {work.items.map(item => <span key={item.id} className={styles.workItem} data-work-item={item.count}>
@@ -101,7 +109,6 @@ function WorkDayFooter({ work, portrait }: { work: NonNullable<RealizedCardSumma
         {item.count > 1 && <strong aria-label={`${item.count} achats`}>×{item.count}</strong>}
       </span>)}
     </span>
-    <ParticipantBadge name={work.name} portrait={portrait} />
   </span>;
 }
 
@@ -110,65 +117,74 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open
   position?: PackedCardPosition; portrait?: string;
 }) {
   const { badges, relatedCount, caption, trip, travel } = card;
-  const visibleDate = card.date ?? date;
+  const visibleDate = card.date ?? date ?? (card.paymentIds.length === 1 ? card.sortDate : undefined);
+  const displayTitle = card.displayTitle ?? card.label;
+  const flow = card.flowKinds?.length === 1 ? card.flowKinds[0] : undefined;
+  const isEstimated = !!card.pilotStatus && card.pilotStatus !== "confirmed";
+  const paymentCount = card.paymentIds.length;
+  const participant = card.work?.name ?? card.participant;
+  const hasBeneficiary = caption?.startsWith("Bénéficiaire · ");
   const firstPlace = card.places?.[0];
   const additionalPlaces = (card.places?.length ?? 0) - 1;
-  const location = firstPlace ? firstPlace.label : card.label === "Restaurant" && card.eventStatus ? "Lieu à confirmer" : undefined;
+  const location = firstPlace ? category?.id === "groceries" && firstPlace.label.startsWith(`${card.label} `)
+    ? firstPlace.label.slice(card.label.length).replace(/^[\s–—·-]+/u, "") || firstPlace.label : firstPlace.label
+    : card.label === "Restaurant" && card.section === "events" ? "Lieu à confirmer" : undefined;
+  const context = category?.id === "groceries" && location && searchText(caption) === "courses alimentaires" ? undefined : caption;
+  const entryCount = card.section === "events" && paymentCount > 0
+    ? `${paymentCount} ${isEstimated ? paymentCount === 1 ? "élément budgété" : "éléments budgétés"
+      : paymentCount === 1 ? "opération rattachée" : "opérations rattachées"}` : undefined;
+  const subtitle = entryCount ?? (card.hasTransfers ? "Solde des transferts" : context);
+  const unpriced = isEstimated || card.work || paymentCount > 0 ? "Montant à confirmer"
+    : relatedCount ? "Paiements dans d’autres cartes" : "Aucun paiement rattaché";
+  const mobilityNote = usefulMobilityNote(card.mobilityNote);
+  const compactTravel = usefulMobilityNote(travel);
   return <button id={card.id} type="button" className={styles.card} data-realized-card={card.section}
     data-realized-category={category?.id} data-card-date={visibleDate} data-pilot-status={card.pilotStatus}
     data-operation-id={card.paymentIds.length === 1 ? card.paymentIds[0] : undefined}
     data-operation-count={card.paymentIds.length} data-card-amount={card.amount ?? undefined}
-    data-multiple-badges={!card.work && badges.length > 1 || undefined}
     data-realized-work={card.work?.mode}
     style={position ? { "--card-column": position.column, insetBlockStart: position.top, minHeight: position.height } as CSSProperties : undefined}
     aria-haspopup="dialog" onClick={() => open(card.id)}>
     <span className={styles.cardContent} data-realized-card-content>
       <span className={styles.cardVisuals}>
-        <CardArtwork card={card} size={42} />
-        {!card.work && badges.length > 0 && <span className={styles.badges}>
-          {badges.slice(0, 5).map(badge => <RealizedBadge key={badge.label} {...badge} named />)}
-          {badges.length > 5 && <span title={badges.slice(5).map(badge => badge.label).join(", ")}>+{badges.length - 5}</span>}
+        <CardArtwork card={card} size={38} />
+        {!card.work && badges.length > 0 && <span className={styles.badges} aria-label="Marchands">
+          {badges.slice(0, 2).map(badge => <RealizedBadge key={badge.label} {...badge} named />)}
         </span>}
       </span>
       <span className={styles.cardIdentity}>
         <span className={styles.cardMeta}>
-          {category && <span className={styles.cardCategory}>{category.shortLabel}</span>}
-          {visibleDate && <CardDate date={visibleDate} end={card.endDate} />}
+          <strong className={styles.cardTitle} title={displayTitle}>{displayTitle}</strong>
+          {visibleDate ? <CardDate date={visibleDate} end={card.endDate} />
+            : <span className={styles.cardDate}>{paymentCount > 1 ? "Plusieurs dates" : "Date à préciser"}</span>}
         </span>
-        <strong className={styles.cardTitle} title={card.label}>{card.label}</strong>
-        {card.pilotStatus && <JulyPilotChip status={card.pilotStatus} />}
-        {card.amount !== null && <span className={styles.cardTotal} data-positive={Number(card.amount) > 0 || undefined}>
-          {money(card.amount)}{card.hasTransfers && <small>Solde des transferts</small>}
-        </span>}
+        {card.amount !== null ? <span className={styles.cardTotal} data-positive={Number(card.amount) > 0 || undefined}>
+          {money(card.amount)}{isEstimated && <small>Estimé</small>}
+        </span> : <span className={styles.cardUnknown}>{unpriced}</span>}
+        {subtitle && <span className={styles.cardSubtitle} title={subtitle}>{subtitle}</span>}
         {location && <span className={styles.cardLocation} data-place-certainty={firstPlace?.certainty}
           data-confirmed={firstPlace?.certainty === "confirmed"}
           title={card.places?.map(place => `${place.label} · ${placeStatus[place.certainty]}`).join("\n") || location}>
           <MapPin size={12} aria-hidden="true" />
-          <span>{firstPlace?.certainty === "probable" && "≈ "}{location}</span>
+          <span>{firstPlace?.certainty === "probable" && "Lieu probable · "}{location}</span>
           {additionalPlaces > 0 && <small aria-label={`${additionalPlaces} autres lieux`}>+{additionalPlaces}</small>}
         </span>}
-        {caption && <span className={styles.cardSubtitle}>{caption}</span>}
-        {card.amount === null && (relatedCount > 0 || !trip) && <span className={styles.cardSubtitle}>
-          {relatedCount ? `${relatedCount} ${relatedCount === 1 ? "opération associée" : "opérations associées"}`
-            : card.work || card.pilotStatus === "planned" ? "Montant non renseigné" : "Aucun paiement rattaché"}
-        </span>}
       </span>
-      {trip && <span className={styles.cardTrip} data-realized-car-trip title={trip.route}>
+      {trip ? <span className={styles.cardTrip} data-realized-car-trip title={`${trip.route} · Essence estimée ${money(trip.estimatedFuel)}`}>
         <ComposerAssetVisual assetKey={carArtwork} iconKey="car" size={23} />
         <span className={styles.cardTripRoute}>{trip.compactRoute}</span>
-        <strong className={styles.cardTripCost} aria-label={`${money(trip.estimatedFuel)} d’essence estimée`} title="Essence estimée">
-          ≈ {money(trip.estimatedFuel)}
-        </strong>
+        <span className={styles.cardTripCost}>Essence estimée <strong>{money(trip.estimatedFuel)}</strong></span>
+      </span> : (compactTravel || mobilityNote) && <span className={styles.cardTrip} title={compactTravel ?? mobilityNote}>
+        <span className={styles.cardTripRoute}>{compactTravel ?? mobilityNote}</span>
       </span>}
-      {travel && <span className={styles.cardTrip} title={travel}>
-        <ComposerAssetVisual assetKey={carArtwork} iconKey="car" size={23} />
-        <span className={styles.cardTripRoute}>{travel.split(" · ")[0]}</span>
-        <strong className={styles.cardTripCost}>{travel.split(" · ").at(-1)}</strong>
-      </span>}
-      {card.mobilityNote && <span className={styles.cardSubtitle}>{card.mobilityNote}</span>}
-      {card.work && <WorkDayFooter work={card.work} portrait={portrait} />}
-      {!card.work && card.participant && <span className={styles.cardParticipant}>
-        <ParticipantBadge name={card.participant} portrait={portrait} />
+      {card.work && <WorkDayFooter work={card.work} />}
+      {(category || flow || card.pilotStatus || participant) && <span className={styles.cardFooter}>
+        {card.section === "flows" && flow ? <span className={styles.cardCategory} data-flow-kind={flow}>{realizedFlowLabels[flow]}</span>
+          : category && <span className={styles.cardCategory}>{category.shortLabel}</span>}
+        {card.pilotStatus && <JulyPilotChip status={card.pilotStatus} />}
+        {participant && <span className={styles.cardParticipant}>
+          <ParticipantBadge name={participant} portrait={portrait} role={hasBeneficiary ? "Bénéficiaire" : undefined} />
+        </span>}
       </span>}
     </span>
   </button>;
@@ -192,7 +208,9 @@ function RealizedDetail({ card, month, terms, open }: {
         <a className="underline" href={realizedComposerHref(otherMonth, card.id)}>Voir en {monthLabel(otherMonth)}</a>
       </li>)}</ul>
     </nav>}
-    {!card.work && card.participant && <section aria-label="Participants"><p>{card.participant}</p></section>}
+    {!card.work && card.participant && <section aria-label="Participants">
+      <p>{card.section === "events" ? "Participation" : "Personne associée"} · {card.participant}</p>
+    </section>}
     {card.work && <section aria-labelledby="realized-work-title">
       <h3 id="realized-work-title">{card.work.mode === "unspecified" ? "Achats de café" : `Journée de travail · ${card.work.name}`}</h3>
       <ul className={styles.places}>
@@ -292,6 +310,7 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
 }) {
   const overview = useMemo(() => unpackRealizedOverview(packed), [packed]);
   const [sortOrder, setSortOrder] = useState<SortOrder>(pilot ? "date" : "amount-desc");
+  const [flowFilter, setFlowFilter] = useState<FlowFilter>("");
   const [statusFilter, setStatusFilter] = useState<JulyPilotStatus | "">(initialStatus ?? "");
   const [query, setQuery] = useState("");
   const [selection, setSelection] = useState<{ cardId: string; paymentId?: string; componentId?: string } | null>(
@@ -308,13 +327,13 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
   const rail = useRef<HTMLDivElement>(null);
   const terms = useMemo(() => searchText(query).split(" ").filter(Boolean), [query]);
   const byCategory = sortOrder === "category";
-  const fillColumns = !byCategory && terms.length === 0;
   const categoryById = useMemo(() => new Map(overview.groups.map(group => [group.id, group])), [overview.groups]);
   const indexed = useMemo(() => (byCategory ? overview.categoryKeys : overview.flatKeys).map(key => {
     const card = overview.cards[key]!;
     return { key, card, category: card.categoryId ? categoryById.get(card.categoryId) : undefined };
   }), [byCategory, overview, categoryById]);
   const visible = useMemo(() => indexed.filter(({ card }) => (!statusFilter || card.pilotStatus === statusFilter)
+    && (!flowFilter || card.flowKinds?.includes(flowFilter))
     && (!terms.length || card.search.some(line => matches(line, terms)))).sort((a, b) => {
       const byDate = () => (a.card.sortDate ?? "9999").localeCompare(b.card.sortDate ?? "9999") || a.card.label.localeCompare(b.card.label, "fr")
         || a.card.id.localeCompare(b.card.id);
@@ -323,7 +342,7 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
       if (left === null || right === null) return left === right ? byDate() : left === null ? 1 : -1;
       const difference = Math.abs(Number(left)) - Math.abs(Number(right));
       return (sortOrder === "amount-asc" ? difference : -difference) || byDate();
-    }), [indexed, sortOrder, statusFilter, terms]);
+    }), [indexed, sortOrder, statusFilter, flowFilter, terms]);
   const visibleCategories = useMemo(() => byCategory ? overview.groups.flatMap(category => {
     const entries = visible.filter(entry => entry.category?.id === category.id);
     return entries.length ? [{ category, entries }] : [];
@@ -341,10 +360,9 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
   const detail = detailKey ? loaded.get(detailKey) ?? (initialDetail?.key === detailKey ? initialDetail.card : undefined) : undefined;
   const groups = useMemo(() => byCategory ? visibleCategories.map(({ category, entries }) => ({ id: category.id, entries }))
     : visible.length ? [{ id: "all", entries: visible }] : [], [byCategory, visibleCategories, visible]);
-  const visibleKeys = useMemo(() => `${sortOrder}:${fillColumns}:${visible.map(({ card }) => card.id).join("|")}`,
-    [sortOrder, fillColumns, visible]);
+  const visibleKeys = useMemo(() => `${sortOrder}:${visible.map(({ card }) => card.id).join("|")}`, [sortOrder, visible]);
   const { probe, packing, containsColumn, isMounted, setFocusedId, updateWindow } =
-    useRealizedRailLayout(rail, groups, visibleKeys, byCategory, fillColumns);
+    useRealizedRailLayout(rail, groups, visibleKeys, byCategory);
   const groupedPacking = byCategory ? packing : undefined;
 
   useEffect(() => {
@@ -421,6 +439,10 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
 
   return <div className={styles.board} data-realized-month={overview.month}>
     <div className={styles.toolbar}>
+      <div className={styles.flowFilters} role="group" aria-label="Filtrer par type d’opération">
+        {flowFilters.map(([value, label]) => <button key={value || "all"} type="button" aria-pressed={flowFilter === value}
+          onClick={() => { setFlowFilter(value); startRail(); }}>{label}</button>)}
+      </div>
       <select className={styles.sort} aria-label="Trier les cartes" value={sortOrder}
         onChange={event => { setSortOrder(event.target.value as SortOrder); startRail(); }}>
         {sortOptions.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
@@ -460,7 +482,7 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
         event.preventDefault(); scrollRail(event.key === "ArrowRight" ? 1 : -1);
       }}>
       <span ref={probe} className={styles.railWidthProbe} aria-hidden="true" />
-      {visibleCount === 0 && <p className={styles.empty}>{overview.flatKeys.length ? "Aucune carte ne correspond à cette recherche."
+      {visibleCount === 0 && <p className={styles.empty}>{overview.flatKeys.length ? "Aucune carte pour ces filtres."
         : "Aucune opération ni événement importé pour ce mois."}</p>}
       {visibleCount > 0 && !byCategory && renderGrid("all", visible)}
       {visibleCategories.length > 0 && <div className={styles.groupedBoard} data-realized-grouped-grid data-packed={Boolean(groupedPacking)}
@@ -483,10 +505,10 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
         <header className={styles.panelHeader}>
           <CardArtwork card={selected} size={56} />
           <div>
-            <h2 id="realized-dialog-title">{selected.label}</h2>
-            <p>{[selected.dialogCaption, selected.eventStatus].filter(Boolean).join(" · ")}</p>
+            <h2 id="realized-dialog-title">{selected.displayTitle ?? selected.label}</h2>
+            <p>{[selected.displayTitle && selected.caption, selected.dialogCaption, selected.eventStatus].filter(Boolean).join(" · ")}</p>
             {selected.pilotStatus && <JulyPilotChip status={selected.pilotStatus} />}
-            {selected.amount !== null && <strong>{money(selected.amount)}</strong>}
+            {selected.amount !== null && <strong>{money(selected.amount)}{selected.pilotStatus && selected.pilotStatus !== "confirmed" ? " estimés" : ""}</strong>}
           </div>
           <button ref={closeButton} type="button" className={styles.close} aria-label="Fermer la carte" onClick={() => dialog.current?.close()}>
             <X size={20} aria-hidden="true" />
