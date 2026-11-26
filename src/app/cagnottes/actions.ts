@@ -2,7 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { refresh } from "next/cache";
 import { withProductAuthentication } from "@/app/product-query";
 import { forecastWindowMonths } from "@/app/mois-a-venir/month-entry";
 import { parseLocalDate } from "@/core/time";
@@ -14,7 +14,7 @@ import { changeSavingsSchedule, savingsDeadlineGap, savingsFundingDate, savingsF
 import { getBootstrapSession } from "@/server/bootstrap/context";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import { planningDate } from "@/server/phase2/planning-date";
-import { readSavingsGoal, readSavingsGoals } from "@/server/phase2/savings-goals";
+import { readSavingsGoal, readSavingsGoalSummaries } from "@/server/phase2/savings-goals";
 import { readSavingsMargin, readSavingsMargins } from "@/server/phase2/savings-margin";
 
 const field = (form: FormData, name: string) => String(form.get(name) ?? "").trim();
@@ -55,9 +55,7 @@ async function mutate(form: FormData, operation: (owner: Awaited<ReturnType<type
     const changedGoal = await operation(owner);
     if (changedGoal) query.set("goal", changedGoal);
     query.set("notice", "saved");
-    revalidatePath("/cagnottes");
-    revalidatePath("/mois-a-venir");
-    revalidatePath("/mois-a-venir/composer");
+    refresh();
   } catch (error) {
     const code = error instanceof TypeError ? error.message : "";
     if (/^[a-f0-9-]{36}$/u.test(goal)) query.set("goal", goal);
@@ -193,7 +191,7 @@ export async function duplicateSavingsSeason(form: FormData) {
     const project = field(form, "project") as SavingsProject;
     const from = Number(field(form, "fromSeason")), to = Number(field(form, "returnSeason"));
     if (!seasonalSavingsProject(project) || !validYear(from) || !validYear(to) || to <= from) throw new TypeError("season");
-    const goals = (await readSavingsGoals(owner.client, owner.householdId)).filter(goal =>
+    const goals = (await readSavingsGoalSummaries(owner.client, owner.householdId)).filter(goal =>
       !goal.abandoned && goal.project === project && goal.season === from && goal.seriesKey);
     if (!goals.length) throw new TypeError("season");
     const { error } = await owner.client.from("phase2_savings_goals").upsert(goals.map(goal => {
@@ -233,7 +231,7 @@ async function buildSchedule(owner: Awaited<ReturnType<typeof scope>>, input: Sc
         : "La marge du mois est positive ou nulle.";
       return { changes, impact: [], moves, blocked, remaining, note, stamp: "" };
     }
-    const goals = await readSavingsGoals(owner.client, owner.householdId);
+    const goals = await readSavingsGoalSummaries(owner.client, owner.householdId);
     const candidates = goals.filter(goal => effectiveSavingsAllocations(goal).some(row => row.month === input.month && row.status === "planned"));
     const destinations = months.filter(month => month > input.month && candidates.some(goal => savingsFundingMonths(goal, [month]).length));
     margins = [first, ...await readSavingsMargins(destinations)];
@@ -288,9 +286,7 @@ export async function confirmSavingsSchedule(input: ScheduleInput, stamp: string
     if (error?.code === "40001") throw new TypeError("stale");
     if (error?.code === "23514") throw new TypeError("amount");
     if (error) throw error;
-    revalidatePath("/cagnottes");
-    revalidatePath("/mois-a-venir");
-    revalidatePath("/mois-a-venir/composer");
+    refresh();
     return { ok: true as const };
   } catch (error) {
     return { ok: false as const, message: scheduleError(error) };

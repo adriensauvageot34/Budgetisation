@@ -90,7 +90,8 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
       history: vehicle?.vehicleId ? world.mobilityFacts.vehicleHistory?.[vehicle.vehicleId] ?? [] : [] } }, state, undefined, historical);
   }, async readDirectWorld(householdId, targetMonth) {
     scope(householdId);
-    const [forecast, inputs, externalIntents] = await Promise.all([readPlanningMonthForecast(canonical.client, householdId, targetMonth),
+    const cache = opening?.month === targetMonth ? opening.cache : undefined;
+    const [forecast, inputs, externalIntents] = await Promise.all([readPlanningMonthForecast(canonical.client, householdId, targetMonth, undefined, "full", cache),
       readMonthInputs(canonical.client, householdId, targetMonth), readPlannedExpenses(canonical.client, householdId, targetMonth)]);
     return { forecast, monthInputs: inputs.inputs, externalIntents,
       asOfDate: Temporal.Instant.from(clock()).toZonedDateTimeISO(canonical.context.timezone).toPlainDate().toString() };

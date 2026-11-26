@@ -86,6 +86,15 @@ export async function readActiveComposerDraft(scope: Scope, targetMonth: string)
   return data ? parseRow(data, targetMonth) : null;
 }
 
+export async function readActiveComposerDraftRevision(scope: Scope, targetMonth: string) {
+  const { data, error } = await scope.supabase.from(table).select("draft_id,draft_version,semantic_state_digest")
+    .eq("owner_user_id", plannerUuid(scope.userId)).eq("household_id", plannerUuid(scope.householdId))
+    .eq("target_month", monthDate(targetMonth)).eq("lifecycle", "ACTIVE").maybeSingle();
+  if (error) throw error;
+  return data ? { id: plannerUuid(data.draft_id), version: plannerInteger(data.draft_version, 1),
+    digest: plannerDigestString(data.semantic_state_digest) } : null;
+}
+
 function failed(code: Exclude<ComposerDraftResult, { ok: true }>["code"], latest: ComposerDraftSnapshot | null = null): ComposerDraftResult {
   const messages = {
     CONFLICT: "Ce brouillon a changé dans un autre onglet ou appareil. Vos modifications locales restent disponibles.",

@@ -16,12 +16,15 @@ const unknownCodes = new Set(["COMPONENT_COST_UNKNOWN", "OWNED_SLOT_COST_UNKNOWN
   "CONTEXT_COMPONENT_SLOT_UNRESOLVED", "CONTEXT_SLOT_BINDING_UNRESOLVED", "MOBILITY_PRICING_UNRESOLVED",
   "MOBILITY_RELATION_NEEDS_CHOICE", "MOBILITY_DIRECTION_UNRESOLVED"]);
 const unknown = (plan: CompiledSemanticPlanV1) => plan.constraints.some(c => unknownCodes.has(c.code));
+export function planEconomicRemainder(compiled: CompiledSemanticPlanV1, scenario: MonthScenario) {
+  return unknown(compiled) ? null : scenario.economicPlan?.scenarios.central ?? null;
+}
 /** A projection of the financial owner's result and compiled evidence, never a sum
  * of Board cards. Gross Contexts are an explanatory lens, not an additive total. */
 export function buildPlanProjection(world: PlanningWorldFacts, state: PlanSemanticStateV1, compiled: CompiledSemanticPlanV1,
   scenario: MonthScenario, baselineCompiled: CompiledSemanticPlanV1, baselineScenario: MonthScenario): PlanProjectionV1 {
-  const plan = scenario.economicPlan, remainder = unknown(compiled) ? null : plan?.scenarios.central ?? null;
-  const before = unknown(baselineCompiled) ? null : baselineScenario.economicPlan?.scenarios.central ?? null;
+  const plan = scenario.economicPlan, remainder = planEconomicRemainder(compiled, scenario);
+  const before = planEconomicRemainder(baselineCompiled, baselineScenario);
   const mobilityTotal = (key: "economicFuel" | "cashTransport") => compiled.journeyPrices.length !== compiled.journeys.length
     || compiled.journeyPrices.some(p => p[key] === null) ? null : key === "economicFuel"
       ? sum([structuralMobility, ...items.filter(({ line }) => line.assetKey === "transport:fuel_usage").map(({ line }) => plannedLineGross(line))])

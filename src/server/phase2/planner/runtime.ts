@@ -46,7 +46,7 @@ export async function authorizedPlanner(options: { readCacheMonth?: string } = {
     });
     return deps.prepareWorld!(useJulyLegs ? { ...world, reconstructionLegs: await readJulyCarLegs(canonical) } : world, state, historical);
   };
-  return { householdId, userId: user.id, supabase, canonical, canonicalClient,
+  return { householdId, userId: user.id, supabase, canonical, canonicalClient, monthSourceCache: opening?.cache,
     deps: { ...deps, readComposerWorld: (owner: string, month: string) => owner === householdId && month === JULY_COMPOSER_MONTH
       ? Promise.resolve(reconstructionWorld(owner, month)) : readComposerWorld(owner, month), prepareWorld } };
 }
