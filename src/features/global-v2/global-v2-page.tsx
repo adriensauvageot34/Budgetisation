@@ -1138,7 +1138,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
             <span><strong>{capitalize(person)}</strong><small>Travail, habitudes et projets</small></span><ChevronRight size={16} aria-hidden />
           </button>)}
         </div></Atom>
-        <Atom name="shared-portraits" priority={52} minimum={1}><div className={atomic.actions}>
+        <Atom name="shared-portraits" priority={52} minimum={focus?.slot === "profiles" ? 0 : 1}><div className={atomic.actions}>
           <FocusLink onClick={() => open({ kind: "person", slot: "profiles" })}>Comparer les portraits</FocusLink>
           <FocusLink onClick={() => open({ kind: "person", slot: "profiles", vehicle: true })}>Voiture du foyer</FocusLink>
         </div></Atom>
