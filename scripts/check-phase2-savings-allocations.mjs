@@ -7,6 +7,7 @@ import { require } from "./lib/phase2-ts-loader.mjs";
 import { forecast, inputs } from "./check-phase2-october-contract.mjs";
 import { planningHarness, item, value } from "./lib/planned-actions-harness.mjs";
 import { fixtureCase } from "./lib/phase2-temporal-fixture.mjs";
+import { fixture as plannerFixture, state as plannerState, activity } from "./fixtures/planner-headless.mjs";
 
 const { monthInputsSchema, deriveMonthScenario } = require("@/server/phase2/month-scenario.ts");
 const { projectMonthDecision } = require("@/server/phase2/month-decision-projection.ts");
@@ -15,7 +16,8 @@ const { makeForecastCheckpoint, explainForecastChange, readForecastMemory } = re
 const { forecastTemporalPolicy } = require("@/server/phase2/forecast-temporal-policy.ts");
 const { projectMonthCalendar } = require("@/app/mois-a-venir/planned-expenses-projection.ts");
 const { changeSavingsSchedule, savingsScheduleDeltas, suggestSavingsMoves } = require("@/domain/phase2/savings-schedule.ts");
-const { savingsGoalProgress, summarizeSavingsGoals } = require("@/domain/phase2/savings-goals.ts");
+const { savingsGoalProgress, savingsReconciledReservations, summarizeSavingsGoals } = require("@/domain/phase2/savings-goals.ts");
+const { evaluatePlanScenario, evaluateDraftEconomicMargin } = require("@/server/phase2/planner/preview.ts");
 const monthly = require("@/server/phase2/month-inputs.ts");
 const realReadInputs = monthly.readMonthInputs, realSaveInputs = monthly.saveMonthInputs;
 const results = [], writes = [];
@@ -34,9 +36,26 @@ await test("SAVE-LIVRET-PURCHASE-PROGRESS", () => {
   assert.deepEqual([progress.saved, progress.purchased, progress.funded, progress.fundedComplete, progress.complete], [2000, 8000, 10000, true, false]);
   const refund = { ...goal.purchases[0], cents: 6000, refundedCents: 2000 };
   assert.equal(savingsGoalProgress({ ...goal, purchases: [refund] }).saved, 4000);
+  assert.deepEqual(savingsGoalProgress({ ...goal, purchases: undefined, purchaseAmounts: [refund] }),
+    savingsGoalProgress({ ...goal, purchases: [refund] }));
+  const reconciliation = { ...goal, allocations: [{ id: "reservation", month: "2026-12", cents: 8000, status: "planned", accounted: false }] };
+  assert.deepEqual(savingsReconciledReservations(reconciliation), [["2026-12", 8000]]);
+  assert.deepEqual(savingsReconciledReservations({ ...reconciliation, purchases: undefined, purchaseAmounts: [refund] }), [["2026-12", 6000]]);
   const summary = summarizeSavingsGoals([{ ...goal, purchasedComplete: true },
     { ...goal, goalId: "unpriced", optional: true, targetCents: null, allocations: [], purchases: [] }]);
   assert.deepEqual([summary.percent, summary.completed, summary.count, summary.unpriced, summary.optional], [100, 1, 2, 1, 1]);
+});
+
+await test("SAVE-MARGIN-IS-THE-COMPOSER-REMAINDER", () => {
+  const scenario = plannerFixture();
+  const base = { expectedActiveRevisionId: null, expectedActiveRevisionNumber: 0 };
+  const states = [plannerState(), plannerState([], [activity(200, null)])];
+  for (const state of states) {
+    const full = evaluatePlanScenario(scenario, state, base);
+    const margin = evaluateDraftEconomicMargin(scenario, state);
+    assert.equal(margin.amount, full.projection.plan.economicMonthEndRemainder);
+    assert.deepEqual(margin.scenario, full.scenario);
+  }
 });
 
 await test("SAVE-PLANNING-MILESTONES", () => {
@@ -141,6 +160,7 @@ const savingsRows = { phase2_savings_goal_month_entries: [], phase2_savings_purc
 h.client.from = table => {
   if (Object.hasOwn(savingsRows, table)) return {
     select() { return this; }, eq() { return this; }, gte() { return this; }, lt() { return this; }, not() { return this; }, order() { return this; },
+    range() { return this; },
     then(resolve) { return Promise.resolve({ data: savingsRows[table], error: null }).then(resolve); },
   };
   if (table !== "phase2_month_inputs") return originalFrom(table);

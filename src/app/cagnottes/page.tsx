@@ -7,9 +7,11 @@ import { withProductAuthentication } from "@/app/product-query";
 import { forecastWindowMonths } from "@/app/mois-a-venir/month-entry";
 import { getBootstrapSession } from "@/server/bootstrap/context";
 import { planningDate } from "@/server/phase2/planning-date";
-import { readSavingsGoals } from "@/server/phase2/savings-goals";
+import { readSavingsGoalSummaries, readSavingsProjectPurchases } from "@/server/phase2/savings-goals";
+import type { BootstrapSession } from "@/server/bootstrap/auth";
+import type { BootstrapHousehold, BootstrapHouseholdRevision, BootstrapPerson } from "@/server/bootstrap/types";
 import { readSavingsMargin } from "@/server/phase2/savings-margin";
-import { effectiveSavingsAllocations, savingsBudgetKinds, savingsEuros, savingsGoalProgress, savingsLivretUsed, savingsMoney, savingsPriorities, savingsProgressPercent, savingsProjects, savingsStatuses, savingsTemplates,
+import { effectiveSavingsAllocations, savingsBudgetKinds, savingsEuros, savingsGoalProgress, savingsLivretUsed, savingsMoney, savingsPriorities, savingsProgressPercent, savingsProjects, savingsReconciledReservations, savingsStatuses, savingsTemplates,
   type SavingsGoal, type SavingsGoalAllocation, type SavingsStatus } from "@/domain/phase2/savings-goals";
 import { savingsDeadlineGap, savingsFundingDate, savingsFundingMonths } from "@/domain/phase2/savings-schedule";
 import { ARCHIVED_REALIZED_MONTHS, IMPORTED_REALIZED_MONTHS, JULY_COMPOSER_MONTH, JULY_PILOT_DATE, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
@@ -57,7 +59,7 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
   const today = planningDate(context.household.timezone);
   const months = forecastWindowMonths.filter(month => month >= today.slice(0, 7));
   const month = typeof params.month === "string" && months.includes(params.month) ? params.month : months[0];
-  const goals = await readSavingsGoals(session.supabase, context.household.householdId);
+  const goals = await readSavingsGoalSummaries(session.supabase, context.household.householdId);
   const year = Number(today.slice(0, 4));
   const requestedSeason = typeof params.season === "string" && /^20\d{2}$/u.test(params.season) ? Number(params.season) : undefined;
   const selectedGoal = goals.find(goal => goal.goalId === params.goal);
@@ -97,9 +99,6 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
     ...(month ? { month } : {}), ...(season ? { season: String(season) } : {}), view: next,
     ...(project ? { project } : {}), ...(goal ? { goal } : {}),
   })}`;
-  const recipients = savingsRecipientPortraits(context.household, context.persons);
-  const paymentBadges = readSavingsPurchaseBadges(session, context.household.householdId,
-    displayed.filter(goal => allowed.has(goal.goalId) || selectedGoal === goal).flatMap(goal => goal.purchases?.map(item => item.operationId) ?? []));
   const assigned = goals.flatMap(effectiveSavingsAllocations).filter(row => row.month === month && !row.accounted)
     .reduce((sum, row) => sum + row.cents, 0);
   const notice = typeof params.notice === "string" && Object.hasOwn(notices, params.notice) ? notices[params.notice] : undefined;
@@ -109,16 +108,15 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
     .map(goal => ({ id: goal.goalId, label: [savingsProjects[goal.project], goal.season, goal.label].filter(Boolean).join(" · ") }));
   const initialProject = selectedGoal?.project ?? savingsProjectKeys.find(project => params.project === project);
   const reportId = typeof params.report === "string" ? params.report : undefined;
+  const household = context.household;
 
   const projects = groups.map(({ project, goals: projectGoals, season, seasons }) => {
     const cards = projectGoals.filter(goal => allowed.has(goal.goalId) || selectedGoal === goal);
     const name = [savingsProjects[project], season].filter(Boolean).join(" ");
-    const renderCard = (goal: SavingsGoal) => <GoalCard key={goal.goalId} goal={goal} months={months} month={month} today={today} destinations={destinations}
-      selected={selectedGoal === goal} reportId={reportId} recipients={recipients} paymentBadges={paymentBadges} />;
-    return { id: project, name, preview: cards.length > 0
+    return { id: project, name, href: viewHref(view, requestedSeason, project), preview: cards.length > 0
       ? <ProjectSummary project={project} goals={projectGoals} season={season} matching={view === "all" ? undefined : cards.length} /> : null,
-      detail: <>
-        {initialProject === project && notification}
+      detail: initialProject === project ? <>
+        {notification}
         <ProjectSummary project={project} goals={projectGoals} season={season} compact />
         {season && <div className={styles.seasonBar}>
           {seasons.length > 1 && <nav aria-label={`Années · ${savingsProjects[project]}`}>
@@ -136,19 +134,11 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
             </form>
           </details>}
         </div>}
-        {!cards.length ? <p className={styles.muted}>Aucun poste pour ce filtre.</p>
-          : project === "travel" ? <div className={styles.topics}>
-            {savingsTravelTopicKeys.map(topic => {
-              const topicCards = cards.filter(goal => (goal.travelTopic ?? "other") === topic);
-              if (!topicCards.length) return null;
-              const topicGoals = projectGoals.filter(goal => (goal.travelTopic ?? "other") === topic);
-              return <section className={styles.topic} key={topic} aria-labelledby={`voyage-${topic}`}>
-                <TravelTopicSummary topic={topic} goals={topicGoals} />
-                <div className={styles.cards}>{topicCards.map(renderCard)}</div>
-              </section>;
-            })}
-          </div> : <div className={styles.cards}>{cards.map(renderCard)}</div>}
-      </>,
+        {cards.length ? <Suspense fallback={<p className={styles.muted} role="status">Chargement des postes…</p>}>
+          <SavingsProjectGoals session={session} household={household} revision={context.revision} people={context.persons} cards={cards} projectGoals={projectGoals}
+            months={months} month={month} today={today} destinations={destinations} selectedId={selectedGoal?.goalId} reportId={reportId} />
+        </Suspense> : <p className={styles.muted}>Aucun poste pour ce filtre.</p>}
+      </> : null,
     };
   });
 
@@ -161,14 +151,14 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
       </details>
     </header>
     {!initialProject && notification}
-    <SavingsDashboard key={JSON.stringify([month, view, requestedSeason, initialProject, params.goal, reportId, params.notice, selectedGoal?.revision])}
+    <SavingsDashboard key={JSON.stringify([month, view, requestedSeason])} listHref={viewHref(view)}
       initial={initialProject ? { project: initialProject, anchor: reportId ? `reservation-${reportId}`
         : selectedGoal ? `cagnotte-${selectedGoal.goalId}` : undefined } : undefined}
       projects={projects} deadlines={near.slice(0, 3).map(({ goal, date }) => ({
         project: goal.project, id: goal.goalId, label: goal.label, date,
         when: date < today ? `${shortDate.format(new Date(date))} · En retard` : shortDate.format(new Date(date)),
         late: date < today,
-        href: allowed.has(goal.goalId) ? undefined : viewHref("all", goal.season ?? requestedSeason, goal.project, goal.goalId),
+        href: viewHref(view, requestedSeason, goal.project, goal.goalId),
       }))}
       overview={<section className={styles.monthPanel} aria-labelledby="savings-margin">
         <div className={styles.marginHeading}>
@@ -187,7 +177,7 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
       filters={<div className={styles.listBar}>
         <nav aria-label="Filtrer les cagnottes" className={styles.tabs}>
           {(Object.keys(filters) as (keyof typeof filters)[]).map(key =>
-            (key !== "archived" || matches.archived.length > 0) && <Link key={key} href={viewHref(key)} scroll={false}
+            (key !== "archived" || matches.archived.length > 0) && <Link key={key} href={viewHref(key)} scroll={false} prefetch={false}
               aria-current={view === key ? "page" : undefined}>{filters[key]}{key !== "all" && <span>{matches[key].length}</span>}</Link>)}
         </nav>
         {view === "all" && hasNewTemplates && <form action={addSavingsTemplates}>
@@ -202,6 +192,36 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
       </section>} />
   </div>;
 }
+
+async function SavingsProjectGoals({ session, household, revision, people, cards, projectGoals, months, month, today, destinations, selectedId, reportId }: {
+  session: BootstrapSession; household: BootstrapHousehold; revision: BootstrapHouseholdRevision | null; people: readonly BootstrapPerson[];
+  cards: SavingsGoal[]; projectGoals: SavingsGoal[]; months: readonly string[]; month?: string; today: string;
+  destinations: { id: string; label: string }[]; selectedId?: string; reportId?: string;
+}) {
+  let purchases;
+  try {
+    purchases = await readSavingsProjectPurchases(session.supabase, household.householdId, session.user.id, cards, revision);
+  } catch {
+    return <p className={styles.warning} role="alert">Impossible de charger les postes. Ferme le projet et réessaie.</p>;
+  }
+  const byGoal = Object.groupBy(purchases, item => item.goalId);
+  const recipients = savingsRecipientPortraits(household, people);
+  const paymentBadges = readSavingsPurchaseBadges(session, household.householdId, purchases.map(item => item.operationId));
+  const renderCard = (goal: SavingsGoal) => <GoalCard key={goal.goalId} goal={{ ...goal, purchases: byGoal[goal.goalId] ?? [] }}
+    months={months} month={month} today={today} destinations={destinations} selected={selectedId === goal.goalId}
+    reportId={reportId} recipients={recipients} paymentBadges={paymentBadges} />;
+  if (cards[0]?.project !== "travel") return <div className={styles.cards}>{cards.map(renderCard)}</div>;
+  return <div className={styles.topics}>{savingsTravelTopicKeys.map(topic => {
+    const topicCards = cards.filter(goal => (goal.travelTopic ?? "other") === topic);
+    if (!topicCards.length) return null;
+    const topicGoals = projectGoals.filter(goal => (goal.travelTopic ?? "other") === topic);
+    return <section className={styles.topic} key={topic} aria-labelledby={`voyage-${topic}`}>
+      <TravelTopicSummary topic={topic} goals={topicGoals} />
+      <div className={styles.cards}>{topicCards.map(renderCard)}</div>
+    </section>;
+  })}</div>;
+}
+
 async function MonthBalance({ month, reserved }: { month: string; reserved: number }) {
   const { cents: balance, limits } = await readSavingsMargin(month);
   return <div className={styles.monthBalance}>
@@ -233,6 +253,7 @@ function GoalCard({ goal, months, month, today, selected, reportId, destinations
   const allocations = effectiveSavingsAllocations(goal).sort((a, b) => a.month.localeCompare(b.month) || a.id.localeCompare(b.id));
   const Heading = goal.project === "travel" ? "h4" : "h3";
   const hasPurchases = !!goal.purchases?.length;
+  const reconciled = savingsReconciledReservations(goal);
   const canLink = !goal.abandoned && !progress.complete;
   const action = hasPurchases ? "Voir les achats" : goal.abandoned || progress.complete ? "Voir le suivi"
     : !target ? "Chiffrer" : (progress.unassigned ?? 0) > 0 && payableMonths.length > 0 ? "Planifier" : "Lier un achat";
@@ -277,6 +298,9 @@ function GoalCard({ goal, months, month, today, selected, reportId, destinations
       {hasPurchases && <Suspense fallback={<PurchaseList goal={goal} portraits={recipients} />}>
         <PurchaseListWithBadges goal={goal} portraits={recipients} badges={paymentBadges} />
       </Suspense>}
+      {reconciled.map(([matchingMonth, cents]) => <p key={matchingMonth} className={styles.footnote}>
+        {monthLabel(matchingMonth)} · {savingsMoney(cents)} de réservation couverts par les achats liés du mois
+      </p>)}
       {(progress.unassigned ?? 0) > 0 && payableMonths.length > 0 && <SavingsFundingPlanner key={goal.revision}
         goalId={goal.goalId} revision={goal.revision} months={monthChoices(payableMonths)} selected={month} cutoff={cutoff ?? null}
         remaining={progress.unassigned!} />}

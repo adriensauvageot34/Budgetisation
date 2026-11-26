@@ -19,10 +19,12 @@ export type SavingsPurchaseItem = {
   id: string; goalId: string | null; article: string; recipient: string | null; grossCents: number; refundedCents: number; livretCents?: number;
 };
 export type SavingsPurchase = SavingsPurchaseItem & { operationId: string; goalId: string; date: string; label: string; cents: number };
+export type SavingsPurchaseAmount = Pick<SavingsPurchase, "goalId" | "date" | "cents" | "livretCents">;
 export type SavingsGoal = {
   goalId: string; label: string; project: SavingsProject; targetCents: number | null; deadline: string | null;
   templateKey: string | null; travelTopic: SavingsTravelTopic | null; revision: number; allocations: SavingsGoalAllocation[];
   purchases?: readonly SavingsPurchase[];
+  purchaseAmounts?: readonly SavingsPurchaseAmount[];
   priority?: SavingsPriority;
   plannedPurchaseDate?: string | null;
   budgetKind?: SavingsBudgetKind;
@@ -58,7 +60,7 @@ export function savingsPurchaseTotals(items: readonly Pick<SavingsPurchaseItem, 
 }
 
 export function savingsAllocationsAfterPurchases<T extends SavingsGoalAllocation>(
-  allocations: readonly T[], purchases: readonly SavingsPurchase[], goalOf: (row: T) => string,
+  allocations: readonly T[], purchases: readonly SavingsPurchaseAmount[], goalOf: (row: T) => string,
 ): T[] {
   if (!purchases.length) return [...allocations];
   const paidByMonth = new Map<string, number>();
@@ -78,7 +80,19 @@ export function savingsAllocationsAfterPurchases<T extends SavingsGoalAllocation
 export function effectiveSavingsAllocations(goal: SavingsGoal) {
   const active = goal.purchasedComplete || goal.abandoned ? goal.allocations.filter(row => row.status !== "planned") : goal.allocations;
   return savingsAllocationsAfterPurchases([...active].sort((a, b) => a.id.localeCompare(b.id)),
-    goal.purchases ?? [], () => goal.goalId);
+    goal.purchases ?? goal.purchaseAmounts ?? [], () => goal.goalId);
+}
+
+export function savingsReconciledReservations(goal: SavingsGoal) {
+  if (goal.abandoned || goal.purchasedComplete) return [];
+  const remaining = new Map(effectiveSavingsAllocations(goal).map(row => [row.id, row.cents]));
+  const reconciled = new Map<string, number>();
+  for (const row of goal.allocations) {
+    if (row.status !== "planned") continue;
+    const consumed = row.cents - (remaining.get(row.id) ?? 0);
+    if (consumed > 0) reconciled.set(row.month, (reconciled.get(row.month) ?? 0) + consumed);
+  }
+  return [...reconciled].sort(([a], [b]) => a.localeCompare(b));
 }
 
 export const savingsLivretUsed = (item: Pick<SavingsPurchaseItem, "livretCents" | "grossCents" | "refundedCents">) =>
@@ -87,10 +101,11 @@ export const savingsLivretUsed = (item: Pick<SavingsPurchaseItem, "livretCents" 
 export function savingsGoalProgress(goal: SavingsGoal) {
   const planned = effectiveSavingsAllocations(goal).filter(row => row.status === "planned").reduce((sum, row) => sum + row.cents, 0);
   const deposited = goal.allocations.filter(row => row.status === "saved").reduce((sum, row) => sum + row.cents, 0);
-  const used = (goal.purchases ?? []).reduce((sum, row) => sum + savingsLivretUsed(row), 0);
+  const purchases = goal.purchases ?? goal.purchaseAmounts ?? [];
+  const used = purchases.reduce((sum, row) => sum + Math.min(row.livretCents ?? 0, row.cents), 0);
   const saved = deposited + (goal.livretTransfers ?? 0) - used;
   const purchased = goal.allocations.filter(row => row.status === "purchased").reduce((sum, row) => sum + row.cents, 0)
-    + (goal.purchases ?? []).reduce((sum, row) => sum + row.cents, 0);
+    + purchases.reduce((sum, row) => sum + row.cents, 0);
   const funded = saved + purchased;
   const closed = Boolean(goal.purchasedComplete || goal.abandoned);
   const remaining = closed ? 0 : goal.targetCents === null ? null : Math.max(0, goal.targetCents - funded);

@@ -6,7 +6,7 @@ import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state
 import type { PlanningWorldFacts, PlannerExpectedBase, PlanScenarioPreview, CompiledSemanticPlanV1 } from "@/domain/phase2/planner/compiler-contract";
 import { compileSemanticPlan, jsonEnvelope, PLANNER_COMPILER_VERSION } from "./compiler";
 import { deriveCompiledMonthScenario } from "./financial-adapter";
-import { buildPlanProjection, PLAN_PROJECTION_MODEL } from "./projection";
+import { buildPlanProjection, PLAN_PROJECTION_MODEL, planEconomicRemainder } from "./projection";
 import { mutatePlanSemanticState } from "./semantic-mutations";
 import { materializePlanSlots } from "./plan-slot-resolver";
 import { snapshotSync } from "./snapshot-observation";
@@ -47,17 +47,29 @@ export function evaluateHistoricalPlanScenario(world: PlanningWorldFacts, revisi
 export function evaluatePlanMutation(world:PlanningWorldFacts,semanticState:PlanSemanticStateV1,base:PlannerExpectedBase):PlanScenarioPreview {
   return evaluate(world,semanticState,base,false);
 }
-function evaluate(world:PlanningWorldFacts,semanticState:PlanSemanticStateV1,base:PlannerExpectedBase,includeMarginals:boolean,historical?:HistoricalControlAdmission):PlanScenarioPreview {
-  return snapshotSync("Compiler_Finance_V2", () => {
+function compileFinancialScenario(world: PlanningWorldFacts, semanticState: PlanSemanticStateV1, historical?: HistoricalControlAdmission) {
   const state = parsePlanSemanticState(semanticState);
   const input = { baseline: world.baseline, semanticState: state, externalIntents: world.externalIntents, world,
     compilerVersion: PLANNER_COMPILER_VERSION, modelVersions: { ...world.modelVersions, projection: PLAN_PROJECTION_MODEL } };
   const compiled = compileSemanticPlan(input, historical);
+  return { state, input, compiled, scenario: deriveCompiledMonthScenario(world, compiled) };
+}
+
+export function evaluateDraftEconomicMargin(world: PlanningWorldFacts, semanticState: PlanSemanticStateV1) {
+  return snapshotSync("Compiler_Finance_V2_Margin", () => {
+    const { compiled, scenario } = compileFinancialScenario(world, semanticState);
+    return { scenario, amount: planEconomicRemainder(compiled, scenario) };
+  });
+}
+
+function evaluate(world:PlanningWorldFacts,semanticState:PlanSemanticStateV1,base:PlannerExpectedBase,includeMarginals:boolean,historical?:HistoricalControlAdmission):PlanScenarioPreview {
+  return snapshotSync("Compiler_Finance_V2", () => {
+  const { state, input, compiled, scenario } = compileFinancialScenario(world, semanticState, historical);
   const referenceState = emptyPlanSemanticState(state.targetMonth);
   const baselineCompiled = isSemanticallyNeutralPlanEvaluation(world, state, referenceState, compiled, input.compilerVersion)
     ? compiled : compileSemanticPlan({ ...input, semanticState: referenceState,
     forcedOwnedSlotKeys: compiled.financialAdapterInput.adapterManifest.planOwnedDecisionSlots });
-  const scenario = deriveCompiledMonthScenario(world, compiled), baselineScenario = baselineCompiled === compiled
+  const baselineScenario = baselineCompiled === compiled
     ? scenario : deriveCompiledMonthScenario(world, baselineCompiled);
   const initial = buildPlanProjection(world, state, compiled, scenario, baselineCompiled, baselineScenario);
   const marginal = (targetRef: string, makeState: () => PlanSemanticStateV1) => {
