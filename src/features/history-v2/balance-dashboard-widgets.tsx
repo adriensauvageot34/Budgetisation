@@ -78,6 +78,10 @@ function subscribeToCompactPages(onChange: () => void) {
   return () => media.removeEventListener("change", onChange);
 }
 
+export function useShortBalance() {
+  return useSyncExternalStore(subscribeToCompactPages, () => window.matchMedia(compactPageQuery).matches, () => false);
+}
+
 export function PagedRows<T>({ items, size = 3, label, children }: {
   readonly items: readonly T[];
   readonly size?: number;
@@ -85,7 +89,7 @@ export function PagedRows<T>({ items, size = 3, label, children }: {
   readonly children: (items: readonly T[]) => ReactNode;
 }) {
   const [offset, setOffset] = useState(0);
-  const compact = useSyncExternalStore(subscribeToCompactPages, () => window.matchMedia(compactPageQuery).matches, () => false);
+  const compact = useShortBalance();
   const pageSize = Math.min(size, compact ? 2 : 3);
   const pages = Math.ceil(items.length / pageSize);
   const page = Math.max(0, Math.min(Math.floor(offset / pageSize), pages - 1));
