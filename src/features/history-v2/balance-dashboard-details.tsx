@@ -288,7 +288,7 @@ function LifeDetail({ model, onOpen }: { readonly model: MonthLifeMoneyReadModel
     <DetailGroup title="Activités du mois">
       <DisplayState node={model.activities}>{collection => <CollectionState collection={collection}>{items =>
         <PagedRows label="Activités" items={items}>{rows => rows.map(row =>
-          <DetailLink key={row.activityTypeKey} label={row.label} end={formatCount(row.occurrences, "fois")}
+          <DetailLink key={row.activityTypeKey} label={row.label} end={formatCount(row.occurrences, "fois", "fois")}
             onClick={() => onOpen({ target: { kind: "activity", activityTypeKey: row.activityTypeKey }, label: row.label })} />
         )}</PagedRows>
       }</CollectionState>}</DisplayState>

@@ -177,6 +177,7 @@
 }
 .marginStats > div > :first-child { color: var(--muted-label); font-size: .75rem; line-height: 1.2; }
 .marginStats > div > :last-child { font-size: clamp(.79rem, 1.45vw, 1.26rem); font-weight: 820; line-height: 1.35; }
+.marginCompact { display: none; }
 .breakdown { display: grid; gap: 5px; }
 .stack { display: flex; height: 12px; overflow: hidden; border-radius: 99px; background: #e6dde9; }
 .stack > span { flex: 0 0 auto; background: #8d66c5; }
@@ -342,7 +343,16 @@
   .categoryPlot button > svg { width: 10px; }
   .panelFoot .zone { font-size: .68rem; }
   .marginStats { grid-template-columns: minmax(0, 1fr); gap: 4px; }
-  .marginStats > div { padding: 4px 5px; }
+  .marginStats > div {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 5px;
+  }
+  .marginStats > div > :first-child { font-size: .68rem; }
+  .marginStats > div > :last-child { white-space: nowrap; font-size: .73rem; }
+  .marginCompact { display: inline; }
+  .marginFull { display: none; }
   .legend { gap: 3px 9px; font-size: .71rem; }
   .lifeRows button { gap: 4px; padding: 4px; }
   .lifeRows button > span:last-child { display: none; }
