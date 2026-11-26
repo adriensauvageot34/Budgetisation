@@ -5,15 +5,15 @@ import type { DeclaredSavingsInput } from "@/domain/phase2/savings-allocations";
 
 type GoalRow = {
   goal_id: string; label: string; project: SavingsGoal["project"]; target_cents: number | null;
-  deadline: string | null; template_key: string | null; revision: number; allocations: SavingsGoalAllocation[];
+  deadline: string | null; template_key: string | null; travel_topic: SavingsGoal["travelTopic"]; revision: number; allocations: SavingsGoalAllocation[];
 };
 type MonthRow = Pick<GoalRow, "goal_id" | "label" | "project" | "deadline"> &
   Omit<SavingsGoalAllocation, "month"> & { target_month: string };
 
-const columns = "goal_id,label,project,target_cents,deadline,template_key,revision,allocations";
+const columns = "goal_id,label,project,target_cents,deadline,template_key,travel_topic,revision,allocations";
 function fromRow(row: GoalRow): SavingsGoal {
   return { goalId: row.goal_id, label: row.label, project: row.project, targetCents: row.target_cents,
-    deadline: row.deadline, templateKey: row.template_key, revision: row.revision, allocations: row.allocations };
+    deadline: row.deadline, templateKey: row.template_key, travelTopic: row.travel_topic, revision: row.revision, allocations: row.allocations };
 }
 
 export async function readSavingsGoals(client: SupabaseClient, householdId: string): Promise<SavingsGoal[]> {

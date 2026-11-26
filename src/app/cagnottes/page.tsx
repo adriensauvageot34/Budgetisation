@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowUpRight, CalendarDays, ChevronDown, Plus, WalletCards } from "lucide-react";
+import { ArrowUpRight, CalendarDays, ChevronDown, Plus } from "lucide-react";
 import { withProductAuthentication } from "@/app/product-query";
 import { forecastWindowMonths } from "@/app/mois-a-venir/month-entry";
 import { getBootstrapSession } from "@/server/bootstrap/context";
@@ -13,21 +13,16 @@ import { readActiveComposerDraft } from "@/server/phase2/planner/composer-draft-
 import { resolveEffectiveMonthScenario } from "@/server/phase2/planner/effective-month-scenario";
 import { readMonthComposer } from "@/server/phase2/planner/read-model";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
-import { savingsEuros, savingsGoalProgress, savingsMoney, savingsProjects, savingsStatuses, savingsTemplates,
-  type SavingsGoal, type SavingsGoalAllocation, type SavingsProject } from "@/domain/phase2/savings-goals";
+import { savingsEuros, savingsGoalProgress, savingsMoney, savingsProgressPercent, savingsProjects, savingsStatuses, savingsTemplates,
+  summarizeSavingsGoals, type SavingsGoal, type SavingsGoalAllocation } from "@/domain/phase2/savings-goals";
 import { addSavingsTemplates, changeSavingsAllocation, saveSavingsGoal } from "./actions";
+import { GoalProjectFields } from "./goal-project-fields";
+import { FundingTrack, goalArt, projectArt, ProjectSummary, savingsProjectKeys, savingsTravelTopicKeys, TravelTopicSummary } from "./savings-presentation";
 import styles from "./savings.module.css";
 
 export const metadata = { title: "Centre des cagnottes" };
 export const dynamic = "force-dynamic";
 
-const art: Record<SavingsProject, string> = {
-  birthday: "/planned-visuals/composer/presets/gift-present.webp",
-  christmas: "/planned-visuals/builder/clay/misc/gift.webp",
-  travel: "/planned-visuals/builder/clay/intent/travel.webp",
-  other: "/analyse-globale/clay/expenses.webp",
-};
-const projects = Object.keys(savingsProjects) as SavingsProject[];
 const monthLabel = (month: string) => new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" })
   .format(new Date(`${month}-01T12:00:00Z`));
 const dateLabel = (date: string) => new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
@@ -53,11 +48,8 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
   const filled = goals.filter(goal => savingsGoalProgress(goal).complete);
   const completed = params.view === "complete";
   const visible = completed ? filled : goals.filter(goal => !savingsGoalProgress(goal).complete);
-  const totals = goals.reduce((sum, goal) => {
-    const progress = savingsGoalProgress(goal);
-    return { saved: sum.saved + progress.saved, purchased: sum.purchased + progress.purchased,
-      planned: sum.planned + progress.planned };
-  }, { saved: 0, purchased: 0, planned: 0 });
+  const totals = summarizeSavingsGoals(goals);
+  const projects = savingsProjectKeys.filter(project => goals.some(goal => goal.project === project));
   const assigned = goals.flatMap(goal => goal.allocations).filter(row => row.month === month && !row.accounted)
     .reduce((sum, row) => sum + row.cents, 0);
   const notice = typeof params.notice === "string" && Object.hasOwn(notices, params.notice) ? notices[params.notice] : undefined;
@@ -96,24 +88,38 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
         <Link href={viewHref("active")} aria-current={!completed ? "page" : undefined}>En cours <span>{goals.length - filled.length}</span></Link>
         <Link href={viewHref("complete")} aria-current={completed ? "page" : undefined}>Remplies <span>{filled.length}</span></Link>
       </nav>
+      {projects.length > 1 && <nav className={styles.projectNav} aria-label="Accéder à un projet">
+        {projects.map(project => <a key={project} data-project={project} href={`#savings-${project}`}>{savingsProjects[project]}</a>)}
+      </nav>}
       {!completed && hasNewTemplates && <form action={addSavingsTemplates}>
         <input type="hidden" name="returnMonth" value={month ?? ""} />
         <button className={styles.quiet}><Plus size={15} aria-hidden /> Ajouter les postes de départ</button>
       </form>}
     </div>
     {visible.length === 0 && <section className={styles.empty}>
-      <Image src={art[completed ? "other" : "travel"]} width={84} height={70} alt="" />
+      <Image src={projectArt[completed ? "other" : "travel"]} width={84} height={70} alt="" />
       <h2>{completed ? "Aucune cagnotte remplie" : "Quels projets veux-tu financer ?"}</h2>
       <p>{completed ? "Les cagnottes financées par des achats ou par le livret apparaîtront ici."
         : goals.length ? "Tes cagnottes sont dans l’onglet Remplies." : "Ajoute les postes de départ pour les anniversaires, Noël et le voyage, ou crée ta première cagnotte."}</p>
     </section>}
     {projects.map(project => {
+      const projectGoals = goals.filter(goal => goal.project === project);
       const cards = visible.filter(goal => goal.project === project);
-      if (!cards.length) return null;
-      return <section className={styles.group} key={project} aria-labelledby={`savings-${project}`}>
-        <h2 id={`savings-${project}`}>{savingsProjects[project]}</h2>
-        <div className={styles.cards}>{cards.map(goal =>
-          <GoalCard key={goal.goalId} goal={goal} months={months} month={month} today={today} selected={params.goal === goal.goalId} />)}</div>
+      const renderCard = (goal: SavingsGoal) =>
+        <GoalCard key={goal.goalId} goal={goal} months={months} month={month} today={today} selected={params.goal === goal.goalId} />;
+      return <section className={styles.group} data-project={project} key={project} aria-labelledby={`savings-${project}`}>
+        <ProjectSummary project={project} goals={projectGoals} />
+        {project === "travel" ? <div className={styles.topics}>
+          {savingsTravelTopicKeys.map(topic => {
+            const topicGoals = projectGoals.filter(goal => (goal.travelTopic ?? "other") === topic);
+            if (!topicGoals.length) return null;
+            const topicCards = cards.filter(goal => (goal.travelTopic ?? "other") === topic);
+            return <section className={styles.topic} key={topic} aria-labelledby={`voyage-${topic}`}>
+              <TravelTopicSummary topic={topic} goals={topicGoals} />
+              {topicCards.length > 0 && <div className={styles.cards}>{topicCards.map(renderCard)}</div>}
+            </section>;
+          })}
+        </div> : cards.length > 0 && <div className={styles.cards}>{cards.map(renderCard)}</div>}
       </section>;
     })}
   </div>;
@@ -141,22 +147,22 @@ async function MonthBalance({ month, reserved }: { month: string; reserved: numb
 function GoalCard({ goal, months, month, today, selected }: { goal: SavingsGoal; months: readonly string[]; month?: string; today: string; selected: boolean }) {
   const progress = savingsGoalProgress(goal);
   const target = goal.targetCents ?? 0;
+  const percent = savingsProgressPercent(progress.funded, target);
   const payableMonths = months.filter(item => !goal.deadline || item <= goal.deadline.slice(0, 7));
   const allocations = [...goal.allocations].sort((a, b) => a.month.localeCompare(b.month) || a.id.localeCompare(b.id));
+  const Heading = goal.project === "travel" ? "h4" : "h3";
   return <article className={styles.card} data-project={goal.project}>
     <div className={styles.cardIntro}>
-      <Image src={art[goal.project]} width={53} height={53} alt="" />
-      <div><h3>{goal.label}</h3>
+      <Image src={goalArt(goal)} width={53} height={53} alt="" unoptimized />
+      <div><Heading>{goal.label}</Heading>
         <p className={goal.deadline && goal.deadline < today && !progress.complete ? styles.warning : styles.muted}>
           {goal.deadline ? dateLabel(goal.deadline) : "Échéance à préciser"}</p></div>
     </div>
     <div className={styles.cardMoney}>
       <strong>{target ? savingsMoney(progress.funded) : "Objectif à chiffrer"}</strong>
-      {target > 0 && <span>sur {savingsMoney(target)}</span>}
+      {target > 0 && <><span>sur {savingsMoney(target)}</span><span className={styles.percentChip}>{percent} % financés</span></>}
     </div>
-    {target > 0 && <div className={styles.track} aria-label={`${savingsMoney(progress.funded)} financés et ${savingsMoney(progress.planned)} prévus`}>
-      <span style={{ width: `${progress.funded / target * 100}%` }} /><span style={{ width: `${progress.planned / target * 100}%` }} />
-    </div>}
+    <FundingTrack budget={target} {...progress} label={`Financement · ${goal.label}`} />
     <p className={styles.footnote}>{progress.complete ? "Remplie" : (progress.unassigned ?? 0) > 0 ? `${savingsMoney(progress.unassigned!)} à affecter`
       : progress.planned > 0 ? `${savingsMoney(progress.planned)} prévus` : "Montant à renseigner"}</p>
     <details open={selected || undefined} className={styles.details}>
@@ -214,8 +220,7 @@ function GoalForm({ goal, month }: { goal?: SavingsGoal; month?: string }) {
   return <form action={saveSavingsGoal} className={styles.form}>
     <GoalFields goal={goal} month={month} />
     <label>Nom de la cagnotte<input name="label" required maxLength={100} defaultValue={goal?.label} placeholder="Ex. cadeau de Noël pour…" /></label>
-    <label>Projet<select name="project" defaultValue={goal?.project ?? "other"}>
-      {projects.map(project => <option key={project} value={project}>{savingsProjects[project]}</option>)}</select></label>
+    <GoalProjectFields initialProject={goal?.project} initialTopic={goal?.travelTopic} />
     <label>Objectif en euros<input name="target" inputMode="decimal" defaultValue={goal?.targetCents == null ? "" : savingsEuros(goal.targetCents)} /></label>
     <label>Échéance<input name="deadline" type="date" defaultValue={goal?.deadline ?? ""} /></label>
     <button className={styles.primary}>{goal ? "Enregistrer l’objectif" : "Créer la cagnotte"}</button>

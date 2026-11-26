@@ -7,7 +7,7 @@ import { withProductAuthentication } from "@/app/product-query";
 import { forecastWindowMonths } from "@/app/mois-a-venir/month-entry";
 import { parseLocalDate } from "@/core/time";
 import { plannerUuid } from "@/domain/phase2/planner/json";
-import { maxSavingsCents, savingsGoalProgress, savingsProjects, savingsStatuses, savingsTemplates,
+import { maxSavingsCents, savingsGoalProgress, savingsProjects, savingsStatuses, savingsTemplates, savingsTravelTopics,
   type SavingsGoalAllocation, type SavingsProject, type SavingsStatus } from "@/domain/phase2/savings-goals";
 import { getBootstrapSession } from "@/server/bootstrap/context";
 import { planningDate } from "@/server/phase2/planning-date";
@@ -62,6 +62,7 @@ export async function addSavingsTemplates(form: FormData) {
   await mutate(form, async ({ client, householdId }) => {
     const { error } = await client.from("phase2_savings_goals").upsert(savingsTemplates.map(template => ({
       household_id: householdId, label: template.label, project: template.project, deadline: template.deadline, template_key: template.key,
+      travel_topic: template.travelTopic ?? null,
     })), { onConflict: "household_id,template_key", ignoreDuplicates: true });
     if (error) throw error;
   });
@@ -76,7 +77,9 @@ export async function saveSavingsGoal(form: FormData) {
       try { deadline = parseLocalDate(date); } catch { throw new TypeError("fields"); }
     }
     const amount = field(form, "target");
-    const values = { label, project, deadline, target_cents: amount ? cents(amount) : null };
+    const travelTopic = project === "travel" ? field(form, "travelTopic") || "other" : null;
+    if (travelTopic !== null && !Object.hasOwn(savingsTravelTopics, travelTopic)) throw new TypeError("fields");
+    const values = { label, project, deadline, target_cents: amount ? cents(amount) : null, travel_topic: travelTopic };
     const id = field(form, "goalId");
     if (id) {
       await updateGoal(owner, plannerUuid(id), Number(field(form, "revision")), values);
