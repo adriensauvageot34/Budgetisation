@@ -3,6 +3,8 @@
 import { useId, useRef, useState, type ReactNode } from "react";
 import { ArrowDownRight, ArrowLeft, ArrowUpRight, ChartNoAxesColumn, ChevronDown, Landmark, MapPin, SlidersHorizontal, Sparkles, Wallet, X } from "lucide-react";
 import type { YearMonth } from "@/core/time";
+import type { MetricValue } from "@/core/history-v2";
+import type { Money } from "@/core/money";
 import type { MonthBalanceSummaryReadModel, MonthCategoriesReadModel, MonthLifeMoneyReadModel, MonthSpendingNatureReadModel } from "@/query-api";
 import { BalanceDetail, type BalanceTarget, type DetailSelection, type OpenDetail } from "./balance-dashboard-details";
 import { AmountBar, AmountBars, chartMaximum, metricValue, stateValue, visibleValue } from "./balance-dashboard-widgets";
@@ -253,8 +255,8 @@ function MarginCard({ model }: { readonly model: MonthSpendingNatureReadModel })
   const fixedVariable = metricValue(visibleValue(model.behavior)?.result);
   return <>
     <div className={styles.marginStats}>
-      <div><span>Ajustable maintenant</span>{matrix ? <MoneyMetric metric={matrix.immediateMargin} /> : <strong>À établir</strong>}</div>
-      <div><span>Ajustable à moyen terme</span>{matrix ? <MoneyMetric metric={matrix.mediumMargin} /> : <strong>À établir</strong>}</div>
+      <div><span>Ajustable maintenant</span><MarginAmount metric={matrix?.immediateMargin} /></div>
+      <div><span>Ajustable à moyen terme</span><MarginAmount metric={matrix?.mediumMargin} /></div>
     </div>
     {fixedVariable?.length ? <div className={styles.breakdown}>
       <div className={styles.stack} aria-hidden="true">
@@ -268,6 +270,18 @@ function MarginCard({ model }: { readonly model: MonthSpendingNatureReadModel })
       </div>
     </div> : <p className={styles.note}>Répartition fixe et variable indisponible.</p>}
   </>;
+}
+
+function MarginAmount({ metric }: { readonly metric?: MetricValue<Money> }) {
+  if (!metric) return <strong>À établir</strong>;
+  if (metric.status !== "PARTIAL" || metric.partialMeaning !== "LOWER_BOUND") return <MoneyMetric metric={metric} />;
+  return <span>
+    <span className={styles.marginFull}><MoneyMetric metric={metric} /></span>
+    <span className={styles.marginCompact}>
+      <span aria-hidden="true">≥ </span><span className="sr-only">Au moins </span>
+      <MoneyMetric metric={metric} partialDisplay="value-only" />
+    </span>
+  </span>;
 }
 
 function LifeCard({ model, onOpen }: { readonly model: MonthLifeMoneyReadModel; readonly onOpen: OpenDetail }) {
@@ -284,7 +298,7 @@ function LifeCard({ model, onOpen }: { readonly model: MonthLifeMoneyReadModel; 
     </button></li>}
     {activity && <li><button type="button" onClick={() => onOpen({ target: { kind: "activity", activityTypeKey: activity.activityTypeKey }, label: activity.label })}>
       <ChartNoAxesColumn size={16} aria-hidden /><span><small>Activité du mois</small><strong title={activity.label}>{activity.label}</strong></span>
-      <span>{metricValue(activity.cost) === undefined ? formatCount(activity.occurrences, "fois") : <MoneyMetric metric={activity.cost} />}</span>
+      <span>{metricValue(activity.cost) === undefined ? formatCount(activity.occurrences, "fois", "fois") : <MoneyMetric metric={activity.cost} />}</span>
     </button></li>}
     {place && <li><button type="button" onClick={() => onOpen({ target: { kind: "place", placeId: place.placeId }, label: place.label })}>
       <MapPin size={16} aria-hidden /><span><small>Lieu fréquenté</small><strong title={place.label}>{place.label}</strong></span>
