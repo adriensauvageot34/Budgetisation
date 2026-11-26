@@ -199,11 +199,9 @@ function CategoryDetail({ scope, id, labels }: { readonly scope: HistoryScope; r
         {entries.length ? <PagedRows label="Sous-catégories" items={entries}>{rows => <AmountBars rows={rows} maximum={chartMaximum(entries)} />}</PagedRows>
           : <p className={styles.note}>Pas assez de données pour détailler un mois habituel.</p>}
       </DetailGroup>
-      <DetailGroup title="Nature des dépenses du mois">
-        <CategoryAxis label="Nécessité" axis={visibleValue(model.classificationViews.necessity)} />
-        <CategoryAxis label="Fixes et variables" axis={visibleValue(model.classificationViews.behavior)} />
-        <CategoryAxis label="Quotidien et hors quotidien" axis={visibleValue(model.classificationViews.lifeScope)} />
-      </DetailGroup>
+      <CategoryAxis label="Nécessité" axis={visibleValue(model.classificationViews.necessity)} />
+      <CategoryAxis label="Fixes et variables" axis={visibleValue(model.classificationViews.behavior)} />
+      <CategoryAxis label="Quotidien et hors quotidien" axis={visibleValue(model.classificationViews.lifeScope)} />
     </div>;
   }}</StateBoundary>;
 }
@@ -223,15 +221,17 @@ type PublishedAxis = import("@/analytics/history-v2/month-balance").SpendingAxis
 function CategoryAxis({ label, axis }: { readonly label: string; readonly axis?: PublishedAxis }) {
   const buckets = metricValue(axis?.result);
   if (!buckets?.length) return null;
-  return <div className={styles.classification}>
-    <h4>{label}</h4>
+  return <DetailGroup title={label}>
     <div className={styles.axisTrack} aria-hidden="true">
       {buckets.map((bucket, index) => bucket.shareOfActual === undefined ? null :
         <span key={bucket.key} data-series={index} style={{ width: `${Math.max(0, Math.min(100, bucket.shareOfActual * 100))}%` }} />)}
     </div>
-    <p>{buckets.map(bucket => `${spendingPresentationLabel(bucket.key)} ${bucket.shareOfActual === undefined ? formatMoney(bucket.amount) : `${Math.round(bucket.shareOfActual * 100)} %`}`).join(" · ")}</p>
-    {axis && Number(axis.unclassifiedAmount) !== 0 && <small>{formatMoney(axis.unclassifiedAmount)} non classés</small>}
-  </div>;
+    <ul className={styles.axisLegend}>{buckets.map((bucket, index) => <li key={bucket.key}>
+      <i data-series={index} aria-hidden /><span>{spendingPresentationLabel(bucket.key)}</span>
+      <strong>{bucket.shareOfActual === undefined ? formatMoney(bucket.amount) : `${Math.round(bucket.shareOfActual * 100)} %`}</strong>
+    </li>)}</ul>
+    {axis && Number(axis.unclassifiedAmount) !== 0 && <small className={styles.note}>{formatMoney(axis.unclassifiedAmount)} non classés</small>}
+  </DetailGroup>;
 }
 
 function SpendingDetail({ model, onOpen }: { readonly model: MonthSpendingNatureReadModel; readonly onOpen: OpenDetail }) {

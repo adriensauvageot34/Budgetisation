@@ -153,7 +153,7 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
   const topId = `${detailId}-top`;
   const bottomId = `${detailId}-bottom`;
   const activeTarget = openLane === null ? undefined : stacks[openLane].at(-1)?.target;
-  return <div className={styles.dashboard} onKeyDown={event => {
+  return <div className={styles.dashboard} data-detail-open={openLane !== null} onKeyDown={event => {
     if (event.key === "Escape" && openLane !== null) {
       event.preventDefault();
       close();
@@ -296,7 +296,7 @@ function MarginCard({ model }: { readonly model: MonthSpendingNatureReadModel })
       </div>
       <div className={styles.legend}>
         {fixedVariable.map(bucket => <span key={bucket.key} data-variable={bucket.key === "VARIABLE"}>
-          <i aria-hidden /> {bucket.key === "FIXED" ? "Fixes" : "Variables"} <strong>{formatMoney(bucket.amount)}</strong>{bucket.shareOfActual !== undefined && <small>{Math.round(bucket.shareOfActual * 100)} %</small>}
+          <i aria-hidden /> {bucket.key === "FIXED" ? "Fixes" : "Variables"} <strong className={styles.legendAmount}>{formatMoney(bucket.amount)}</strong>{bucket.shareOfActual !== undefined && <small>{Math.round(bucket.shareOfActual * 100)} %</small>}
         </span>)}
       </div>
     </div> : <p className={styles.note}>Répartition fixe et variable indisponible.</p>}

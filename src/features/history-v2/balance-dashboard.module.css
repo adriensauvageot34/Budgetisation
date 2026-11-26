@@ -317,13 +317,7 @@
 .pagedRows { min-width: 0; }
 .pagination { display: flex; align-items: center; justify-content: start; gap: 8px; margin-top: 4px; color: var(--muted-label); font-size: .75rem; }
 .pagination button:disabled { opacity: .48; cursor: default; }
-.classification { padding: 4px 0; border-bottom: 1px solid var(--border); font-size: .78rem; }
-.classification h4 { margin: 0; font-weight: 750; }
 .axisTrack { display: flex; height: 4px; margin-block: 2px; overflow: hidden; border-radius: 8px; background: #e8def0; }
-.axisTrack > span { background: #8b68bf; }
-.axisTrack > span[data-series="1"] { background: #bd78a5; }
-.axisTrack > span[data-series="2"] { background: #6b80b7; }
-.classification p,.classification small { margin: 2px 0 0; color: var(--muted-label); }
 .dashboard button:focus-visible { outline: 2px solid #7246ae; outline-offset: 1px; }
 .unavailable { padding: 13px; border-radius: 12px; background: #fff4f3; color: #703c53; }
 
@@ -452,4 +446,48 @@
   .lifeRows { gap: 2px; }
   .lifeRows button { padding-block: 2px; }
   .textButton { min-height: 19px; }
+}
+
+.axisLegend { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.axisLegend li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 5px; font-size: .77rem; }
+.axisLegend i { width: 7px; height: 7px; border-radius: 50%; }
+:is(.axisTrack > span, .axisLegend i) { background: #8b68bf; }
+:is(.axisTrack > span, .axisLegend i)[data-series="1"] { background: #bd78a5; }
+:is(.axisTrack > span, .axisLegend i)[data-series="2"] { background: #6b80b7; }
+
+@media (max-height: 850px) {
+  .dashboard[data-detail-open="true"] .panel { padding-block: 6px; }
+  .dashboard[data-detail-open="true"] .panelBody { gap: 4px; }
+  .dashboard[data-detail-open="true"] .comparisonPlot { height: 35px; }
+  .dashboard[data-detail-open="true"] .bigAmount { font-size: clamp(1.35rem, 2.4vw, 2.15rem); }
+  .dashboard[data-detail-open="true"] .categoryRing { width: 70px; }
+  .dashboard[data-detail-open="true"] .categoryPlot button { min-height: 21px; padding-block: 2px; }
+  .dashboard[data-detail-open="true"] .lifeRows li:nth-child(n+3) { display: none; }
+  .dashboard[data-detail-open="true"] .panelFoot { line-height: 1.15; }
+  .dashboard[data-detail-open="true"] .textButton { min-height: 19px; }
+  .detailGroup { padding: 5px 7px; }
+  .detailGroup h3 { font-size: .82rem; }
+}
+@media (max-height: 670px) {
+  .dashboard[data-detail-open="true"] .panelHeading { min-height: 24px; line-height: 1.13; }
+  .dashboard[data-detail-open="true"] .comparisonPlot { height: 25px; }
+  .dashboard[data-detail-open="true"] .categoryPlot li:nth-child(n+3) { display: none; }
+  .dashboard[data-detail-open="true"] .lifeRows li:nth-child(n+2) { display: none; }
+  .detailHeader { min-height: 24px; }
+  .detailHeader button, .pagination button { width: 24px; height: 24px; }
+}
+@media (max-width: 670px) {
+  .dashboard[data-detail-open="true"] .delta,
+  .dashboard[data-detail-open="true"] .comparisonLegend,
+  .dashboard[data-detail-open="true"] .panelFoot,
+  .dashboard[data-detail-open="true"] .legendAmount { display: none; }
+  .dashboard[data-detail-open="true"] .categoryChart .barTrack { height: 3px; }
+  .dashboard[data-detail-open="true"] .marginStats { gap: 2px; }
+  .dashboard[data-detail-open="true"] .marginStats > div { padding: 3px 4px; }
+  .dashboard[data-detail-open="true"] .marginStats > div > :first-child { font-size: .64rem; }
+  .dashboard[data-detail-open="true"] .stack { height: 8px; }
+  .dashboard[data-detail-open="true"] .legend { gap: 0 5px; }
+  .dashboard[data-detail-open="true"] .legend small { font-size: .67rem; }
+  .dashboard[data-detail-open="true"] .detailColumns { grid-auto-columns: minmax(min(100%, 225px), 1fr); }
+  .dashboard[data-detail-open="true"] .detailGroup { align-self: start; }
 }
