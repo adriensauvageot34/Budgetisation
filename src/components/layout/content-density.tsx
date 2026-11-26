@@ -50,6 +50,7 @@ export function useContentDensity(detailViewportSelector?: string) {
       }
       const style = getComputedStyle(container!);
       const available = container!.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      if (detailViewportSelector) container!.style.setProperty("--region-available-height", `${Math.max(0, available)}px`);
       for (const node of atoms) {
         if (!observed.has(node)) {
           resize.observe(node);
@@ -60,10 +61,14 @@ export function useContentDensity(detailViewportSelector?: string) {
 
       const detailViewport = detailViewportSelector ? content!.querySelector<HTMLElement>(detailViewportSelector) : null;
       if (detailViewport) {
-        detailViewport.style.removeProperty("--balanced-detail-height");
+        delete detailViewport.dataset.detailOverflow;
+        detailViewport.removeAttribute("tabindex");
         const deficit = content!.offsetHeight - available;
-        if (deficit > 0) {
-          detailViewport.style.setProperty("--balanced-detail-height", `${Math.max(72, detailViewport.clientHeight - deficit)}px`);
+        if (deficit > 0 && detailViewport.clientHeight > deficit) {
+          detailViewport.style.setProperty("--balanced-detail-height", `${Math.floor(detailViewport.clientHeight - deficit)}px`);
+          detailViewport.style.setProperty("--balanced-detail-width", `${detailViewport.clientWidth}px`);
+          detailViewport.dataset.detailOverflow = "";
+          detailViewport.tabIndex = 0;
         }
       }
 
