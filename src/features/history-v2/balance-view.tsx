@@ -189,10 +189,10 @@ function SpendingNature({ model, onSegment, workspace }: { readonly model: Month
         const projection = projections.get(spendingSegmentKey(segment));
         return <div key={bucket.key} className={styles.spendingBucket}>
           <button type="button" onClick={() => onSegment(segment)}>
-            <span>{spendingPresentationLabel(bucket.key)}</span>
+            <span className={workspace ? styles.segmentLabel : undefined}>{spendingPresentationLabel(bucket.key)}{workspace && <ArrowRight size={13} aria-hidden />}</span>
             <span><strong>{formatMoney(bucket.amount)}</strong><small>{bucket.shareOfActual === undefined ? "Part indisponible" : `${Math.round(bucket.shareOfActual * 100)} % du mois`}</small></span>
           </button>
-          <SpendingContributors projection={projection} />
+          {!workspace && <SpendingContributors projection={projection} />}
         </div>;
       })}</div>} />
       {Number(data.unclassifiedAmount) === 0 ? null : <p>{formatMoney(data.unclassifiedAmount)} non classés</p>}
@@ -217,10 +217,10 @@ function SpendingNature({ model, onSegment, workspace }: { readonly model: Month
             const projection = projections.get(spendingSegmentKey(segment));
             return <div key={cell.key} className={styles.spendingBucket}>
               <button type="button" onClick={() => onSegment(segment)}>
-                <span>{spendingPresentationLabel(cell.key)}</span>
+                <span className={workspace ? styles.segmentLabel : undefined}>{spendingPresentationLabel(cell.key)}{workspace && <ArrowRight size={13} aria-hidden />}</span>
                 <span><strong>{formatMoney(cell.amount)}</strong><small>{cell.shareOfActual === undefined ? "Part indisponible" : `${Math.round(cell.shareOfActual * 100)} % du mois`}</small></span>
               </button>
-              <SpendingContributors projection={projection} />
+              {!workspace && <SpendingContributors projection={projection} />}
             </div>;
           })}
         </div>}

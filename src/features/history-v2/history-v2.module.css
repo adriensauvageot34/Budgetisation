@@ -400,12 +400,13 @@ button.ribbon:hover, button.ribbon:focus-visible { outline: 2px solid #31564f; o
 .glassBalance .matrixToggle { margin-top: 5px; padding-block: 4px; }
 .glassBalance .axisCard h3 { margin: 0; }
 .glassBalance .axisCard button { padding-block: 5px; }
-.glassBalance .contributorList { gap: 1px; padding-bottom: 4px; }
-.glassBalance .lifeMoney { gap: 12px; }
+.glassBalance .segmentLabel { display: flex; align-items: center; gap: 6px; }
+.glassBalance .segmentLabel svg { flex: none; color: var(--accent-projection); }
+.glassBalance .lifeMoney { gap: 8px; }
 .glassBalance .lifeMoney h3 { margin: 0 0 4px; font-size: 1rem; font-weight: 750; }
-.glassBalance .lifeMoney :is(.activityCard, .momentCard, .placeCard) { gap: 3px; padding: 9px; font-size: .875rem; }
+.glassBalance .lifeMoney :is(.activityCard, .momentCard, .placeCard) { align-content: start; gap: 3px; padding: 8px; font-size: .875rem; line-height: 1.3; }
 .glassBalance .singleMoment .momentCard { min-height: 0; }
-.glassBalance .momentMedia { min-height: 42px; }
+.glassBalance .momentMedia { min-height: 36px; }
 .glassBalance .lifeRail {
   display: grid;
   grid-auto-flow: column;
