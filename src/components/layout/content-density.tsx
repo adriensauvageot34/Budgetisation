@@ -19,7 +19,7 @@ export function DensityAtom({ name, priority, minimum = 0, className, motionClas
   </div>;
 }
 
-export function useContentDensity() {
+export function useContentDensity(detailViewportSelector?: string) {
   const region = useRef<HTMLElement>(null);
   const flow = useRef<HTMLDivElement>(null);
 
@@ -58,6 +58,15 @@ export function useContentDensity() {
         node.dataset.density = node.dataset.minimum ?? "0";
       }
 
+      const detailViewport = detailViewportSelector ? content!.querySelector<HTMLElement>(detailViewportSelector) : null;
+      if (detailViewport) {
+        detailViewport.style.removeProperty("--balanced-detail-height");
+        const deficit = content!.offsetHeight - available;
+        if (deficit > 0) {
+          detailViewport.style.setProperty("--balanced-detail-height", `${Math.max(72, detailViewport.clientHeight - deficit)}px`);
+        }
+      }
+
       for (let target = 1; target <= 4; target++) {
         for (const node of atoms) {
           const previous = Number(node.dataset.density);
@@ -91,6 +100,6 @@ export function useContentDensity() {
       resize.disconnect();
       mutation.disconnect();
     };
-  }, []);
+  }, [detailViewportSelector]);
   return { region, flow };
 }
