@@ -573,7 +573,7 @@ function M2EntityDetail({ model, entityRef, certifiedThrough }: { readonly model
       if (item === undefined || value === undefined) return [];
       const display = item.typedMeasure?.kind === "RATIO" ? formatM2Ratio(value) : item.typedMeasure?.kind === "COUNT" ? `${integerFormatter.format(value)} mois` : formatMoney(value);
       return [<article key={id}><span>{label}</span><strong>{display}</strong></article>];
-    })}</div>{isCategory && currentValue !== undefined && referenceValue !== undefined && deltaValue !== undefined ? <article className={styles.m2ReferenceCard}><header><span>{period.targetLabel}</span><strong>{formatMoney(currentValue)}</strong></header><dl><div><dt>Référence</dt><dd>{formatMoney(referenceValue)}</dd></div><div><dt>Écart</dt><dd>{formatMoney(deltaValue, { signed: true })}{deltaValue === 0 || deltaRelativeValue === undefined ? null : <> · {formatM2Ratio(deltaRelativeValue)}</>}</dd></div></dl></article> : null}</section>
+    })}</div>{isCategory && currentValue !== undefined && referenceValue !== undefined && deltaValue !== undefined ? <article className={styles.m2ReferenceCard} data-detail-heading={period.targetLabel}><header><span>{period.targetLabel}</span><strong>{formatMoney(currentValue)}</strong></header><dl><div><dt>Référence</dt><dd>{formatMoney(referenceValue)}</dd></div><div><dt>Écart</dt><dd>{formatMoney(deltaValue, { signed: true })}{deltaValue === 0 || deltaRelativeValue === undefined ? null : <> · {formatM2Ratio(deltaRelativeValue)}</>}</dd></div></dl></article> : null}</section>
     {model.series.length === 0 ? null : isCategory ? <M2MonetarySeries title="Évolution mensuelle" series={model.series.slice(0, 1)} reference={reference} showLegend={false} showSummary={false} highlightLastPoint /> : <section aria-labelledby="m2-detail-evolution"><h3 id="m2-detail-evolution">Évolution sur la période</h3><M2MonetarySeries title="Montant mensuel" series={model.series.slice(0, 1)} /></section>}
     {model.rows.length === 0 ? null : <section aria-labelledby="m2-detail-composition"><h3 id="m2-detail-composition">{isCategory ? "Ce qui compose ce poste" : "Catégories qui contribuent à ce besoin"}</h3><M2MoneyRows rows={model.rows} onDetail={() => undefined} initialLimit={isCategory ? 5 : 10} {...(isCategory ? { expansionLabels: { all: "Voir les autres sous-catégories", fewer: "Réduire la liste" }, showRemainingCount: true } : {})} /></section>}
     {!isCategory && deltaValue !== undefined ? <section className={styles.m2DetailChange} aria-labelledby="m2-detail-change"><h3 id="m2-detail-change">Écart au niveau de référence</h3><p>En {period.targetLabel.toLocaleLowerCase("fr-FR")}, l’écart au niveau de référence est de <strong>{formatMoney(deltaValue, { signed: true })}</strong>{deltaRelativeValue === undefined ? null : <> ({formatM2Ratio(deltaRelativeValue)})</>}. Cette lecture ne déduit aucune cause.</p></section> : null}
@@ -871,20 +871,20 @@ function dashboardEventValue(event: DashboardEvent) {
 function AtomicTimeline({ model, open, selectedEvent }: { readonly model: DashboardTimeline; readonly open: OpenFocus; readonly selectedEvent?: DashboardEvent }) {
   const [selected, setSelected] = useState<string>();
   const [all, setAll] = useState(false);
-  const [page, setPage] = useState(0);
   const months = groupTimelineEvents(model.events.filter((event) => all || !("visibilityTier" in event) || event.visibilityTier === "PRINCIPAL")).flatMap((year) => year.months);
   const current = months.find(({ key }) => key === selected) ?? months.at(-1);
   const busiestMonth = Math.max(1, ...months.map(({ events }) => events.length));
   const events = current?.events ?? [];
-  const pageCount = Math.ceil(events.length / 4);
-  const currentPage = Math.max(0, Math.min(page, pageCount - 1));
+  const highlighted = events.find(({ eventRef }) => eventRef === selectedEvent?.eventRef);
+  const preview = events.slice(0, 4);
+  const visible = highlighted && !preview.includes(highlighted) ? [...preview.slice(0, 3), highlighted] : preview;
   return <>
     {months.length > 1 && <Atom name="event-months" priority={35}>
       <div className={atomic.timelineSummary}>
         <h3>Événements par mois</h3>
         <div className={atomic.ruler}>{months.map(({ key, events }) =>
           <button key={key} type="button" aria-pressed={current?.key === key} aria-label={`${capitalize(frenchMonth(key))} · ${events.length} événements`}
-            onClick={() => { setSelected(key); setPage(0); }}>
+            onClick={() => setSelected(key)}>
             <span className={atomic.barWell}><i style={{ height: `${events.length / busiestMonth * 100}%` }} /></span>
             <small>{frenchMonth(key, true).split(" ")[0]}</small>
           </button>)}</div>
@@ -892,21 +892,28 @@ function AtomicTimeline({ model, open, selectedEvent }: { readonly model: Dashbo
     </Atom>}
     <Atom name="timeline" priority={68} minimum={1}>
       <div className={atomic.timelineControls}>
-        <label className={atomic.monthLabel}>Événements <select aria-label="Mois des événements" value={current?.key ?? ""} onChange={(event) => { setSelected(event.currentTarget.value); setPage(0); }}>
+        <label className={atomic.monthLabel}>Événements <select aria-label="Mois des événements" value={current?.key ?? ""} onChange={(event) => setSelected(event.currentTarget.value)}>
           {months.length === 0 && <option value="">Aucun mois renseigné</option>}
           {months.map(({ key }) => <option key={key} value={key}>{capitalize(frenchMonth(key))}</option>)}
         </select></label>
-        <label className={atomic.checkbox}><input type="checkbox" checked={all} onChange={(event) => { setAll(event.currentTarget.checked); setPage(0); }} /> Tous les événements</label>
+        <label className={atomic.checkbox}><input type="checkbox" checked={all} onChange={(event) => setAll(event.currentTarget.checked)} /> Tous les événements</label>
       </div>
       {events.length === 0 ? <p className={atomic.note}>Aucun événement dans cette sélection.</p> : <div className={atomic.timelineStrip} aria-label="Événements au fil du mois">
-        {events.slice(currentPage * 4, currentPage * 4 + 4).map((event) => <button type="button" key={event.eventRef} aria-pressed={selectedEvent?.eventRef === event.eventRef} aria-label={`${event.canonicalName} · ${dashboardEventValue(event)}`}
+        {visible.map((event) => <button type="button" key={event.eventRef} aria-pressed={selectedEvent?.eventRef === event.eventRef} aria-label={`${event.canonicalName} · ${dashboardEventValue(event)}`}
           onClick={() => open({ kind: "event", slot: "life", event })}><i aria-hidden /><time dateTime={event.startDate}>{lifeMomentDates(event.startDate, false)?.split(" ").slice(0, 2).join(" ")}</time><strong title={event.canonicalName}>{event.canonicalName}</strong><small>{dashboardEventValue(event)}</small></button>)}
       </div>}
-      {pageCount > 1 && <div className={atomic.pagination} aria-label="Autres événements du mois">
-        <button type="button" disabled={currentPage <= 0} onClick={() => setPage(currentPage - 1)} aria-label="Événements précédents"><ChevronLeft size={14} /></button>
-        <span>{currentPage + 1} / {pageCount}</span>
-        <button type="button" disabled={currentPage + 1 >= pageCount} onClick={() => setPage(currentPage + 1)} aria-label="Événements suivants"><ChevronRight size={14} /></button>
-      </div>}
+      {events.length > preview.length && <label className={atomic.eventPicker}>
+        Ouvrir un événement
+        <select value={highlighted?.eventRef ?? ""} onChange={(event) => {
+          const item = events.find(({ eventRef }) => eventRef === event.currentTarget.value);
+          if (item) open({ kind: "event", slot: "life", event: item });
+        }}>
+          <option value="" disabled>Choisir par date ou par nom</option>
+          {events.map((event) => <option key={event.eventRef} value={event.eventRef}>
+            {lifeMomentDates(event.startDate, false)} · {event.canonicalName}
+          </option>)}
+        </select>
+      </label>}
     </Atom>
   </>;
 }

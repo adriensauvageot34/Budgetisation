@@ -1,27 +1,66 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import styles from "./global-atomic.module.css";
+
+type Destination = { readonly label: string; readonly offset: number };
+
+const headingSelector = "h2,h3,h4,h5,h6,summary,[data-detail-heading]";
+const rowSelector = "dt,li,article,button,a,p";
+
+function labelFor(element: HTMLElement) {
+  return (element.getAttribute("data-detail-heading") || element.getAttribute("aria-label")
+    || element.innerText || "").replace(/\s+/gu, " ").trim();
+}
+
+function measureDestinations(viewport: HTMLElement, content: HTMLElement): readonly Destination[] {
+  const width = viewport.clientWidth;
+  if (!width || viewport.scrollWidth <= width + 2) return [];
+  const gap = Number.parseFloat(getComputedStyle(content).columnGap) || 0;
+  const stride = width + gap;
+  const left = viewport.getBoundingClientRect().left - viewport.scrollLeft;
+  const destinations = new Map<number, { label: string; rank: number }>();
+  const find = (element: HTMLElement, rank: number) => {
+    const label = labelFor(element);
+    if (!label) return;
+    for (const fragment of element.getClientRects()) {
+      if (!fragment.width || !fragment.height) continue;
+      const column = Math.max(0, Math.floor((fragment.left - left + 2) / stride));
+      if ((destinations.get(column)?.rank ?? -1) >= rank) continue;
+      const excerpt = label.length > 72 ? `${label.slice(0, 69).trimEnd()}…` : label;
+      destinations.set(column, { label: excerpt, rank });
+    }
+  };
+  for (const element of content.querySelectorAll<HTMLElement>(headingSelector)) find(element, 2);
+  for (const element of content.querySelectorAll<HTMLElement>(rowSelector)) find(element, 1);
+  if (!destinations.has(0)) destinations.set(0, { label: "Vue d’ensemble", rank: 0 });
+  return [...destinations.entries()].sort(([a], [b]) => a - b).map(([column, item]) => ({
+    label: item.label, offset: Math.min(column * stride, viewport.scrollWidth - width),
+  }));
+}
 
 export function AtomicDetailPages({ children }: { readonly children: ReactNode }) {
   const region = useRef<HTMLDivElement>(null);
   const columns = useRef<HTMLDivElement>(null);
-  const [page, setPage] = useState(0);
-  const [count, setCount] = useState(1);
+  const [destinations, setDestinations] = useState<readonly Destination[]>([]);
+  const [offset, setOffset] = useState(0);
+  const choice = useRef<string | null>(null);
 
   useLayoutEffect(() => {
     const viewport = region.current;
     const content = columns.current;
     if (!viewport || !content) return;
+
     let frame = 0;
     function measure() {
       frame = 0;
-      if (!viewport || !content || viewport.clientWidth === 0) return;
-      const gap = Number.parseFloat(getComputedStyle(content).columnGap) || 0;
-      const stride = viewport.clientWidth + gap;
-      setCount(Math.max(1, Math.round((viewport.scrollWidth + gap) / stride)));
-      setPage(Math.round(viewport.scrollLeft / stride));
+      if (!viewport || !content) return;
+      const next = measureDestinations(viewport, content);
+      setDestinations((current) => current.length === next.length
+        && current.every((item, index) => item.label === next[index]?.label && item.offset === next[index]?.offset) ? current : next);
+      const active = next.find(({ label }) => label === choice.current);
+      if (active && Math.abs(viewport.scrollLeft - active.offset) > 1) viewport.scrollLeft = active.offset;
+      setOffset(viewport.scrollLeft);
     }
     function schedule() {
       if (!frame) frame = requestAnimationFrame(measure);
@@ -38,32 +77,36 @@ export function AtomicDetailPages({ children }: { readonly children: ReactNode }
     };
   }, []);
 
-  function goTo(next: number) {
-    const viewport = region.current;
-    const content = columns.current;
-    if (!viewport || !content) return;
-    const gap = Number.parseFloat(getComputedStyle(content).columnGap) || 0;
-    viewport.scrollTo({ left: next * (viewport.clientWidth + gap), behavior: "instant" });
-    setPage(next);
-  }
+  const selected = destinations.reduce<Destination | undefined>((nearest, item) =>
+    !nearest || Math.abs(item.offset - offset) < Math.abs(nearest.offset - offset) ? item : nearest, undefined);
 
   return <div className={styles.detailPages}>
-    <div ref={region} className={styles.detailViewport} onScroll={(event) => {
-      const gap = columns.current ? Number.parseFloat(getComputedStyle(columns.current).columnGap) || 0 : 0;
-      const viewport = event.currentTarget;
-      setPage(Math.round(viewport.scrollLeft / (viewport.clientWidth + gap)));
-    }} onFocusCapture={(event) => {
-      const viewport = event.currentTarget;
-      const gap = columns.current ? Number.parseFloat(getComputedStyle(columns.current).columnGap) || 0 : 0;
-      const left = event.target.getBoundingClientRect().left - viewport.getBoundingClientRect().left + viewport.scrollLeft;
-      goTo(Math.max(0, Math.floor((left + 1) / (viewport.clientWidth + gap))));
-    }}>
+    {destinations.length > 1 && <label className={styles.detailPicker}>
+      Aller directement à
+      <select value={selected?.offset ?? 0} onChange={(event) => {
+        const next = destinations.find((item) => item.offset === Number(event.currentTarget.value));
+        if (!next || !region.current) return;
+        choice.current = next.label;
+        region.current.scrollLeft = next.offset;
+        setOffset(next.offset);
+      }}>
+        {destinations.map((item) => <option key={item.offset} value={item.offset}>{item.label}</option>)}
+      </select>
+    </label>}
+    <div ref={region} className={styles.detailViewport} onScroll={(event) => setOffset(event.currentTarget.scrollLeft)}
+      onFocusCapture={(event) => {
+        const viewport = event.currentTarget;
+        const focus = event.target.getBoundingClientRect();
+        const bounds = viewport.getBoundingClientRect();
+        if (focus.left >= bounds.left - 1 && focus.right <= bounds.right + 1) return;
+        const x = focus.left - bounds.left + viewport.scrollLeft;
+        const target = destinations.findLast((item) => item.offset <= x + 2);
+        if (!target) return;
+        choice.current = target.label;
+        viewport.scrollLeft = target.offset;
+        setOffset(target.offset);
+      }}>
       <div ref={columns} className={styles.detailColumns}>{children}</div>
     </div>
-    <nav className={styles.pagination} aria-label="Pages du détail" hidden={count <= 1}>
-      <button type="button" disabled={page <= 0} onClick={() => goTo(page - 1)} aria-label="Page précédente du détail"><ChevronLeft size={15} /></button>
-      <span aria-live="polite">{page + 1} / {count}</span>
-      <button type="button" disabled={page >= count - 1} onClick={() => goTo(page + 1)} aria-label="Page suivante du détail"><ChevronRight size={15} /></button>
-    </nav>
   </div>;
 }

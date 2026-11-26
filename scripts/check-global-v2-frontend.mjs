@@ -270,6 +270,13 @@ check(() => assert.doesNotMatch(pageSource, /role="tablist"|role="tabpanel"|<Ove
 check(() => assert.match(pageSource, /useContentDensity\(\)[\s\S]*data-global-section[\s\S]*name="heading"/u));
 check(() => assert.match(pageSource, /<AtomicSection slot="spending"[\s\S]*<AtomicSection slot="categories"[\s\S]*<AtomicSection slot="life"[\s\S]*<AtomicSection slot="profiles"/u));
 check(() => assert.match(pageSource, /<AtomicDetailPages[\s\S]*<AtomicQueryDetail/u));
+const detailNavigationSource = fs.readFileSync(path.join(root, "src/features/global-v2/atomic-detail-pages.tsx"), "utf8");
+const profileNavigationSource = fs.readFileSync(path.join(root, "src/features/global-v2/persona/atomic-persona.tsx"), "utf8");
+check(() => assert.doesNotMatch(pageSource, /currentPage|Événements précédents|Événements suivants/u));
+check(() => assert.match(pageSource, /Ouvrir un événement[\s\S]*events\.map[\s\S]*event\.canonicalName/u));
+check(() => assert.doesNotMatch(detailNavigationSource, /Page précédente|Page suivante|className=\{styles\.pagination\}/u));
+check(() => assert.match(detailNavigationSource, /Aller directement à[\s\S]*item\.label/u));
+check(() => assert.match(profileNavigationSource, /aria-pressed=\{selection === id\}[\s\S]*\{block\.title\}[\s\S]*<PersonaEditorialBlock block=\{current\.block\}/u));
 check(() => assert.match(pageSource, /sectionKey: section[\s\S]*target\.resource, params/u));
 check(() => assert.match(pageSource, /trail\.slice\(0, -1\)[\s\S]*Fermer le détail/u));
 check(() => assert.match(pageSource, /origin\.current\?\.focus\(\{ preventScroll: true \}\)/u));
