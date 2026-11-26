@@ -153,7 +153,8 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
   const topId = `${detailId}-top`;
   const bottomId = `${detailId}-bottom`;
   const activeTarget = openLane === null ? undefined : stacks[openLane].at(-1)?.target;
-  return <div className={styles.dashboard} data-detail-open={openLane !== null} onKeyDown={event => {
+  return <div className={styles.dashboard} data-detail-open={openLane !== null}
+    data-detail-deep={openLane !== null && stacks[openLane].length > 1} onKeyDown={event => {
     if (event.key === "Escape" && openLane !== null) {
       event.preventDefault();
       close();
@@ -165,12 +166,12 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
     </header>
 
     <div className={styles.pair}>
-      <Panel kind="summary" title="Dépenses du mois" icon={<Wallet size={19} aria-hidden />} selected={activePanel === "summary"}
+      <Panel kind="summary" title="Dépenses du mois" icon={<Wallet size={19} aria-hidden />} selected={activePanel === "summary"} collapsed={activePanel !== undefined && activePanel !== "summary"}
         detailId={topId} onOpen={() => activePanel === "summary" ? close() : togglePanel({ target: { kind: "summary" }, label: baseDetailLabels.summary })}>
         {summary ? <SummaryCard model={summary} onOpen={togglePanel} /> : <DataStatus failed={state.summary.status === "error"} />}
       </Panel>
 
-      <Panel kind="categories" title="Dépenses par catégorie" icon={<ChartNoAxesColumn size={19} aria-hidden />} selected={activePanel === "categories"}
+      <Panel kind="categories" title="Dépenses par catégorie" icon={<ChartNoAxesColumn size={19} aria-hidden />} selected={activePanel === "categories"} collapsed={activePanel !== undefined && activePanel !== "categories"}
         detailId={topId} onOpen={() => activePanel === "categories" ? close() : togglePanel({ target: { kind: "categories" }, label: baseDetailLabels.categories })}>
         {categories ? <CategoryCard model={categories} total={metricValue(visibleValue(summary?.actualValue))}
           activeId={activeTarget?.kind === "category" ? activeTarget.categoryId : undefined}
@@ -180,12 +181,12 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
     </div>
 
     <div className={styles.pair}>
-      <Panel kind="spending" title="Marges du mois" icon={<SlidersHorizontal size={19} aria-hidden />} selected={activePanel === "spending"}
+      <Panel kind="spending" title="Marges du mois" icon={<SlidersHorizontal size={19} aria-hidden />} selected={activePanel === "spending"} collapsed={activePanel !== undefined && activePanel !== "spending"}
         detailId={bottomId} onOpen={() => activePanel === "spending" ? close() : togglePanel({ target: { kind: "spending" }, label: baseDetailLabels.spending })}>
         {spending ? <MarginCard model={spending} /> : <DataStatus failed={state.spendingNature.status === "error"} />}
       </Panel>
 
-      <Panel kind="life" title="Vie et argent" icon={<Sparkles size={19} aria-hidden />} selected={activePanel === "life"}
+      <Panel kind="life" title="Vie et argent" icon={<Sparkles size={19} aria-hidden />} selected={activePanel === "life"} collapsed={activePanel !== undefined && activePanel !== "life"}
         detailId={bottomId} onOpen={() => activePanel === "life" ? close() : togglePanel({ target: { kind: "life" }, label: baseDetailLabels.life })}>
         {life ? <LifeCard model={life} month={month} activeId={activeTarget?.kind === "moment" ? activeTarget.momentId : undefined} onOpen={togglePanel} /> : <DataStatus failed={state.lifeMoney.status === "error"} />}
       </Panel>
@@ -194,21 +195,24 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
   </div>;
 }
 
-function Panel({ kind, title, icon, selected, onOpen, detailId, children }: {
+function Panel({ kind, title, icon, selected, collapsed, onOpen, detailId, children }: {
   readonly kind: string;
   readonly title: string;
   readonly icon: ReactNode;
   readonly selected: boolean;
+  readonly collapsed: boolean;
   readonly onOpen: () => void;
   readonly detailId: string;
   readonly children: ReactNode;
 }) {
-  return <section className={styles.panel} data-panel={kind} data-selected={selected}>
+  return <section className={styles.panel} data-panel={kind} data-selected={selected} data-collapsed={collapsed}>
     <h2><button type="button" className={styles.panelHeading} onClick={onOpen} aria-controls={detailId} aria-expanded={selected}>
       <span className={styles.panelIcon}>{icon}</span><span>{title}</span>
       <ChevronDown className={styles.chevron} size={16} aria-hidden />
     </button></h2>
-    <div className={styles.panelBody}>{children}</div>
+    <div className={styles.panelSummary} aria-hidden={collapsed} inert={collapsed}>
+      <div className={styles.panelSummaryClip}><div className={styles.panelBody}>{children}</div></div>
+    </div>
   </section>;
 }
 

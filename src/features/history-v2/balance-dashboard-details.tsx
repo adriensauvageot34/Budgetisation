@@ -13,6 +13,7 @@ import {
   type MonthLifeMoneyReadModel,
   type MonthSpendingNatureReadModel,
 } from "@/query-api";
+import { SpendingBreakdown } from "./balance-dashboard-spending";
 import { AmountBars, DetailGroup, PagedRows, chartMaximum, formatDelta, metricValue, moneyAmount, visibleValue } from "./balance-dashboard-widgets";
 import { expenseDisplayTitle, formatCount, formatFrenchDate, formatFrenchDateRange, formatHistoricalRank, spendingPresentationLabel } from "./presentation";
 import { CollectionState, DisplayState, MoneyMetric, StateBoundary, formatMoney } from "./renderers";
@@ -52,7 +53,7 @@ export function BalanceDetail({ selection, month, summary, categories, spending,
     case "minimal": return <MinimalDetail scope={scope} />;
     case "categories": return categories ? <CategoriesDetail model={categories} onOpen={onOpen} /> : missing;
     case "category": return <CategoryDetail scope={scope} id={target.categoryId} labels={subcategoryLabels} />;
-    case "spending": return spending ? <SpendingDetail model={spending} onOpen={onOpen} /> : missing;
+    case "spending": return spending ? <SpendingBreakdown model={spending} month={month} /> : missing;
     case "segment": return <SegmentDetail scope={scope} params={target.params} />;
     case "life": return life ? <LifeDetail model={life} onOpen={onOpen} /> : missing;
     case "activity": return <ActivityDetail scope={scope} id={target.activityTypeKey} onOpen={onOpen} />;
@@ -234,35 +235,7 @@ function CategoryAxis({ label, axis }: { readonly label: string; readonly axis?:
   </DetailGroup>;
 }
 
-function SpendingDetail({ model, onOpen }: { readonly model: MonthSpendingNatureReadModel; readonly onOpen: OpenDetail }) {
-  const axes = [
-    { id: "necessity", label: "Pourquoi la dépense est nécessaire", node: model.necessity },
-    { id: "behavior", label: "Fixes et variables", node: model.behavior },
-    { id: "lifeScope", label: "Quotidien et hors quotidien", node: model.lifeScope },
-  ] as const;
-  const matrix = visibleValue(model.matrix);
-  return <div className={styles.detailColumns}>
-    {axes.map(({ id, label, node }) => <DetailGroup key={id} title={label}>
-      <DisplayState node={node}>{axis => <>
-        <PagedRows label={label} items={metricValue(axis.result) ?? []}>{rows => rows.map(row =>
-          <DetailLink key={row.key} label={spendingPresentationLabel(row.key)} end={formatMoney(row.amount)}
-            onClick={() => onOpen({ target: { kind: "segment", params: { axis: id, bucket: row.key } }, label: spendingPresentationLabel(row.key) })} />
-        )}</PagedRows>
-        {Number(axis.unclassifiedAmount) !== 0 && <p className={styles.note}>{formatMoney(axis.unclassifiedAmount)} non classés</p>}
-      </>}</DisplayState>
-    </DetailGroup>)}
-    {matrix?.cells.length ? <DetailGroup title="Nécessité et type de dépense">
-      <PagedRows label="Combinaisons" items={matrix.cells}>{rows => rows.map(row => {
-        const [necessity, behavior] = row.key.split("__");
-        if ((necessity !== "INDISPENSABLE" && necessity !== "CONSTRAINED" && necessity !== "OPTIONAL")
-          || (behavior !== "FIXED" && behavior !== "VARIABLE")) return null;
-        const label = spendingPresentationLabel(row.key);
-        return <DetailLink key={row.key} label={label} end={formatMoney(row.amount)}
-          onClick={() => onOpen({ target: { kind: "segment", params: { necessity, behavior } }, label })} />;
-      })}</PagedRows>
-    </DetailGroup> : null}
-  </div>;
-}
+
 
 function SegmentDetail({ scope, params }: { readonly scope: HistoryScope; readonly params: Extract<HistoryOverlayTarget, { kind: "segment" }>["params"] }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historySpendingSegmentDetail, scope, params });
