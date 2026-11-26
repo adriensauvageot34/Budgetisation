@@ -14,6 +14,7 @@ import { controlAccessLabel } from "@/domain/phase2/planner/control-input";
 import { presentationLabel } from "./presentation-label";
 import { controlMainDimension, controlValuePresentation, controlValueSummary } from "./control-value-presentation";
 import { MonthlyCommerceBadge } from "./commerce-badges";
+import { savingsGoalRef } from "@/domain/phase2/savings-goals";
 
 export function ComposerCard({ card, presentation, busy, preserved, focused = false, focus = () => {}, edit, preserve, mutate, hover, details }: {
   card: ComposerCardView; presentation: ComposerObjectPresentation; busy: boolean; preserved: boolean; focused?: boolean; focus?: () => void;
@@ -23,6 +24,7 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
   const interaction = useComposerInteractions(), handle = useDragHandle(presentation.protectedSavings || preserved ? `control:${card.targetRef}` : undefined);
   const assistantTarget = interaction?.canTarget(card.targetRef);
   const label = presentationLabel(card.label), valuePresentation = controlValuePresentation(card);
+  const projectSavings = typeof card.value.annualGoalRef === "string" && card.value.annualGoalRef.startsWith(savingsGoalRef);
   return <article className={styles.card} data-compact-card data-control={card.targetRef} data-variant={presentation.variant} data-focused={focused} data-protected={presentation.protectedSavings} data-card-family={locked ? "PROTECTED" : card.kind === "SAVINGS" ? "RESERVATION" : "ADJUSTABLE"}
     data-state={valuePresentation.kind === "DECISION" ? "chosen" : valuePresentation.kind === "UNKNOWN" ? "unresolved" : "derived"} data-value-status={valuePresentation.kind} {...handle}
     data-compatible={assistantTarget} data-unresolved={interaction?.unresolvedRefs.includes(card.targetRef)} data-snap={interaction?.motionTarget === card.targetRef ? interaction.motion : undefined}
@@ -67,8 +69,9 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
       {presentation.occurrenceStack.overflow !== null && <small>+{presentation.occurrenceStack.overflow}</small>}</div>}
     {presentation.variant === "SAVINGS" && gauge?.percent !== null && gauge && <div className={styles.reservationGauge}><div className={styles.gaugeTrack} role="progressbar" aria-label={`${card.label}, réservation par rapport au repère initial, pas une progression d’objectif`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={gauge.percent} aria-valuetext={`${money(gauge.referenceAmount)} → ${money(card.value.amount)}`}><span style={{ width: `${gauge.percent}%` }} /></div></div>}
     {presentation.variant === "SAVINGS" && <small className={styles.reservationLabel}>
-      {locked ? "Réservation protégée · lecture seule" : `Ajustable · déclaré ${money(card.value.declaredAmount as string ?? null)}`}
-      {gauge && " · réservation / repère initial"}
+      {projectSavings ? "Cagnotte · gérée depuis le menu Budgetisation"
+        : locked ? "Réservation protégée · lecture seule" : `Ajustable · déclaré ${money(card.value.declaredAmount as string ?? null)}`}
+      {!projectSavings && gauge && " · réservation / repère initial"}
     </small>}
   </article>;
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import { Suspense, useCallback, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
-import { Landmark } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { ChevronDown, Landmark, WalletCards } from "lucide-react";
 import { SignOutButton } from "@/features/auth/sign-out-button";
 import { useProductRuntime } from "@/components/runtime";
 import { JULY_V2_HREF } from "@/domain/phase2/planner/realized-month-entry";
@@ -14,12 +15,15 @@ import styles from "./app-shell.module.css";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { backgroundRootRef } = useProductRuntime();
   const setBackgroundRoot = useCallback((element: HTMLElement | null) => {
     backgroundRootRef.current = element;
   }, [backgroundRootRef]);
   const [toolbarTarget, setToolbarTarget] = useState<HTMLDivElement | null>(null);
   const monthNavigationGuard = useRef<ComposerMonthNavigationGuard | null>(null);
+  const menu = useRef<HTMLDetailsElement>(null);
+  const [menuNotice, setMenuNotice] = useState<string | null>(null);
   const historyV2 = /^\/historique\/\d{4}-\d{2}$/.test(pathname);
   const julyV2 = pathname === JULY_V2_HREF;
   const composerBalance = pathname === "/mois-a-venir/composer/bilan";
@@ -27,6 +31,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const composerCalendar = pathname === "/mois-a-venir/composer/calendrier";
   const composer = pathname === "/mois-a-venir/composer";
   const globalAnalysis = pathname === "/analyse-globale";
+  const cagnottes = pathname === "/cagnottes";
   const glass = plannedMonth;
   const compactWorkspace = composer || composerCalendar || glass;
 
@@ -41,16 +46,42 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div ref={compactWorkspace ? setBackgroundRoot : undefined} data-planned-shell={glass ? "" : undefined}
       className={composer ? "grid h-dvh grid-rows-[auto_minmax(0,1fr)]" : glass ? scene.shell
         : globalAnalysis ? `${styles.clayShell} ${styles.globalShell}`
+          : cagnottes ? styles.clayShell
           : composerCalendar ? `${styles.clayShell} ${styles.calendarShell}` : "min-h-screen"}>
       {glass && <div data-planned-background className={scene.background} aria-hidden="true" />}
       <header data-planned-header={plannedMonth ? "" : undefined} className={plannedMonth ? scene.header : "border-b border-[var(--color-border)] bg-white"}>
         <div className={styles.bar}>
-          <div className="flex shrink-0 items-center gap-2">
+          <details ref={menu} className={styles.logoMenu} onToggle={event => {
+            if (!event.currentTarget.open) setMenuNotice(null);
+          }} onBlur={event => {
+            if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
+          }} onKeyDown={event => {
+            if (event.key !== "Escape" || !event.currentTarget.open) return;
+            event.stopPropagation();
+            event.currentTarget.open = false;
+            event.currentTarget.querySelector("summary")?.focus();
+          }}>
+          <summary className={styles.logoButton} aria-label="Menu Budgetisation">
             <span className="flex size-8 items-center justify-center rounded-lg bg-[var(--color-primary)] text-white">
               <Landmark size={17} aria-hidden />
             </span>
             <span className="sr-only font-bold sm:not-sr-only">Budgetisation</span>
-          </div>
+            <ChevronDown size={13} aria-hidden />
+          </summary>
+          <nav className={styles.logoDropdown} aria-label="Centre de contrôle">
+            <Link href="/cagnottes" prefetch={false} aria-current={cagnottes ? "page" : undefined}
+              onNavigate={event => {
+                if (composer && monthNavigationGuard.current) {
+                  event.preventDefault();
+                  setMenuNotice(monthNavigationGuard.current(() => {
+                    if (menu.current) menu.current.open = false;
+                    router.push("/cagnottes");
+                  }));
+                } else if (menu.current) menu.current.open = false;
+              }}><WalletCards size={17} aria-hidden /> Cagnottes</Link>
+            {menuNotice && <p role="status">{menuNotice}</p>}
+          </nav>
+          </details>
           <nav className={styles.period} aria-label="Période de Budgetisation">
             <Suspense fallback={<span aria-hidden className="block h-8 w-28 sm:w-56" />}>
               <MonthPicker />
@@ -65,6 +96,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ref={compactWorkspace ? undefined : setBackgroundRoot}
         data-composer-app-shell={composer ? "" : undefined}
         className={composer ? "min-h-0 min-w-0 overflow-hidden bg-[#fdfcfb] px-3 pb-4 pt-2 sm:px-6"
+          : cagnottes ? "min-w-0 px-4 py-4 sm:px-7"
           : globalAnalysis ? styles.globalMain : composerCalendar ? styles.calendarMain : historyV2
           ? "py-6"
           : pathname === "/mois-a-venir" || composerBalance
