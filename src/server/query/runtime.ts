@@ -323,6 +323,23 @@ export async function resolveLatestPublishedHistoryV2Month() {
   return store.readLatestPublishedHistoryV2Month();
 }
 
+export async function readAuthenticatedSubcategoryLabels(): Promise<Readonly<Record<string, string>>> {
+  const bootstrap = await getBootstrapContext();
+  const context = createAuthorizedRuntimeContext(bootstrap, parseInstant(new Date().toISOString()));
+  try {
+    const repository = new CanonicalRepository(createCanonicalReadClient(), context);
+    const rows = await repository.loadCanonicalSubcategories();
+    return Object.fromEntries(rows.flatMap(({ subcategory_id, nom_canonique }) =>
+      typeof subcategory_id === "string" && typeof nom_canonique === "string" && nom_canonique.trim()
+        ? [[subcategory_id, nom_canonique.trim()]]
+        : [],
+    ));
+  } catch (error) {
+    if (!(error instanceof CanonicalReadError)) throw error;
+    return {};
+  }
+}
+
 export async function readAuthenticatedCanonicalSourceHealth(): Promise<CanonicalSourceHealth> {
   const bootstrap = await getBootstrapContext();
   const context = createAuthorizedRuntimeContext(
