@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DisplayNode, MetricValue } from "@/core/history-v2";
 import type { Money } from "@/core/money";
@@ -71,22 +71,31 @@ export function DetailGroup({ title, note, children }: {
   </section>;
 }
 
-export function PagedRows<T>({ items, size = 4, label, children }: {
+const compactPageQuery = "(max-height: 670px)";
+function subscribeToCompactPages(onChange: () => void) {
+  const media = window.matchMedia(compactPageQuery);
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
+
+export function PagedRows<T>({ items, size = 3, label, children }: {
   readonly items: readonly T[];
   readonly size?: number;
   readonly label: string;
   readonly children: (items: readonly T[]) => ReactNode;
 }) {
-  const [requestedPage, setPage] = useState(0);
-  const pages = Math.ceil(items.length / size);
-  const page = Math.max(0, Math.min(requestedPage, pages - 1));
+  const [offset, setOffset] = useState(0);
+  const compact = useSyncExternalStore(subscribeToCompactPages, () => window.matchMedia(compactPageQuery).matches, () => false);
+  const pageSize = Math.min(size, compact ? 2 : 3);
+  const pages = Math.ceil(items.length / pageSize);
+  const page = Math.max(0, Math.min(Math.floor(offset / pageSize), pages - 1));
   if (!items.length) return <p className={styles.note}>Aucun élément pour ce mois.</p>;
   return <div className={styles.pagedRows}>
-    <div>{children(items.slice(page * size, (page + 1) * size))}</div>
+    <div>{children(items.slice(page * pageSize, (page + 1) * pageSize))}</div>
     {pages > 1 && <div className={styles.pagination} aria-label={`Pages · ${label}`}>
-      <button type="button" onClick={() => setPage(page - 1)} disabled={page === 0} aria-label={`${label}, page précédente`}><ChevronLeft size={16} aria-hidden /></button>
+      <button type="button" onClick={() => setOffset((page - 1) * pageSize)} disabled={page === 0} aria-label={`${label}, page précédente`}><ChevronLeft size={16} aria-hidden /></button>
       <span aria-live="polite">{page + 1} / {pages}</span>
-      <button type="button" onClick={() => setPage(page + 1)} disabled={page === pages - 1} aria-label={`${label}, page suivante`}><ChevronRight size={16} aria-hidden /></button>
+      <button type="button" onClick={() => setOffset((page + 1) * pageSize)} disabled={page === pages - 1} aria-label={`${label}, page suivante`}><ChevronRight size={16} aria-hidden /></button>
     </div>}
   </div>;
 }
