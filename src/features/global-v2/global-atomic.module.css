@@ -294,34 +294,36 @@
 @media (prefers-reduced-motion: reduce) {
   .profileExpanded { animation: none; }
 }
-.profileOverview [class*="personaEditorialBlock"] { gap: 5px; }
-.profileOverview [class*="personaMetrics"] { gap: 6px; }
-.profileOverview [class*="personaChildren"] {
-  grid-template-columns: repeat(auto-fit, minmax(min(135px,100%),1fr));
-  gap: 3px 8px;
-  margin-inline-start: 0;
+.profileTopicDetail {
+  display: grid;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 9px;
+  background: #fffafe;
+  border: 1px solid var(--atomic-line);
 }
-.profileOverview [class*="personaChildren"] > li { padding-block: 4px 2px; gap: 4px; }
-.profileOverview [class*="personaMetrics"] { grid-template-columns: repeat(auto-fit,minmax(min(95px,100%),1fr)); margin-inline-start: 0; }
-.profileOverview [class*="personaMetrics"] dd { font-size: .82rem; }
-.profileOverview [class*="personaEditorialHeader"] h4 { margin: 0; font-size: .93rem; }
-.profileOverview [class*="personaEditorialHeader"] p { font-size: .72rem; }
-.profileOverview [class*="personaEditorialIcon"] { width: 27px; height: 27px; }
-.profileOverview [class*="personaEditorialHeader"] { grid-template-columns: 27px 1fr; gap: 6px; }
-
-.profileExpanded [class*="personaChildren"] [class*="personaMetrics"] {
+.detailColumns .profileTopicDetail h4 { margin: 0; font-size: .88rem; line-height: 1.15; }
+.detailColumns .profileTopicDetail p { margin: 0; font-size: .71rem; }
+.detailColumns .profileFacts {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 8px;
-}
-.profileExpanded [class*="personaChildren"] [class*="personaMetrics"] > div {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 1px 4px;
-}
-.profileExpanded [class*="personaChildren"] [class*="personaMetrics"] :is(dt, dd) {
+  gap: 1px 9px;
+  margin: 0;
   font-size: .71rem;
-  line-height: 1.2;
+  line-height: 1.18;
 }
-.profileExpanded [class*="personaChildren"] li > div strong { font-size: .76rem; line-height: 1.2; }
+.profileFacts > div { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0 3px; }
+.profileFacts dt { color: var(--atomic-muted); }
+.profileFacts dd { margin: 0; font-weight: 750; color: var(--atomic-ink); }
+.detailColumns .profileItems {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(min(234px,100%),1fr));
+  gap: 3px 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.profileItems li { min-width: 0; padding-block: 3px; border-top: 1px solid var(--atomic-line); }
+.profileItems li > strong { display: block; margin-bottom: 2px; font-size: .76rem; line-height: 1.16; }
+.atom[data-density="1"] .profileOverview[data-profile-open] .profileBlockIcon { display: none; }
+.atom[data-density="1"] .profileOverview[data-profile-open] .profileSummary button { grid-template-columns: minmax(0,1fr); min-height: 20px; }

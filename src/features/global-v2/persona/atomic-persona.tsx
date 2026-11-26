@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { PersonaDirectProfile } from "@/query-api/global-v2/persona-direct-presentation";
+import type { PersonaDirectBlock, PersonaDirectFact, PersonaDirectProfile } from "@/query-api/global-v2/persona-direct-presentation";
 import type { PersonaEditorialModel } from "@/query-api/global-v2/persona-editorial";
 import type { GlobalV2PersonaPanelModel } from "@/query-api/global-v2/persona-panel";
 import { GlobalClayIcon, type GlobalClayIconName } from "../global-clay-icon";
-import { PersonaEditorialBlock } from "./persona-card";
 import { PersonaVehicleModule } from "./persona-editorial-view";
 import { profileBlocks } from "./profile-content";
 import styles from "../global-atomic.module.css";
@@ -15,6 +14,26 @@ const icons: Readonly<Record<string, GlobalClayIconName>> = {
   services: "home", beauty: "health", grooming: "health", vape: "categories",
   tobacco: "categories", creative: "photo", permit: "car", suno: "concert",
 };
+
+function ProfileFacts({ facts }: { readonly facts: readonly PersonaDirectFact[] }) {
+  return facts.length > 0 && <dl className={styles.profileFacts}>
+    {facts.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+  </dl>;
+}
+
+function ProfileTopicDetail({ block }: { readonly block: PersonaDirectBlock }) {
+  return <article className={styles.profileTopicDetail}>
+    <h4>{block.title}</h4>
+    {block.description && <p className={styles.note}>{block.description}</p>}
+    <ProfileFacts facts={block.facts} />
+    {block.items.length > 0 && <ul className={styles.profileItems}>
+      {block.items.map(({ title, facts }, index) => <li key={`${title}:${index}`}>
+        <strong>{title}</strong>
+        <ProfileFacts facts={facts} />
+      </li>)}
+    </ul>}
+  </article>;
+}
 
 function ProfileSummary({ profiles, editorial }: { readonly profiles: readonly PersonaDirectProfile[]; readonly editorial?: PersonaEditorialModel }) {
   const [selection, setSelection] = useState<string>();
@@ -51,7 +70,7 @@ function ProfileSummary({ profiles, editorial }: { readonly profiles: readonly P
     </div>
     {current && <div key={selection} id="global-profile-block" className={styles.profileExpanded}>
       {profiles.length > 1 && <strong className={styles.profileOwner}>{current.profile.name}</strong>}
-      <PersonaEditorialBlock block={current.block} />
+      <ProfileTopicDetail block={current.block} />
     </div>}
   </div>;
 }
