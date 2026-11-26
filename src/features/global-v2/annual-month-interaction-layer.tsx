@@ -39,6 +39,7 @@ export function AnnualMonthInteractionLayer({
     }
     if (event.key === "Escape") {
       event.preventDefault();
+      if (state.selectedMonth) event.stopPropagation();
       onClose();
     }
   };

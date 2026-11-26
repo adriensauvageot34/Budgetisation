@@ -659,7 +659,7 @@ check(() => assert.match(backgroundCssSource, /@media \(max-width: 600px\)[\s\S]
 check(() => assert.match(backgroundCssSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*animation:\s*none/u));
 check(() => assert.match(`${annualMonthFocusSource}\n${monthInteractionSource}`, /ArrowRight[\s\S]*ArrowLeft[\s\S]*Home[\s\S]*End[\s\S]*Enter[\s\S]*Escape/u));
 check(() => assert.match(monthInteractionSource, /tabIndex=\{state\.rovingMonth === index \? 0 : -1\}/u));
-check(() => assert.match(fs.readFileSync(path.join(root, "src/features/global-v2/rhythm-month-focus-region.tsx"), "utf8"), /<OverlayFrame kind="exploration"[\s\S]*onAction: onClose/u));
+check(() => assert.match(fs.readFileSync(path.join(root, "src/features/global-v2/rhythm-month-focus-region.tsx"), "utf8"), /<section[\s\S]*data-rhythm-month[\s\S]*onClick=\{onClose\}/u));
 check(() => assert.match(carFocusSource, /Voir le séjour dans notre Timeline/u));
 check(() => assert.match(lifeTimelineSource, /function LegacyTimelineEventRow\(\{ event, focusRequest[\s\S]*data-global-entity-ref=\{event\.eventRef\}/u));
 check(() => assert.doesNotMatch(lifePrimarySource, /role="dialog"|modal|drawer|bottom sheet|carousel|horizontal/u));
