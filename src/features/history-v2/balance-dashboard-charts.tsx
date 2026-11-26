@@ -6,7 +6,7 @@ import { formatFrenchDateRange } from "./presentation";
 import { formatMoney } from "./renderers";
 import styles from "./balance-dashboard.module.css";
 
-export const categoryColors = ["#7851b0", "#be73a1", "#687db5", "#ab703e"];
+export const categoryColors = ["#7851b0", "#be73a1", "#687db5", "#ab703e", "#687f80", "#a85870", "#7c789e", "#ab8854"];
 
 export function SpendingComparison({ actual, typical, range }: {
   readonly actual?: Money;
@@ -42,7 +42,7 @@ export function CategoryRing({ shares }: { readonly shares: readonly (number | u
   let from = 0;
   const segments = shares.map((share, index) => {
     const end = Math.min(100, from + (share ?? 0) * 100);
-    const segment = `${categoryColors[index]} ${from}% ${end}%`;
+    const segment = `${categoryColors[index % categoryColors.length]} ${from}% ${end}%`;
     from = end;
     return segment;
   });
