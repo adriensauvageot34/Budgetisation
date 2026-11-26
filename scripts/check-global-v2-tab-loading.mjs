@@ -36,7 +36,7 @@ const ownerFixture = {
     {
       personId: "manon", socialLife: social("Cinéma Manon"),
       work: { workMeals: {}, primaryWorkPlaces: [], professionalInterventions: {} },
-      personalUniverses: { products: [], sunoFatherSong: project },
+      personalUniverses: { products: [{ label: "Mascara repère", typicalPrice: "20", purchaseCount: 2, medianGapDays: 42 }], sunoFatherSong: project },
       recurringHabits: { netflix: subscription, max: subscription, vape: {} },
     },
   ],
@@ -46,6 +46,10 @@ const outingTitles = (personId) => profileBlocks(directProfile(personId), ownerF
 assert.deepEqual(outingTitles("manon"), ["Cinéma Manon"]);
 assert.deepEqual(outingTitles("adrien"), ["Concert Adrien"]);
 assert.equal(outingTitles("autre"), undefined);
+const beauty = profileBlocks({
+  ...directProfile("manon"), recurring: [{ key: "beauty", title: "Soins", facts: [], items: [{ title: "Mascara", facts: [] }] }],
+}, ownerFixture).find(({ key }) => key === "beauty");
+assert.deepEqual(beauty?.items.map(({ title }) => title), ["Mascara repère"]);
 const fixture = createGlobalV2FixtureBundle("contract");
 const fixtureTransport = createGlobalV2FixtureTransport(fixture, "contract");
 globalThis.window = {

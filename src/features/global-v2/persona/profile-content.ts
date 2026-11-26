@@ -97,10 +97,20 @@ export function profileBlocks(profile: PersonaDirectProfile, editorial: PersonaE
       ...fact("Interventions professionnelles", work.professionalInterventions.eventCount),
     ]);
     update("services", "Divertissement", [], [service("Netflix", recurringHabits.netflix), service("Max", recurringHabits.max)]);
-    update("beauty", "Beauté & soins", [], personalUniverses.products.map((product) => ({
-      title: product.label,
-      facts: [...fact("Prix habituel", money(product.typicalPrice)), ...fact("Achats observés", product.purchaseCount)],
-    })));
+    if (personalUniverses.products.length > 0) {
+      const summary = blocks.get("beauty");
+      blocks.set("beauty", {
+        key: "beauty", title: "Beauté & soins", description: summary?.description, facts: summary?.facts ?? [],
+        items: personalUniverses.products.map((product) => ({
+          title: product.label,
+          facts: [
+            ...fact("Prix habituel", money(product.typicalPrice)),
+            ...fact("Achats observés", product.purchaseCount),
+            ...fact("Rythme médian", product.medianGapDays === null ? undefined : `${quantity.format(product.medianGapDays)} jours`),
+          ],
+        })),
+      });
+    }
     update("vape", "Vape", [
       ...fact("Matériel observé", money(recurringHabits.vape.equipmentCost)),
       ...fact("Achats directs", money(recurringHabits.vape.directObservedCost)),

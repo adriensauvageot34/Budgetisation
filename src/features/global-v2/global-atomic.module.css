@@ -308,3 +308,20 @@
 .profileOverview [class*="personaEditorialHeader"] p { font-size: .72rem; }
 .profileOverview [class*="personaEditorialIcon"] { width: 27px; height: 27px; }
 .profileOverview [class*="personaEditorialHeader"] { grid-template-columns: 27px 1fr; gap: 6px; }
+
+.profileExpanded [class*="personaChildren"] [class*="personaMetrics"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+}
+.profileExpanded [class*="personaChildren"] [class*="personaMetrics"] > div {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 1px 4px;
+}
+.profileExpanded [class*="personaChildren"] [class*="personaMetrics"] :is(dt, dd) {
+  font-size: .71rem;
+  line-height: 1.2;
+}
+.profileExpanded [class*="personaChildren"] li > div strong { font-size: .76rem; line-height: 1.2; }
