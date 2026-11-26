@@ -6,12 +6,15 @@ import { revalidatePath } from "next/cache";
 import { withProductAuthentication } from "@/app/product-query";
 import { forecastWindowMonths } from "@/app/mois-a-venir/month-entry";
 import { parseLocalDate } from "@/core/time";
-import { plannerUuid } from "@/domain/phase2/planner/json";
-import { effectiveSavingsAllocations, parseSavingsCents, savingsGoalProgress, savingsProjects, savingsStatuses, savingsTemplates, savingsTravelTopics,
+import { plannerDigest, plannerUuid } from "@/domain/phase2/planner/json";
+import { effectiveSavingsAllocations, parseSavingsCents, savingsGoalProgress, savingsPriorities, savingsProjects, savingsStatuses, savingsTemplates, savingsTravelTopics,
   type SavingsGoalAllocation, type SavingsProject, type SavingsStatus } from "@/domain/phase2/savings-goals";
+import { changeSavingsSchedule, savingsDeadlineGap, savingsFundingDate, savingsFundingMonths, savingsScheduleDeltas, suggestSavingsMoves,
+  type SavingsGoalChange, type SavingsMargin, type SavingsScheduleRequest } from "@/domain/phase2/savings-schedule";
 import { getBootstrapSession } from "@/server/bootstrap/context";
 import { planningDate } from "@/server/phase2/planning-date";
-import { readSavingsGoal } from "@/server/phase2/savings-goals";
+import { readSavingsGoal, readSavingsGoals } from "@/server/phase2/savings-goals";
+import { readSavingsMargin, readSavingsMargins } from "@/server/phase2/savings-margin";
 
 const field = (form: FormData, name: string) => String(form.get(name) ?? "").trim();
 function cents(text: string): number {
@@ -60,7 +63,7 @@ export async function addSavingsTemplates(form: FormData) {
   await mutate(form, async ({ client, householdId }) => {
     const { error } = await client.from("phase2_savings_goals").upsert(savingsTemplates.map(template => ({
       household_id: householdId, label: template.label, project: template.project, deadline: template.deadline, template_key: template.key,
-      travel_topic: template.travelTopic ?? null,
+      travel_topic: template.travelTopic ?? null, priority: template.priority ?? "normal",
     })), { onConflict: "household_id,template_key", ignoreDuplicates: true });
     if (error) throw error;
   });
@@ -74,10 +77,17 @@ export async function saveSavingsGoal(form: FormData) {
     if (date) {
       try { deadline = parseLocalDate(date); } catch { throw new TypeError("fields"); }
     }
+    const rawPurchase = field(form, "plannedPurchaseDate");
+    let plannedPurchaseDate: string | null = null;
+    if (rawPurchase) {
+      try { plannedPurchaseDate = parseLocalDate(rawPurchase); } catch { throw new TypeError("fields"); }
+    }
+    const priority = field(form, "priority") || "normal";
+    if (!Object.hasOwn(savingsPriorities, priority) || deadline && plannedPurchaseDate && plannedPurchaseDate > deadline) throw new TypeError("fields");
     const amount = field(form, "target");
     const travelTopic = project === "travel" ? field(form, "travelTopic") || "other" : null;
     if (travelTopic !== null && !Object.hasOwn(savingsTravelTopics, travelTopic)) throw new TypeError("fields");
-    const values = { label, project, deadline, target_cents: amount ? cents(amount) : null, travel_topic: travelTopic };
+    const values = { label, project, deadline, planned_purchase_date: plannedPurchaseDate, priority, target_cents: amount ? cents(amount) : null, travel_topic: travelTopic };
     const id = field(form, "goalId");
     if (id) {
       await updateGoal(owner, plannerUuid(id), Number(field(form, "revision")), values);
@@ -102,7 +112,7 @@ export async function changeSavingsAllocation(form: FormData) {
     const remaining = goal.allocations.filter(allocation => allocation.id !== allocationId);
     const validateMonth = (month: string) => {
       if (month < owner.currentMonth || !forecastWindowMonths.includes(month)
-        || goal.deadline && month > goal.deadline.slice(0, 7)) throw new TypeError("month");
+        || (savingsFundingDate(goal)?.slice(0, 7) ?? "9999") < month) throw new TypeError("month");
       return month;
     };
     let allocations: SavingsGoalAllocation[];
@@ -135,4 +145,95 @@ export async function changeSavingsAllocation(form: FormData) {
     await updateGoal(owner, id, goal.revision, { allocations });
     return id;
   });
+}
+
+type ScheduleInput = SavingsScheduleRequest | { kind: "suggest"; month: string };
+const openMonths = (current: string) => forecastWindowMonths.filter(month => month >= current);
+const scheduleError = (error: unknown) => {
+  const key = error instanceof TypeError ? error.message : "";
+  return ({
+    stale: "La cagnotte a changé. Recharge la page avant de reprendre.",
+    month: "Choisis un mois ouvert avant l’achat prévu ou l’échéance.",
+    deadline: "Renseigne une date d’achat prévue ou une échéance pour utiliser le lissage.",
+    amount: "Vérifie les montants et le reste à financer.",
+  } as Record<string, string>)[key] ?? "Le planning est indisponible pour le moment.";
+};
+
+async function buildSchedule(owner: Awaited<ReturnType<typeof scope>>, input: ScheduleInput) {
+  const months = openMonths(owner.currentMonth);
+  if (!months.includes(input.month)) throw new TypeError("month");
+  const changes: SavingsGoalChange[] = [];
+  let margins: SavingsMargin[] = [];
+  let remaining = 0;
+  let blocked: { goalId: string; label: string; date: string | null }[] = [];
+  let moves: { goalId: string; label: string; from: string; to: string; cents: number; date: string | null }[] = [];
+  if (input.kind === "suggest") {
+    const first = await readSavingsMargin(input.month);
+    if (first.cents === null || first.cents >= 0) {
+      const note = first.cents === null ? "Marge à confirmer. Le montant à reporter reste à déterminer."
+        : "La marge du mois est positive ou nulle.";
+      return { changes, impact: [], moves, blocked, remaining, note, stamp: "" };
+    }
+    const goals = await readSavingsGoals(owner.client, owner.householdId);
+    const candidates = goals.filter(goal => effectiveSavingsAllocations(goal).some(row => row.month === input.month && row.status === "planned"));
+    const destinations = months.filter(month => month > input.month && candidates.some(goal => savingsFundingMonths(goal, [month]).length));
+    margins = [first, ...await readSavingsMargins(destinations)];
+    const suggestion = suggestSavingsMoves(candidates, input.month, -first.cents, margins);
+    remaining = suggestion.remaining;
+    blocked = candidates.filter(goal => suggestion.blocked.includes(goal.goalId) && savingsFundingDate(goal)).map(goal => ({
+      goalId: goal.goalId, label: goal.label, date: savingsFundingDate(goal) ?? null,
+    }));
+    for (const goal of candidates) {
+      let current = goal;
+      for (const move of suggestion.moves.filter(move => move.goalId === goal.goalId)) {
+        const next = changeSavingsSchedule(current, { kind: "move", goalId: goal.goalId, revision: goal.revision, allocationId: move.allocationId,
+          month: move.to, cents: move.cents }, months, randomUUID);
+        current = { ...current, allocations: next.allocations };
+        moves.push({ goalId: goal.goalId, label: goal.label, from: move.from, to: move.to, cents: move.cents, date: savingsFundingDate(goal) ?? null });
+      }
+      if (current !== goal) changes.push({ goal, allocations: current.allocations });
+    }
+  } else {
+    const goal = await readSavingsGoal(owner.client, owner.householdId, plannerUuid(input.goalId));
+    if (!goal) throw new TypeError("stale");
+    changes.push(changeSavingsSchedule(goal, input, months, randomUUID));
+  }
+  const deltas = savingsScheduleDeltas(changes);
+  if (input.kind !== "suggest") margins = await readSavingsMargins(deltas.map(([month]) => month));
+  const impact = deltas.flatMap(([month, delta]) => margins.filter(item => item.month === month).map(item => ({
+    month, delta, before: item.cents, after: item.cents === null ? null : item.cents + delta, limits: item.limits,
+  })));
+  const gaps = changes.map(({ goal, allocations }) => ({ goalId: goal.goalId, label: goal.label, date: savingsFundingDate(goal) ?? null,
+    cents: savingsDeadlineGap({ ...goal, allocations }) ?? 0 })).filter(goal => goal.cents > 0);
+  return { changes, impact, moves, blocked, gaps, remaining, note: "",
+    stamp: plannerDigest({ input, revisions: changes.map(({ goal }) => [goal.goalId, goal.revision]), impact, moves, blocked, remaining, gaps }) };
+}
+
+export async function previewSavingsSchedule(input: ScheduleInput) {
+  try {
+    const { changes: _changes, ...preview } = await buildSchedule(await scope(), input);
+    return { ok: true as const, ...preview };
+  } catch (error) {
+    return { ok: false as const, message: scheduleError(error) };
+  }
+}
+
+export async function confirmSavingsSchedule(input: ScheduleInput, stamp: string) {
+  try {
+    const owner = await scope();
+    const draft = await buildSchedule(owner, input);
+    if (!draft.changes.length || draft.stamp !== stamp) return { ok: false as const,
+      message: "Les montants ou les prévisions ont changé. Recalcule l’aperçu avant de confirmer." };
+    const { error } = await owner.client.rpc("apply_phase2_savings_schedule", { p_household: owner.householdId,
+      p_updates: draft.changes.map(({ goal, allocations }) => ({ id: goal.goalId, revision: goal.revision, allocations })) });
+    if (error?.code === "40001") throw new TypeError("stale");
+    if (error?.code === "23514") throw new TypeError("amount");
+    if (error) throw error;
+    revalidatePath("/cagnottes");
+    revalidatePath("/mois-a-venir");
+    revalidatePath("/mois-a-venir/composer");
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, message: scheduleError(error) };
+  }
 }

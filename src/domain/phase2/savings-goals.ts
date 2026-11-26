@@ -7,6 +7,8 @@ export const savingsTravelTopics = {
   flights: "Billets d’avion", bags: "Bagages", equipment: "Équipement", documents: "Formalités", other: "Autres frais de voyage",
 } as const;
 export type SavingsTravelTopic = keyof typeof savingsTravelTopics;
+export const savingsPriorities = { essential: "Indispensable", normal: "Normale", flexible: "Souple" } as const;
+export type SavingsPriority = keyof typeof savingsPriorities;
 export const savingsStatuses = { planned: "Prévu", saved: "Sur le livret", purchased: "Acheté" } as const;
 export type SavingsStatus = keyof typeof savingsStatuses;
 export type SavingsGoalAllocation = { id: string; month: string; cents: number; status: SavingsStatus; accounted: boolean };
@@ -18,8 +20,10 @@ export type SavingsGoal = {
   goalId: string; label: string; project: SavingsProject; targetCents: number | null; deadline: string | null;
   templateKey: string | null; travelTopic: SavingsTravelTopic | null; revision: number; allocations: SavingsGoalAllocation[];
   purchases?: readonly SavingsPurchase[];
+  priority?: SavingsPriority;
+  plannedPurchaseDate?: string | null;
 };
-export type SavingsMonthEntry = SavingsGoalAllocation & Pick<SavingsGoal, "goalId" | "label" | "project" | "deadline">;
+export type SavingsMonthEntry = SavingsGoalAllocation & Pick<SavingsGoal, "goalId" | "label" | "project">;
 
 export const savingsGoalRef = "cagnotte:";
 export const maxSavingsCents = 99_999_999;
@@ -97,7 +101,7 @@ export function summarizeSavingsGoals(goals: readonly SavingsGoal[]) {
   return { ...totals, funded, percent: savingsProgressPercent(totals.covered, totals.budget) };
 }
 
-type SavingsTemplate = { key: string; project: SavingsProject; label: string; deadline: string | null; travelTopic?: SavingsTravelTopic };
+type SavingsTemplate = { key: string; project: SavingsProject; label: string; deadline: string | null; travelTopic?: SavingsTravelTopic; priority?: SavingsPriority };
 export const savingsTemplates: readonly SavingsTemplate[] = [
   { key: "birthday-mathilde", project: "birthday", label: "Anniversaire de Mathilde", deadline: null },
   { key: "birthday-isabelle", project: "birthday", label: "Anniversaire d’Isabelle", deadline: null },
@@ -108,5 +112,5 @@ export const savingsTemplates: readonly SavingsTemplate[] = [
   { key: "bag-adrien", project: "travel", travelTopic: "bags", label: "Sac de voyage · Adrien", deadline: "2027-10-31" },
   { key: "bag-manon", project: "travel", travelTopic: "bags", label: "Sac de voyage · Manon", deadline: "2027-10-31" },
   { key: "travel-equipment", project: "travel", travelTopic: "equipment", label: "Matériel de voyage", deadline: "2027-10-31" },
-  { key: "passport-adrien", project: "travel", travelTopic: "documents", label: "Passeport · Adrien", deadline: "2027-10-31" },
+  { key: "passport-adrien", project: "travel", travelTopic: "documents", label: "Passeport · Adrien", deadline: "2027-10-31", priority: "essential" },
 ];

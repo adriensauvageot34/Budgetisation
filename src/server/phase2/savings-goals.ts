@@ -6,11 +6,12 @@ import type { DeclaredSavingsInput } from "@/domain/phase2/savings-allocations";
 type GoalRow = {
   goal_id: string; label: string; project: SavingsGoal["project"]; target_cents: number | null;
   deadline: string | null; template_key: string | null; travel_topic: SavingsGoal["travelTopic"]; revision: number; allocations: SavingsGoalAllocation[];
+  priority: SavingsGoal["priority"]; planned_purchase_date: string | null;
 };
-type MonthRow = Pick<GoalRow, "goal_id" | "label" | "project" | "deadline"> &
+type MonthRow = Pick<GoalRow, "goal_id" | "label" | "project"> &
   Omit<SavingsGoalAllocation, "month"> & { target_month: string };
 
-const columns = "goal_id,label,project,target_cents,deadline,template_key,travel_topic,revision,allocations";
+const columns = "goal_id,label,project,target_cents,deadline,template_key,travel_topic,revision,allocations,priority,planned_purchase_date";
 const itemColumns = "line_id,goal_id,article,recipient,gross_cents,refunded_cents";
 type ItemRow = { line_id: string; goal_id: string | null; article: string; recipient: string | null; gross_cents: number; refunded_cents: number };
 function purchaseItem(row: ItemRow): SavingsPurchaseItem {
@@ -41,7 +42,8 @@ export async function readSavingsPurchases(client: SupabaseClient, householdId: 
 }
 function fromRow(row: GoalRow): SavingsGoal {
   return { goalId: row.goal_id, label: row.label, project: row.project, targetCents: row.target_cents,
-    deadline: row.deadline, templateKey: row.template_key, travelTopic: row.travel_topic, revision: row.revision, allocations: row.allocations };
+    deadline: row.deadline, templateKey: row.template_key, travelTopic: row.travel_topic, revision: row.revision, allocations: row.allocations,
+    priority: row.priority, plannedPurchaseDate: row.planned_purchase_date };
 }
 
 export async function readSavingsGoals(client: SupabaseClient, householdId: string): Promise<SavingsGoal[]> {
@@ -66,7 +68,7 @@ export async function readSavingsGoal(client: SupabaseClient, householdId: strin
 
 export async function readSavingsMonthEntries(client: SupabaseClient, householdId: string, month: string): Promise<SavingsMonthEntry[]> {
   const [{ data, error }, purchases] = await Promise.all([
-    client.from("phase2_savings_goal_month_entries").select("goal_id,label,project,deadline,id,target_month,cents,status,accounted")
+    client.from("phase2_savings_goal_month_entries").select("goal_id,label,project,id,target_month,cents,status,accounted")
       .eq("household_id", householdId).eq("target_month", month).order("label").order("id"),
     readSavingsPurchases(client, householdId, { month }),
   ]);
@@ -77,8 +79,8 @@ export async function readSavingsMonthEntries(client: SupabaseClient, householdI
 
 export function projectSavingsReservations(entries: readonly SavingsMonthEntry[]): DeclaredSavingsInput[] {
   return entries.filter(entry => !entry.accounted).map(entry => ({
-    id: entry.id, kind: "SAVINGS", label: entry.label, amount: savingsEuros(entry.cents),
-    dueDate: entry.deadline?.startsWith(entry.month) ? entry.deadline : null,
+    id: entry.id, kind: "SAVINGS", label: entry.project === "travel" ? `Voyage · ${entry.label}` : entry.label,
+    amount: savingsEuros(entry.cents), dueDate: null,
     adjustability: "PROTECTED", source: "ANNUAL_PLAN", annualGoalRef: savingsGoalRef + entry.goalId,
   }));
 }

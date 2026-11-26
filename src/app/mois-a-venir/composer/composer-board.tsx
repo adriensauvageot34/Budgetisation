@@ -31,7 +31,7 @@ const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeClust
   // The drag geometry may be held, but card values always use the current model.
   if(item.context){const card=index.contexts.get(item.id);return card?<ContextCard livingBar={livingBar} card={card} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} openEquipment={openEquipment} openReference={openReference} edit={(value,selectionId)=>{if(inCluster&&!closeCluster(()=>editContext(value,selectionId)))return;editContext(value,selectionId);}}/>:null;}
   const card=index.controls.get(item.id);if(!card)return null;
-  return <ComposerCard card={card} presentation={model.presentation.objects[item.id]} busy={busy} focused={focused===item.id} focus={()=>focus(item.id)}
+  return <ComposerCard card={card} presentation={model.presentation.objects[item.id]} month={model.board.targetMonth} busy={busy} focused={focused===item.id} focus={()=>focus(item.id)}
     preserved={model.semanticState.preferences.flexibility[item.id]==="PRESERVE"} edit={()=>{if(inCluster&&!closeCluster(()=>edit(card)))return;edit(card);}}
     preserve={()=>request({kind:"PRESERVE",targetRef:item.id,preserve:model.semanticState.preferences.flexibility[item.id]!=="PRESERVE"})}
     details={()=>{if(inCluster&&!closeCluster(()=>{focus(item.id);details();}))return;focus(item.id);details();}}

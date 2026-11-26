@@ -8,18 +8,16 @@ import { forecastWindowMonths } from "@/app/mois-a-venir/month-entry";
 import { getBootstrapSession } from "@/server/bootstrap/context";
 import { planningDate } from "@/server/phase2/planning-date";
 import { readSavingsGoals } from "@/server/phase2/savings-goals";
-import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/composer-draft-cutover";
-import { readActiveComposerDraft } from "@/server/phase2/planner/composer-draft-service";
-import { resolveEffectiveMonthScenario } from "@/server/phase2/planner/effective-month-scenario";
-import { readMonthComposer } from "@/server/phase2/planner/read-model";
-import { authorizedPlanner } from "@/server/phase2/planner/runtime";
-import { effectiveSavingsAllocations, savingsEuros, savingsGoalProgress, savingsMoney, savingsProgressPercent, savingsProjects, savingsStatuses, savingsTemplates,
+import { readSavingsMargin } from "@/server/phase2/savings-margin";
+import { effectiveSavingsAllocations, savingsEuros, savingsGoalProgress, savingsMoney, savingsPriorities, savingsProgressPercent, savingsProjects, savingsStatuses, savingsTemplates,
   summarizeSavingsGoals, type SavingsGoal, type SavingsGoalAllocation } from "@/domain/phase2/savings-goals";
+import { savingsDeadlineGap, savingsFundingDate, savingsFundingMonths } from "@/domain/phase2/savings-schedule";
 import { JULY_COMPOSER_MONTH, JULY_PILOT_DATE, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { realizedOperationCardId } from "@/app/mois-a-venir/composer/realized-card-view";
 import { addSavingsTemplates, changeSavingsAllocation, saveSavingsGoal } from "./actions";
 import { GoalProjectFields } from "./goal-project-fields";
 import { FundingTrack, goalArt, projectArt, ProjectSummary, savingsProjectKeys, savingsTravelTopicKeys, TravelTopicSummary } from "./savings-presentation";
+import { SavingsFundingPlanner, SavingsPartialMove, SavingsReportSuggestions } from "./schedule-controls";
 import styles from "./savings.module.css";
 
 export const metadata = { title: "Centre des cagnottes" };
@@ -41,7 +39,7 @@ const notices: Record<string, string> = {
   allocation: "Le total affecté doit tenir dans l’objectif. Vérifie aussi les mois prévus avant l’échéance.",
   month: "Choisis un mois disponible avant ou pendant le mois de l’échéance.",
   stale: "La cagnotte a changé depuis son ouverture. Les derniers montants sont affichés.",
-  fields: "Vérifie le nom, le projet et la date.",
+  fields: "Vérifie le nom, le projet et les dates. L’achat prévu doit précéder ou coïncider avec l’échéance.",
   unavailable: "L’enregistrement est indisponible pour le moment.",
 };
 
@@ -54,7 +52,8 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
   const goals = await readSavingsGoals(session.supabase, context.household.householdId);
   const filled = goals.filter(goal => savingsGoalProgress(goal).complete);
   const completed = params.view === "complete" || params.view === undefined && filled.some(goal => goal.goalId === params.goal);
-  const visible = completed ? filled : goals.filter(goal => !savingsGoalProgress(goal).complete);
+  const visible = (completed ? filled : goals.filter(goal => !savingsGoalProgress(goal).complete))
+    .sort((a, b) => (savingsFundingDate(a) ?? "9999").localeCompare(savingsFundingDate(b) ?? "9999"));
   const totals = summarizeSavingsGoals(goals);
   const projects = savingsProjectKeys.filter(project => goals.some(goal => goal.project === project));
   const assigned = goals.flatMap(effectiveSavingsAllocations).filter(row => row.month === month && !row.accounted)
@@ -113,7 +112,8 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
       const projectGoals = goals.filter(goal => goal.project === project);
       const cards = visible.filter(goal => goal.project === project);
       const renderCard = (goal: SavingsGoal) =>
-        <GoalCard key={goal.goalId} goal={goal} months={months} month={month} today={today} selected={params.goal === goal.goalId} />;
+        <GoalCard key={goal.goalId} goal={goal} months={months} month={month} today={today} selected={params.goal === goal.goalId}
+          reportId={typeof params.report === "string" ? params.report : undefined} />;
       return <section className={styles.group} data-project={project} key={project} aria-labelledby={`savings-${project}`}>
         <ProjectSummary project={project} goals={projectGoals} />
         {project === "travel" ? <div className={styles.topics}>
@@ -133,29 +133,29 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
 }
 
 async function MonthBalance({ month, reserved }: { month: string; reserved: number }) {
-  let remainder: string | null = null;
-  try {
-    const planner = await authorizedPlanner({ readCacheMonth: month });
-    const draft = composerDraftAutosaveEnabledFor(planner.userId) ? await readActiveComposerDraft(planner, month) : null;
-    remainder = draft
-      ? (await readMonthComposer(planner.deps, planner.householdId, month, draft.semanticState)).board.cockpit.plan.economicMonthEndRemainder
-      : (await resolveEffectiveMonthScenario(planner.deps, planner.householdId, month)).scenario.economicPlan?.scenarios.central ?? null;
-  } catch { /* The workspace remains usable when the month forecast is temporarily unavailable. */ }
-  const balance = remainder === null ? null : Math.round(Number(remainder) * 100);
+  const { cents: balance, limits } = await readSavingsMargin(month);
   return <div className={styles.monthBalance}>
     <p><span>Réservé dans ce mois</span><strong>{savingsMoney(reserved)}</strong></p>
-    <p data-negative={balance !== null && balance < 0}><span>Marge prévisionnelle après réservations</span>
-      <strong>{balance === null ? "À préciser" : savingsMoney(balance)}</strong></p>
-    {balance !== null && balance < 0 && <small className={styles.warning}>Marge négative. Ouvre une ligne « Prévu » pour reporter tout ou partie du montant.</small>}
+    <p data-negative={balance !== null && balance < 0}><span>Après dépenses et réservations</span>
+      <strong>{balance === null ? "Marge à confirmer" : savingsMoney(balance)}</strong></p>
+    {!!limits.length && <small>{limits.join(" · ")}</small>}
+    {balance !== null && balance < 0 && <SavingsReportSuggestions key={month} month={month} />}
     <Link className={styles.textLink} href={composerHref(month)} prefetch={false}>Ouvrir le mois dans Composer <ArrowUpRight size={14} aria-hidden /></Link>
   </div>;
 }
 
-function GoalCard({ goal, months, month, today, selected }: { goal: SavingsGoal; months: readonly string[]; month?: string; today: string; selected: boolean }) {
+const monthChoices = (months: readonly string[]) => months.map(value => ({ value, label: monthLabel(value) }));
+
+function GoalCard({ goal, months, month, today, selected, reportId }: {
+  goal: SavingsGoal; months: readonly string[]; month?: string; today: string; selected: boolean; reportId?: string;
+}) {
   const progress = savingsGoalProgress(goal);
   const target = goal.targetCents ?? 0;
   const percent = savingsProgressPercent(progress.funded, target);
-  const payableMonths = months.filter(item => !goal.deadline || item <= goal.deadline.slice(0, 7));
+  const payableMonths = savingsFundingMonths(goal, months);
+  const cutoff = savingsFundingDate(goal);
+  const gap = savingsDeadlineGap(goal);
+  const late = allocationsAfterCutoff(goal, cutoff);
   const allocations = effectiveSavingsAllocations(goal).sort((a, b) => a.month.localeCompare(b.month) || a.id.localeCompare(b.id));
   const Heading = goal.project === "travel" ? "h4" : "h3";
   const purchases = Object.entries(Object.groupBy(goal.purchases ?? [], purchase => purchase.operationId));
@@ -164,7 +164,9 @@ function GoalCard({ goal, months, month, today, selected }: { goal: SavingsGoal;
       <Image src={goalArt(goal)} width={53} height={53} alt="" unoptimized />
       <div><Heading>{goal.label}</Heading>
         <p className={goal.deadline && goal.deadline < today && !progress.complete ? styles.warning : styles.muted}>
-          {goal.deadline ? dateLabel(goal.deadline) : "Échéance à préciser"}</p></div>
+          {goal.deadline ? `Échéance · ${dateLabel(goal.deadline)}` : "Échéance à préciser"}</p>
+        {goal.plannedPurchaseDate && <p className={styles.muted}>Achat prévu · {dateLabel(goal.plannedPurchaseDate)}</p>}
+        {(goal.priority ?? "normal") !== "normal" && <span className={styles.priority}>{savingsPriorities[goal.priority!]}</span>}</div>
     </div>
     <div className={styles.cardMoney}>
       <strong>{target || progress.purchased ? savingsMoney(progress.funded) : "Objectif à chiffrer"}</strong>
@@ -175,6 +177,8 @@ function GoalCard({ goal, months, month, today, selected }: { goal: SavingsGoal;
     <p className={styles.footnote}>{target > 0 && progress.purchased > target ? `${savingsMoney(progress.purchased - target)} au-dessus du budget`
       : progress.complete ? "Remplie" : (progress.unassigned ?? 0) > 0 ? `${savingsMoney(progress.unassigned!)} à affecter`
       : progress.planned > 0 ? `${savingsMoney(progress.planned)} prévus` : "Montant à renseigner"}</p>
+    {late > 0 && <p className={styles.warning}>{savingsMoney(late)} prévus après la date de financement.
+      {gap !== null && gap > 0 && ` Il manque ${savingsMoney(gap)} avant cette date.`}</p>}
     <details open={selected || undefined} className={styles.details}>
       <summary>{target || goal.purchases?.length ? "Affectations et suivi" : "Configurer la cagnotte"} <ChevronDown size={15} aria-hidden /></summary>
       {purchases.length > 0 && <ul className={styles.purchaseLinks} aria-label="Achats liés">
@@ -194,14 +198,10 @@ function GoalCard({ goal, months, month, today, selected }: { goal: SavingsGoal;
         })}
       </ul>}
       {allocations.length > 0 && <div className={styles.allocations}>{allocations.map(row =>
-        <Allocation key={row.id} goal={goal} row={row} months={payableMonths} currentMonth={month} />)}</div>}
-      {(progress.unassigned ?? 0) > 0 && payableMonths.length > 0 && <form action={changeSavingsAllocation} className={styles.form}>
-        <GoalFields goal={goal} month={month} />
-        <label>Mois à financer<MonthSelect months={payableMonths} selected={month} /></label>
-        <label>Montant partiel en euros<input name="amount" inputMode="decimal" placeholder="0,00" /></label>
-        <div className={styles.actions}><button name="operation" value="add" className={styles.quiet}>Affecter ce montant</button>
-          <button name="operation" value="all" className={styles.primary}>Affecter les {savingsMoney(progress.unassigned!)}</button></div>
-      </form>}
+        <Allocation key={row.id} goal={goal} row={row} months={payableMonths} currentMonth={month} showReport={reportId === row.id} />)}</div>}
+      {(progress.unassigned ?? 0) > 0 && payableMonths.length > 0 && <SavingsFundingPlanner key={goal.revision}
+        goalId={goal.goalId} revision={goal.revision} months={monthChoices(payableMonths)} selected={month} cutoff={cutoff ?? null}
+        remaining={progress.unassigned!} />}
       {(progress.unassigned ?? 0) > 0 && !payableMonths.length && <p className={styles.warning}>Aucun mois ouvert avant l’échéance.</p>}
       {target > 0 ? <details className={styles.details}><summary>Modifier l’objectif <ChevronDown size={15} aria-hidden /></summary>
         <GoalForm goal={goal} month={month} /></details> : <GoalForm goal={goal} month={month} />}
@@ -209,9 +209,17 @@ function GoalCard({ goal, months, month, today, selected }: { goal: SavingsGoal;
   </article>;
 }
 
-function Allocation({ goal, row, months, currentMonth }: { goal: SavingsGoal; row: SavingsGoalAllocation; months: readonly string[]; currentMonth?: string }) {
-  const otherMonths = months.filter(month => month !== row.month);
-  return <details className={styles.allocation}>
+function allocationsAfterCutoff(goal: SavingsGoal, cutoff: string | null | undefined) {
+  if (!cutoff) return 0;
+  return effectiveSavingsAllocations(goal).filter(row => row.status === "planned" && row.month > cutoff.slice(0, 7))
+    .reduce((sum, row) => sum + row.cents, 0);
+}
+
+function Allocation({ goal, row, months, currentMonth, showReport }: {
+  goal: SavingsGoal; row: SavingsGoalAllocation; months: readonly string[]; currentMonth?: string; showReport: boolean;
+}) {
+  const otherMonths = months.filter(month => month > row.month);
+  return <details className={styles.allocation} id={`reservation-${row.id}`} open={showReport || undefined}>
     <summary><span>{monthLabel(row.month)} <small data-status={row.status}>{savingsStatuses[row.status]}</small></span>
       <strong>{savingsMoney(row.cents)}</strong></summary>
     <form action={changeSavingsAllocation} className={styles.form}>
@@ -222,12 +230,9 @@ function Allocation({ goal, row, months, currentMonth }: { goal: SavingsGoal; ro
       <label className={styles.check}><input type="checkbox" name="accounted" defaultChecked={row.accounted} /> Déjà compté dans le budget de ce mois</label>
       <button className={styles.quiet} name="operation" value="status">Enregistrer l’état</button>
     </form>
-    {row.status === "planned" && otherMonths.length > 0 && <form action={changeSavingsAllocation} className={styles.form}>
-      <GoalFields goal={goal} month={currentMonth} /><input type="hidden" name="allocationId" value={row.id} />
-      <label>Reporter vers<MonthSelect months={otherMonths} /></label>
-      <label>Montant à reporter en euros<input name="amount" inputMode="decimal" required defaultValue={savingsEuros(row.cents)} /></label>
-      <button className={styles.quiet} name="operation" value="move">Reporter le montant</button>
-    </form>}
+    {row.status === "planned" && otherMonths.length > 0 && <SavingsPartialMove key={goal.revision} goalId={goal.goalId}
+      revision={goal.revision} allocationId={row.id} months={monthChoices(otherMonths)} cents={row.cents} />}
+    {row.status === "planned" && !otherMonths.length && <p className={styles.muted}>Aucun mois de report avant la date de financement.</p>}
     <div className={styles.allocationFooter}><Link className={styles.textLink} prefetch={false} href={composerHref(row.month)}>Voir dans Composer <ArrowUpRight size={14} aria-hidden /></Link>
       {row.status === "planned" && <form action={changeSavingsAllocation}>
         <GoalFields goal={goal} month={currentMonth} /><input type="hidden" name="allocationId" value={row.id} />
@@ -248,7 +253,11 @@ function GoalForm({ goal, month }: { goal?: SavingsGoal; month?: string }) {
     <label>Nom de la cagnotte<input name="label" required maxLength={100} defaultValue={goal?.label} placeholder="Ex. cadeau de Noël pour…" /></label>
     <GoalProjectFields initialProject={goal?.project} initialTopic={goal?.travelTopic} />
     <label>Objectif en euros<input name="target" inputMode="decimal" defaultValue={goal?.targetCents == null ? "" : savingsEuros(goal.targetCents)} /></label>
-    <label>Échéance<input name="deadline" type="date" defaultValue={goal?.deadline ?? ""} /></label>
+    <label>Date d’achat prévue<input name="plannedPurchaseDate" type="date" defaultValue={goal?.plannedPurchaseDate ?? ""} /></label>
+    <label>Échéance finale<input name="deadline" type="date" defaultValue={goal?.deadline ?? ""} /></label>
+    <label>Priorité<select name="priority" defaultValue={goal?.priority ?? "normal"}>
+      {Object.entries(savingsPriorities).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+    </select></label>
     <button className={styles.primary}>{goal ? "Enregistrer l’objectif" : "Créer la cagnotte"}</button>
   </form>;
 }
