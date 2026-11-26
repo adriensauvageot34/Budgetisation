@@ -355,6 +355,9 @@
 }
 .dialog::backdrop { background: #20162f59; }
 .panel { display: flex; flex-direction: column; height: 100%; }
+.savingsFooter { flex: none; border-top: 1px solid var(--line); background: #fdf8ff; }
+.savingsFooter > button { margin: 9px 15px; }
+.savingsFooter > button[hidden] { display: none; }
 .panelHeader {
   flex: none;
   display: flex;

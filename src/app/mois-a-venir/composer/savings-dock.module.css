@@ -1,0 +1,53 @@
+.dock {
+  display: grid;
+  gap: 8px;
+  max-height: min(46vh, 330px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, #f7efff, #fffaff);
+  color: #36234e;
+  font-size: .84rem;
+}
+.header, .filters, .form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.header { justify-content: space-between; }
+.header h3 { display: flex; align-items: center; gap: 7px; margin: 0; font-size: .95rem; font-weight: 750; }
+.dock p { margin: 0; }
+.dock a { text-decoration: underline; }
+.dock button, .dock input, .dock select {
+  padding: 6px 9px;
+  border: 1px solid #dbcaea;
+  border-radius: 9px;
+  background: #fff;
+  color: inherit;
+}
+.dock button:disabled { opacity: .55; }
+.dock :is(input, button, select):focus-visible { outline: 2px solid #7844b1; outline-offset: 2px; }
+.dock .close { display: grid; place-items: center; padding: 4px; }
+.filters input { flex: 0 1 250px; min-width: 0; }
+.goals {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(145px, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 7px;
+  overflow-x: auto;
+  margin: 0;
+  padding: 3px 3px 7px;
+  list-style: none;
+}
+.dock .goal { display: grid; align-content: start; gap: 3px; width: 100%; height: 100%; text-align: left; background: #f4eafd; }
+.dock .goal[data-project="christmas"] { background: #f9eeeb; }
+.dock .goal[data-project="birthday"] { background: #fbedf2; }
+.dock .goal[data-project="travel"] { background: #eef0fc; }
+.dock .goal[aria-pressed="true"] { border-color: #7844b1; box-shadow: inset 0 0 0 1px #7844b1; }
+.goal small, .goal span { font-size: .74rem; }
+.field { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.field select { max-width: 100%; }
+.field input { max-width: 96px; }
+.dock .primary { color: #fff; background: #6942a2; border-color: #6942a2; font-weight: 650; }

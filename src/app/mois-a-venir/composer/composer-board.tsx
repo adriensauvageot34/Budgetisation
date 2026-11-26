@@ -1,6 +1,6 @@
 import type {LivingBar} from "./bar-living-card";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Trash2, LockKeyhole } from "lucide-react";
+import { Trash2, LockKeyhole, PiggyBank } from "lucide-react";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerCardView, ComposerContextCardView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -22,6 +22,8 @@ import { useInlineEditRegistry } from "./inline-edit-registry";
 import { presetForContext } from "@/domain/phase2/planner/composer-presets";
 import type { RealizedCard } from "@/server/phase2/planner/realized-month";
 import { CardReferenceDock, type CardReferenceKind } from "./card-reference-controls";
+import { JULY_PILOT_DATE } from "@/domain/phase2/planner/realized-month-entry";
+import { SavingsDock, savingsPayments } from "./savings-dock";
 const reconstructionOrder = { fixed: 0, daily: 1, events: 2, flows: 3 };
 type BoardProps=Parameters<typeof ComposerBoard>[0];
 const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeCluster,openEquipment,openReference,...props}:Pick<BoardProps,"model"|"busy"|"selected"|"focused"|"focus"|"edit"|"editContext"|"choose"|"drag"|"drop"|"request"|"hover"|"details"|"livingBar"> & {item:AtomicNode;inCluster:boolean;closeCluster:(after?:()=>void)=>boolean;openEquipment:(id:string,slotKey?:string)=>void;openReference:(id:string,kind:CardReferenceKind)=>void}) {
@@ -49,15 +51,17 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
   const commerce = useCommerceLibrary();
   const [equipmentTarget, setEquipmentTarget] = useState<{ id: string; slotKey?: string }>();
   const [referenceTarget, setReferenceTarget] = useState<{ id: string; kind: CardReferenceKind }>();
+  const [savingsTarget, setSavingsTarget] = useState<string>();
   const referenceTrigger = useRef<HTMLElement | null>(null);
   const closeCommerce = commerce?.closeDock;
-  const focusBoard = useCallback((id: string | null) => { setReferenceTarget(undefined); focus(id); }, [focus]);
+  const focusBoard = useCallback((id: string | null) => { setReferenceTarget(undefined); setSavingsTarget(undefined); focus(id); }, [focus]);
   const editBoard = useCallback((card: ComposerContextCardView, selectionId?: string) => {
     setReferenceTarget(undefined);
+    setSavingsTarget(undefined);
     editContext(card, selectionId);
   }, [editContext]);
   const openEquipment = useCallback((id: string, slotKey?: string) => {
-    focusEquipment(id, () => { setReferenceTarget(undefined); setEquipmentTarget({ id, slotKey }); });
+    focusEquipment(id, () => { setReferenceTarget(undefined); setSavingsTarget(undefined); setEquipmentTarget({ id, slotKey }); });
   }, [focusEquipment]);
   const openReference = useCallback((id: string, kind: CardReferenceKind) => {
     const trigger = document.activeElement;
@@ -65,6 +69,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
       referenceTrigger.current = trigger instanceof HTMLElement ? trigger : null;
       closeCommerce?.();
       setEquipmentTarget(undefined);
+      setSavingsTarget(undefined);
       setReferenceTarget({ id, kind });
     });
   }, [focusEquipment, closeCommerce]);
@@ -158,13 +163,23 @@ export function ComposerBoard({ model, busy, selected, focused, focus, focusEqui
   // the Board's available height and prevents an exact return to its layout.
   const paletteInCluster = commerce?.dock ? commerce.dock.cluster && !!openCluster : focusedInCluster;
   const merchantPalette = commerce?.dock && <CommerceDock key={`${commerce.dock.badge.anchor?.key}:${commerce.dock.badge.anchor?.digest}`} library={commerce} />;
+  const focusedPurchase = focused ? reconstructedCards?.get(focused) : undefined;
+  const payments = savingsPayments(focusedPurchase, JULY_PILOT_DATE);
+  const savingsOpen = !!focused && savingsTarget === focused && payments.length > 0;
+  const savingsPalette = payments.length > 0 && (savingsOpen
+    ? <SavingsDock key={focused} cardLabel={focusedPurchase!.label} payments={payments} close={() => setSavingsTarget(undefined)} />
+    : <button type="button" className={styles.savingsDockTrigger} onClick={() => setSavingsTarget(focused ?? undefined)}>
+      <PiggyBank size={15} aria-hidden /> Affecter à une cagnotte
+    </button>);
   const referencePalette = referenceTarget && focusedCard?.contextOccurrenceId === referenceTarget.id
     && <CardReferenceDock key={`${referenceTarget.id}:${referenceTarget.kind}`} card={focusedCard} model={model} kind={referenceTarget.kind}
       busy={busy} close={closeReference} request={request} />;
-  const regularPalette = focusedCard && (presetForContext(focusedCard)?.presetKey !== "bar-apero" || livingBar?.id === focusedCard.contextOccurrenceId) && <div className={styles.paletteDock} data-palette-dock hidden={!!merchantPalette}>{contextGuide || referencePalette || <ContextPalette key={focusedCard.contextOccurrenceId} card={focusedCard} model={model} busy={busy} choose={choose}
+  const regularPalette = focusedCard && (savingsPalette || presetForContext(focusedCard)?.presetKey !== "bar-apero" || livingBar?.id === focusedCard.contextOccurrenceId) && <div className={styles.paletteDock} data-palette-dock
+    data-savings-palette={!!savingsPalette || undefined} hidden={!!merchantPalette}>{savingsPalette}
+    {!savingsOpen && (contextGuide || referencePalette || <ContextPalette key={focusedCard.contextOccurrenceId} card={focusedCard} model={model} busy={busy} choose={choose}
     equipmentTarget={equipmentTarget?.id === focusedCard.contextOccurrenceId ? equipmentTarget : undefined}
     onConfigure={!focusedCard.readOnly ? () => editContext(focusedCard) : undefined}
-    close={() => { setEquipmentTarget(undefined); focus(null); }} />}</div>;
+    close={() => { setEquipmentTarget(undefined); focusBoard(null); }} />)}</div>;
   const trashZone = trashVisible && <div className={styles.trash} data-trash data-protected={interaction?.grabbed?.protected} data-compatible={trashAccepts || !!interaction?.grabbed?.removeOperation} data-drag-over={sameTarget(interaction?.overTarget ?? null, trashTarget)}
     role="status" aria-label={interaction?.grabbed?.protected ? "Protégée · retrait interdit" : "Retirer l’élément saisi"}
     onDragOver={e => { e.stopPropagation(); if (!busy && !interaction?.grabbed?.protected) { e.preventDefault(); interaction?.over(trashTarget); } }}

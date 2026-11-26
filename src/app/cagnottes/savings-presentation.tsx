@@ -33,8 +33,8 @@ export function FundingTrack({ budget, funded, planned, label }: {
   return <div className={styles.track} role="progressbar" aria-label={label} aria-valuenow={percent}
     aria-valuemin={0} aria-valuemax={100}
     aria-valuetext={`${savingsMoney(funded)} financés sur ${savingsMoney(budget)} · ${savingsMoney(planned)} prévus`}>
-    <span style={{ width: `${100 * funded / budget}%` }} />
-    <span style={{ width: `${100 * planned / budget}%` }} />
+    <span style={{ width: `${100 * Math.min(budget, funded) / budget}%` }} />
+    <span style={{ width: `${100 * Math.min(Math.max(0, budget - funded), planned) / budget}%` }} />
   </div>;
 }
 
@@ -53,7 +53,7 @@ export function ProjectSummary({ project, goals }: { project: SavingsProject; go
         <dd>{total.percent === null ? "—" : `${total.percent} %`}</dd></div>
     </dl>
     <div className={styles.projectProgress}>
-      <FundingTrack {...total} label={`Financement · ${savingsProjects[project]}`} />
+      <FundingTrack budget={total.budget} funded={total.covered} planned={total.plannedWithinTarget} label={`Financement · ${savingsProjects[project]}`} />
       <p>{total.budget > 0 && <span>{savingsMoney(total.funded)} financés · {savingsMoney(total.planned)} prévus</span>}
         {total.unpriced > 0 && <span>{total.unpriced} {total.unpriced === 1 ? "poste à chiffrer" : "postes à chiffrer"}</span>}</p>
     </div>
@@ -69,7 +69,7 @@ export function TravelTopicSummary({ topic, goals }: { topic: SavingsTravelTopic
     </div>
     <p className={styles.topicBudget}><strong>{total.budget ? savingsMoney(total.budget) : "À chiffrer"}</strong>
       {total.percent !== null && <span>{total.percent} % financés{total.unpriced > 0 ? " sur les postes chiffrés" : ""}</span>}</p>
-    <FundingTrack {...total} label={`Financement · ${savingsTravelTopics[topic]}`} />
+    <FundingTrack budget={total.budget} funded={total.covered} planned={total.plannedWithinTarget} label={`Financement · ${savingsTravelTopics[topic]}`} />
     {(total.purchased > 0 || total.unpriced > 0) && <p className={styles.footnote}>
       {[total.purchased > 0 ? `${savingsMoney(total.purchased)} achetés` : null,
         total.unpriced > 0 ? `${total.unpriced} ${total.unpriced === 1 ? "poste à chiffrer" : "postes à chiffrer"}` : null].filter(Boolean).join(" · ")}

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ExternalLink, MapPin, Pencil, Search, Utensils, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, MapPin, Pencil, PiggyBank, Search, Utensils, X } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, isImportedRealizedMonth, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { julyPilotLabels, julyPilotStatuses, type JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
@@ -16,6 +16,7 @@ import { days, matches, paymentSearch, searchableDate, searchText } from "./real
 import type { InitialRealizedDetail, RealizedBoardOverview, RealizedCardSummary } from "./realized-overview";
 import { unpackRealizedOverview, type PackedRealizedOverview } from "./realized-overview-wire";
 import { useRealizedRailLayout } from "./realized-rail-layout";
+import { SavingsDock, savingsPayments } from "./savings-dock";
 import styles from "./realized-month.module.css";
 
 const sortOptions = [
@@ -291,7 +292,8 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
   const [statusFilter, setStatusFilter] = useState<JulyPilotStatus | "">(initialStatus ?? "");
   const [query, setQuery] = useState("");
   const [selection, setSelection] = useState<{ cardId: string; paymentId?: string; componentId?: string } | null>(
-    () => initialCardId ? { cardId: initialCardId } : null,
+    () => initialCardId ? { cardId: initialCardId,
+      paymentId: initialCardId.startsWith("payment-") ? initialCardId.slice("payment-".length) : undefined } : null,
   );
   const [loaded, setLoaded] = useState<ReadonlyMap<string, RealizedCard>>(() => new Map());
   const [failedKey, setFailedKey] = useState<string>();
@@ -495,7 +497,23 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
               <button type="button" className={styles.editCard} onClick={() => { setFailedKey(undefined); setRetry(value => value + 1); }}>Réessayer</button>
             </div> : <p role="status">Chargement des détails…</p>}
         </div>
+        {detail && <SavingsFooter key={detail.id} card={detail} />}
       </div>}
     </dialog>
   </div>;
+}
+
+function SavingsFooter({ card }: { card: RealizedCard }) {
+  const [expanded, setExpanded] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const payments = savingsPayments(card);
+  if (!payments.length) return null;
+  return <footer className={styles.savingsFooter}>
+    <button ref={trigger} className={styles.editCard} type="button" hidden={expanded} aria-expanded={expanded}
+      onClick={() => setExpanded(true)}><PiggyBank size={16} aria-hidden /> Affecter à une cagnotte</button>
+    {expanded && <SavingsDock cardLabel={card.label} payments={payments} close={() => {
+      setExpanded(false);
+      requestAnimationFrame(() => trigger.current?.focus());
+    }} />}
+  </footer>;
 }

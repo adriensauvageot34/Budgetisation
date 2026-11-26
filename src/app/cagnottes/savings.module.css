@@ -179,6 +179,10 @@
 .allocation small { background: #ede2fa; padding: 1px 5px; border-radius: 6px; font-size: .69rem; }
 .allocation small[data-status="saved"] { background: #e5e9f9; color: #3d4d85; }
 .allocation small[data-status="purchased"] { background: #dcf1e5; color: #256044; }
+.purchaseLinks { display:grid; gap:5px; list-style:none; margin:8px 0; padding:0; }
+.purchaseLinks li { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:3px 8px; padding:7px 9px; border-radius:9px; background:#f7f0fc; font-size:.78rem; }
+.purchaseLinks a { grid-column:1 / -1; overflow-wrap:anywhere; text-decoration:underline; }
+.purchaseLinks a svg { display:inline; }
 .allocation .check { display: flex; align-items: center; gap: 5px; }
 .allocationFooter { justify-content: space-between; margin-top: 7px; }
 .empty { text-align: center; padding: 30px 12px; background: #fcf7fe; border: 1px dashed #d0b6e5; border-radius: 18px; }

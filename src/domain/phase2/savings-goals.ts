@@ -10,9 +10,11 @@ export type SavingsTravelTopic = keyof typeof savingsTravelTopics;
 export const savingsStatuses = { planned: "Prévu", saved: "Sur le livret", purchased: "Acheté" } as const;
 export type SavingsStatus = keyof typeof savingsStatuses;
 export type SavingsGoalAllocation = { id: string; month: string; cents: number; status: SavingsStatus; accounted: boolean };
+export type SavingsPurchase = { operationId: string; goalId: string; date: string; label: string; cents: number };
 export type SavingsGoal = {
   goalId: string; label: string; project: SavingsProject; targetCents: number | null; deadline: string | null;
   templateKey: string | null; travelTopic: SavingsTravelTopic | null; revision: number; allocations: SavingsGoalAllocation[];
+  purchases?: readonly SavingsPurchase[];
 };
 export type SavingsMonthEntry = SavingsGoalAllocation & Pick<SavingsGoal, "goalId" | "label" | "project" | "deadline">;
 
@@ -23,10 +25,41 @@ export const savingsMoney = (cents: number) => new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", minimumFractionDigits: 2,
 }).format(cents / 100);
 
+export function parseSavingsCents(text: string) {
+  if (!/^\d{1,6}(?:[,.]\d{1,2})?$/u.test(text)) return null;
+  const [whole, decimal = ""] = text.replace(",", ".").split(".");
+  const value = Number(whole) * 100 + Number(decimal.padEnd(2, "0"));
+  return value > 0 && value <= maxSavingsCents ? value : null;
+}
+
+export function savingsAllocationsAfterPurchases<T extends SavingsGoalAllocation>(
+  allocations: readonly T[], purchases: readonly SavingsPurchase[], goalOf: (row: T) => string,
+): T[] {
+  if (!purchases.length) return [...allocations];
+  const paidByMonth = new Map<string, number>();
+  for (const purchase of purchases) {
+    const key = `${purchase.goalId}:${purchase.date.slice(0, 7)}`;
+    paidByMonth.set(key, (paidByMonth.get(key) ?? 0) + purchase.cents);
+  }
+  return allocations.flatMap(row => {
+    if (row.status !== "planned") return [row];
+    const key = `${goalOf(row)}:${row.month}`;
+    const replaced = Math.min(row.cents, paidByMonth.get(key) ?? 0);
+    paidByMonth.set(key, (paidByMonth.get(key) ?? 0) - replaced);
+    return replaced === row.cents ? [] : [{ ...row, cents: row.cents - replaced }];
+  });
+}
+
+export function effectiveSavingsAllocations(goal: SavingsGoal) {
+  return savingsAllocationsAfterPurchases([...goal.allocations].sort((a, b) => a.id.localeCompare(b.id)),
+    goal.purchases ?? [], () => goal.goalId);
+}
+
 export function savingsGoalProgress(goal: SavingsGoal) {
-  const planned = goal.allocations.filter(row => row.status === "planned").reduce((sum, row) => sum + row.cents, 0);
+  const planned = effectiveSavingsAllocations(goal).filter(row => row.status === "planned").reduce((sum, row) => sum + row.cents, 0);
   const saved = goal.allocations.filter(row => row.status === "saved").reduce((sum, row) => sum + row.cents, 0);
-  const purchased = goal.allocations.filter(row => row.status === "purchased").reduce((sum, row) => sum + row.cents, 0);
+  const purchased = goal.allocations.filter(row => row.status === "purchased").reduce((sum, row) => sum + row.cents, 0)
+    + (goal.purchases ?? []).reduce((sum, row) => sum + row.cents, 0);
   const funded = saved + purchased;
   return { planned, saved, purchased, funded,
     unassigned: goal.targetCents === null ? null : goal.targetCents - funded - planned,
@@ -38,17 +71,20 @@ export const savingsProgressPercent = (funded: number, budget: number) =>
 
 export function summarizeSavingsGoals(goals: readonly SavingsGoal[]) {
   const totals = goals.reduce((total, goal) => {
-    const { saved, purchased, planned } = savingsGoalProgress(goal);
+    const { saved, purchased, planned, funded } = savingsGoalProgress(goal);
+    const budget = goal.targetCents ?? 0;
     return {
-      budget: total.budget + (goal.targetCents ?? 0),
+      budget: total.budget + budget,
       unpriced: total.unpriced + (goal.targetCents === null ? 1 : 0),
       saved: total.saved + saved,
       purchased: total.purchased + purchased,
       planned: total.planned + planned,
+      covered: total.covered + Math.min(budget, funded),
+      plannedWithinTarget: total.plannedWithinTarget + Math.min(Math.max(0, budget - funded), planned),
     };
-  }, { budget: 0, unpriced: 0, saved: 0, purchased: 0, planned: 0 });
+  }, { budget: 0, unpriced: 0, saved: 0, purchased: 0, planned: 0, covered: 0, plannedWithinTarget: 0 });
   const funded = totals.saved + totals.purchased;
-  return { ...totals, funded, percent: savingsProgressPercent(funded, totals.budget) };
+  return { ...totals, funded, percent: savingsProgressPercent(totals.covered, totals.budget) };
 }
 
 type SavingsTemplate = { key: string; project: SavingsProject; label: string; deadline: string | null; travelTopic?: SavingsTravelTopic };
