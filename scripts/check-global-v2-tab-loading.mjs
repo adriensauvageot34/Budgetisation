@@ -60,7 +60,19 @@ try {
   assert.equal(root.root.findAllByProps({ "aria-label": "Chargement de chiffres clés" }).length, 1);
   await reply(pending[0]);
   await reply(pending.find(({ request }) => request.params.sectionKey === "BREAKDOWN"));
-  await reply(pending.find(({ request }) => request.resource === "analysis_global_life_timeline"));
+  const timelineRead = pending.find(({ request }) => request.resource === "analysis_global_life_timeline");
+  const timelineReply = await fixtureTransport(timelineRead.request);
+  const seed = timelineReply.data.events.at(-1);
+  const events = Array.from({ length: 6 }, (_, index) => ({
+    ...seed, eventRef: `life-event:fixture-${index}`, canonicalName: `Événement test ${index + 1}`,
+  }));
+  await act(async () => timelineRead.resolve({ ...timelineReply, data: { ...timelineReply.data, events } }));
+  const eventPicker = root.root.findAllByType("select").find(({ props }) =>
+    React.Children.toArray(props.children).some((child) => React.isValidElement(child) && child.props.value === events.at(-1).eventRef));
+  assert.ok(eventPicker, "All events are reachable by name and date");
+  await act(async () => eventPicker.props.onChange({ currentTarget: { value: events.at(-1).eventRef } }));
+  assert.equal(root.root.findByProps({ id: "global-detail-title" }).props.children, events.at(-1).canonicalName);
+  await click({ "aria-label": "Fermer le détail" });
   assert.ok(!requests().includes(globalV2PersonaPanelResource), "Portraits do not trigger a profile read");
 
   const selectPortrait = () => act(async () => {
