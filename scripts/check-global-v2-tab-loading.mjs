@@ -84,12 +84,13 @@ try {
   await mount("");
   assert.deepEqual(requests(), ["OVERVIEW", "EVOLUTION"], "Both financial reads start together");
   assert.equal(root.root.findAllByProps({ role: "tablist" }).length, 0);
-  assert.deepEqual(root.root.findAllByType("h2").map(({ props }) => props.id), ["economie-title", "categories-title", "rythmes-title", "profils-title"]);
+  assert.deepEqual(root.root.findAllByType("h2").map(({ props }) => props.id), ["economie-title", "rythmes-title", "categories-title", "profils-title"]);
   await reply(pending[1]);
   assert.equal(root.root.findAllByProps({ "aria-label": "Dépenses réelles et niveau habituel sur douze mois" }).length, 1);
   assert.equal(root.root.findAllByProps({ "aria-label": "Chargement de chiffres clés" }).length, 1);
   await reply(pending[0]);
   await reply(pending.find(({ request }) => request.params.sectionKey === "BREAKDOWN"));
+  await reply(pending.find(({ request }) => request.params.sectionKey === "PATTERNS"));
   const timelineRead = pending.find(({ request }) => request.resource === "analysis_global_life_timeline");
   const timelineReply = await fixtureTransport(timelineRead.request);
   const seed = timelineReply.data.events.at(-1);
@@ -97,12 +98,21 @@ try {
     ...seed, eventRef: `life-event:fixture-${index}`, canonicalName: `Événement test ${index + 1}`,
   }));
   await act(async () => timelineRead.resolve({ ...timelineReply, data: { ...timelineReply.data, events } }));
-  const eventPicker = root.root.findAllByType("select").find(({ props }) =>
-    React.Children.toArray(props.children).some((child) => React.isValidElement(child) && child.props.value === events.at(-1).eventRef));
-  assert.ok(eventPicker, "All events are reachable by name and date");
-  await act(async () => eventPicker.props.onChange({ currentTarget: { value: events.at(-1).eventRef } }));
+  assert.equal(root.root.findAllByType("select").length, 0);
+  const eventMonth = root.root.findAllByType("button").find(({ props }) => props["aria-label"]?.endsWith("6 événements"));
+  assert.ok(eventMonth);
+  assert.equal(eventMonth.props["aria-pressed"], false);
+  await act(async () => eventMonth.props.onClick());
+  assert.equal(eventMonth.props["aria-pressed"], true);
+  await act(async () => eventMonth.props.onClick());
+  assert.equal(eventMonth.props["aria-pressed"], false);
+  const lastEvent = root.root.findAllByType("button").find(({ props }) => props["aria-label"]?.startsWith(events.at(-1).canonicalName));
+  assert.ok(lastEvent, "Every event is directly reachable from its card");
+  await act(async () => lastEvent.props.onClick());
   assert.equal(root.root.findByProps({ id: "global-detail-title" }).props.children, events.at(-1).canonicalName);
   await click({ "aria-label": "Fermer le détail" });
+  await reply(pending.find(({ request }) => request.params.sectionKey === "PATTERNS" && request.resource === "analysis_global_categories_needs_expanded"));
+  await reply(pending.find(({ request }) => request.params.sectionKey === "COMPARISONS"));
   assert.ok(!requests().includes(globalV2PersonaPanelResource), "Portraits do not trigger a profile read");
 
   const selectPortrait = () => act(async () => {
@@ -127,8 +137,9 @@ try {
   assert.ok(profileRead, "The profile deep link opens its inline detail");
   await act(async () => profileRead.reject(new Error("SNAPSHOT_TEMPORARILY_UNAVAILABLE")));
   await act(async () => root.root.findByProps({ role: "alert" }).findByType("button").props.onClick());
-  await reply(pending.find(({ request }) => request.params.sectionKey === "BREAKDOWN"));
-  await reply(pending.find(({ request }) => request.resource === "analysis_global_life_timeline"));
+  for (let i = 2; i < pending.length; i++) {
+    if (pending[i] !== profileRead) await reply(pending[i]);
+  }
   assert.equal(requests().filter((key) => key === globalV2PersonaPanelResource).length, 2);
   console.log("PASS: concurrent financial reads, fixed headings, lazy profiles, visit reuse, deep link and retry");
 } finally {
