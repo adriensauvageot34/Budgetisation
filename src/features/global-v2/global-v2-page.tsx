@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, ChevronLeft, ChevronRight, ExternalLink, Info, Maximize2, Minimize2, RefreshCw, Sparkles, X } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { parseMoney, type Money } from "@/core/money";
@@ -37,6 +37,7 @@ import { emitGlobalV2UxEvent } from "./instrumentation";
 import { DensityAtom, useContentDensity } from "@/components/layout/content-density";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { AtomicDetailPages } from "./atomic-detail-pages";
+import { GlobalLayoutMotion, useGlobalLayoutMotion } from "./global-layout-motion";
 import atomic from "./global-atomic.module.css";
 import { GlobalClayIcon } from "./global-clay-icon";
 import { groupTimelineEvents, TimelineComparator, TimelineEventFacts } from "./life-timeline";
@@ -839,7 +840,8 @@ function Atom(props: Omit<ComponentProps<typeof DensityAtom>, "className" | "mot
 }
 
 function AtomicSection({ slot, children, detail, actions }: { readonly slot: AtomicSlot; readonly children: ReactNode; readonly detail?: ReactNode; readonly actions?: ReactNode }) {
-  const { region, flow } = useContentDensity(`.${atomic.detailViewport}[data-fit-detail]`);
+  const { revision } = useContext(GlobalLayoutMotion);
+  const { region, flow } = useContentDensity(`.${atomic.detailViewport}[data-fit-detail]`, revision);
   const { id, title, icon } = atomicSections[slot];
   return <section className={atomic.section} data-global-section={slot} data-focused={detail !== undefined} id={id} aria-labelledby={`${id}-title`} ref={region}>
     <div ref={flow} className={atomic.flow}>
@@ -934,6 +936,7 @@ function AtomicTimeline({ model, open, selectedEvent, onPeriodChange, compact }:
   readonly compact: boolean;
 }) {
   const [selected, setSelected] = useState<string>();
+  const { changeLayout } = useContext(GlobalLayoutMotion);
   const months = useMemo(() => groupTimelineEvents(model.events).flatMap((year) => year.months), [model.events]);
   const current = months.find(({ key }) => key === selected);
   const busiestMonth = Math.max(1, ...months.map(({ events }) => events.length));
@@ -944,10 +947,10 @@ function AtomicTimeline({ model, open, selectedEvent, onPeriodChange, compact }:
         <div className={atomic.historyTitle}><h3>Événements par mois</h3><span>{current ? capitalize(frenchMonth(current.key)) : "Période entière"} · {events.length} {events.length === 1 ? "événement" : "événements"}</span></div>
         <div className={atomic.ruler}>{months.map(({ key, events }) =>
           <button key={key} type="button" aria-pressed={current?.key === key} aria-label={`${capitalize(frenchMonth(key))} · ${events.length} ${events.length === 1 ? "événement" : "événements"}`}
-            onClick={() => {
+            onClick={() => changeLayout(() => {
               setSelected((month) => month === key ? undefined : key);
               onPeriodChange();
-            }}>
+            })}>
             <span className={atomic.barWell}><i style={{ height: `${events.length / busiestMonth * 100}%` }} /></span>
             <small>{frenchMonth(key, true).split(" ")[0]}</small>
           </button>)}</div>
@@ -1013,6 +1016,8 @@ const slotForModule: Partial<Record<GlobalPrimaryModuleKey, AtomicSlot>> = {
 export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly bundle: GlobalV2PageBundle; readonly transport: GlobalV2UiTransport; readonly certifiedThrough: string }) {
   const runtime = useMemo(() => new GlobalV2VisitRuntime(bundle.initial.publicationMeta, transport, 2), [bundle.initial.publicationMeta, transport]);
   const visible = useMemo(() => new Set(bundle.initial.navigation.filter(({ visibility }) => visibility !== "HIDDEN").map(({ moduleKey }) => moduleKey)), [bundle.initial.navigation]);
+  const motion = useGlobalLayoutMotion();
+  const { changeLayout } = motion;
   const [trail, setTrail] = useState<readonly AtomicFocus[]>([]);
   const focus = trail.at(-1);
   const [selectedMonth, setSelectedMonth] = useState<string>();
@@ -1029,15 +1034,20 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
         : next.target.kind === "METHODOLOGY" ? "global_methodology_opened" : "global_module_expanded";
       emitGlobalV2UxEvent(event, { moduleKey: next.target.moduleKey });
     }
-    setTrail((current) => {
+    changeLayout(() => setTrail((current) => {
       const previous = current.at(-1);
       if (next.kind === "rhythm-month" && previous?.slot === next.slot) {
         return previous.kind === "rhythm-chart" ? [previous, next] : [...current.slice(0, -1), next];
       }
       return inside && previous?.slot === next.slot ? [...current, next] : [next];
-    });
-  }, []);
+    }));
+  }, [changeLayout]);
+
   function close() {
+    changeLayout(resetFocus);
+  }
+
+  function resetFocus() {
     setTrail([]);
     if (window.location.hash) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
     origin.current?.focus({ preventScroll: true });
@@ -1084,7 +1094,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
     return () => window.removeEventListener("global-v2:focus-life-event", followEvent);
   }, [open, timeline]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!focus) return;
     detailHeading.current?.focus({ preventScroll: true });
     const bar = detailRef.current?.closest("li[data-expanded]");
@@ -1123,7 +1133,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
     return <Atom name="detail" priority={240} minimum={1}>
       <article className={atomic.detail} ref={detailRef} aria-labelledby="global-detail-title">
         <header className={atomic.detailHeader}>
-          {trail.length > 1 && <button type="button" onClick={() => setTrail(trail.slice(0, -1))} aria-label="Revenir au détail précédent"><ChevronLeft size={17} /></button>}
+          {trail.length > 1 && <button type="button" onClick={() => changeLayout(() => setTrail(trail.slice(0, -1)))} aria-label="Revenir au détail précédent"><ChevronLeft size={17} /></button>}
           <h3 tabIndex={-1} id="global-detail-title" ref={detailHeading}>{title}</h3>
           <button type="button" onClick={close} aria-label="Fermer le détail"><X size={17} /></button>
         </header>
@@ -1154,13 +1164,13 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
       <AtomicDetailPages inline={selected === undefined}>
         <BackgroundRhythms runtime={runtime} result={background} view={slot} selectedMonth={selected} onMonthChange={month => {
           if (month) open({ kind: "rhythm-month", slot, month });
-          else if (selected !== undefined) setTrail(current => current.slice(0, -1));
+          else if (selected !== undefined) changeLayout(() => setTrail(current => current.slice(0, -1)));
         }} />
       </AtomicDetailPages>
     </Atom>;
   }
 
-  return <div className={atomic.dashboard} data-global-v2="" data-publication-id={bundle.initial.publicationMeta.publicationId} onKeyDown={(event) => {
+  return <GlobalLayoutMotion.Provider value={motion}><div className={atomic.dashboard} data-global-v2="" data-publication-id={bundle.initial.publicationMeta.publicationId} onKeyDown={(event) => {
     if (event.key === "Escape" && focus) { event.preventDefault(); close(); }
   }}>
     <AppToolbarContent className={atomic.header}><h1>Analyse globale</h1><p>{period.label.replace("—", "→")}</p>
@@ -1190,7 +1200,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
                     const habitual = economicNumber(typical?.points.find(({ unitKey }) => unitKey === point.unitKey));
                     const title = capitalize(frenchMonth(point.unitKey));
                     return <button type="button" key={point.unitKey} aria-label={`${title} · ${formatMoney(value)}`} aria-pressed={selectedMonth === point.unitKey}
-                      onClick={() => setSelectedMonth((month) => month === point.unitKey ? undefined : point.unitKey)}>
+                      onClick={() => changeLayout(() => setSelectedMonth((month) => month === point.unitKey ? undefined : point.unitKey))}>
                       <span className={atomic.barWell}><i style={{ height: `${((value ?? 0) / chartMax) * 100}%` }} />
                       {habitual !== undefined && <b style={{ bottom: `${(habitual / chartMax) * 100}%` }} />}</span>
                       <small>{frenchMonth(point.unitKey, true).split(" ")[0]}</small>
@@ -1209,7 +1219,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
             <AtomicTimeline model={timeline} compact={isFocusing} open={(next) => {
               if (next.kind === "event" && focus?.kind === "event" && next.event.eventRef === focus.event.eventRef) close();
               else open(next);
-            }} selectedEvent={focus?.kind === "event" ? focus.event : undefined} onPeriodChange={() => { if (focus?.kind === "event") close(); }} />}
+            }} selectedEvent={focus?.kind === "event" ? focus.event : undefined} onPeriodChange={() => { if (focus?.kind === "event") resetFocus(); }} />}
           <Atom name="everyday-rhythms" priority={63} minimum={1}><div className={atomic.actions}>
             <FocusLink onClick={() => selectSection("life", "RHYTHM", "PATTERNS", "Coûts des habitudes")}>Coûts des habitudes</FocusLink>
             <button className={atomic.focusLink} type="button" onClick={() => open({ kind: "query", slot: "life", target: methodOverlayTarget("RHYTHM") })}><Info size={13} aria-hidden /> Fiabilité et méthode</button>
@@ -1248,8 +1258,11 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
             <div role="group" aria-label="Mode de répartition" className={atomic.distributionModes}>
               {(Object.keys(distributionModes) as DistributionMode[]).map((mode) => <button key={mode} type="button"
                 aria-pressed={mode === distribution} onClick={() => {
-                  if (mode !== distribution && focus?.slot === "categories") close();
-                  setDistribution(mode);
+                  if (mode === distribution) return;
+                  changeLayout(() => {
+                    if (focus?.slot === "categories") resetFocus();
+                    setDistribution(mode);
+                  });
                 }}>{distributionModes[mode]}</button>)}
             </div>
             <p className={atomic.distributionPeriod}>{distribution === "categories" ? period.label.split(" · ")[0] : period.targetLabel}</p>
@@ -1274,7 +1287,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
         </AtomicSection>}
       </div>
     </div>
-  </div>;
+  </div></GlobalLayoutMotion.Provider>;
 }
 
 export function GlobalV2ActivationPending() {

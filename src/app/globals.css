@@ -238,3 +238,22 @@ a {
     padding: 0.72rem 0.75rem;
   }
 }
+
+html:active-view-transition-type(global-layout)::view-transition {
+  pointer-events: none;
+}
+
+html:active-view-transition-type(global-layout)::view-transition-group(*) {
+  animation-duration: 240ms;
+  animation-timing-function: cubic-bezier(.25, .60, .25, 1);
+}
+
+html:active-view-transition-type(global-layout)::view-transition-old(root),
+html:active-view-transition-type(global-layout)::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html:active-view-transition-type(global-layout)::view-transition-old(root) {
+  opacity: 0;
+}
