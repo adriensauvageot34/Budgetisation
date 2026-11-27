@@ -13,7 +13,6 @@
   color: var(--atomic-ink);
 }
 .header { display: flex; align-items: center; gap: 7px 11px; min-width: 0; }
-.header img { flex: none; width: clamp(25px, 3.6dvh, 40px); height: auto; }
 .header h1 { margin: 0; font-size: clamp(1.1rem, 2.25dvh, 1.68rem); white-space: nowrap; font-weight: 850; line-height: 1.15; letter-spacing: -.04em; }
 .header p { margin: 0; color: var(--color-muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .method, .banner button {
@@ -34,8 +33,11 @@
 }
 .column[data-side="left"]:has(> :nth-child(2)) { grid-template-rows: minmax(min(246px,60%), 1.22fr) minmax(0,.78fr); }
 .column[data-side="right"]:has(> :nth-child(4)) {
-  grid-template-rows: minmax(64px,var(--profiles-size,.54fr)) minmax(40px,var(--car-size,1.3fr))
-    minmax(40px,var(--food-size,1.24fr)) minmax(47px,var(--categories-size,1.12fr));
+  grid-template-rows:
+    minmax(62px,var(--profiles-size,clamp(75px, 9.5dvh, 96px)))
+    minmax(40px,var(--car-size,clamp(144px, 18.6dvh, 170px)))
+    minmax(40px,var(--food-size,clamp(135px, 18.5dvh, 166px)))
+    minmax(47px,var(--categories-size,1fr));
 }
 .grid[data-focus="profiles"] { --profiles-size: 2.8fr; --car-size: .58fr; --food-size: .5fr; --categories-size: .5fr; }
 .grid[data-focus="car"] { --profiles-size: .55fr; --car-size: 2.9fr; --food-size: .55fr; --categories-size: .48fr; }
@@ -393,7 +395,7 @@
 .detailColumns [data-workspace-rhythm] [class*="backgroundHeader"] { float: right; }
 .detailColumns [data-workspace-rhythm] [class*="backgroundHeader"] button { padding-block: 0; font-size: .69rem; }
 .detailColumns [data-workspace-rhythm] [class*="rhythmCard"] { clear: both; gap: 4px; }
-.detailColumns [data-workspace-rhythm] [class*="legend"] { gap: 3px 9px; padding-block: 1px; }
+.detailColumns [data-workspace-rhythm] [class*="legend"] { gap: 3px 9px; padding-block: 0; line-height: 1.2; }
 .detail .detailColumns [data-workspace-rhythm] :is([class*="annualRiver"],[class*="monthInteractionLayer"],[class*="carAnnualVisual"] :is([class*="annualRiver"],[class*="monthInteractionLayer"])) { height: clamp(58px, calc(var(--detail) - 72px), 156px); }
 .detailColumns [data-workspace-rhythm] [class*="annualVisualBody"] { padding-top: 5px; }
 .detailColumns [data-workspace-rhythm] :is([class*="monthInteractionLayer"], [class*="selectedMonthGuide"]) { top: 5px; }
@@ -465,12 +467,6 @@
 .section[data-global-section="food"] [data-workspace-rhythm] [class*="annualKpi"] small { display: none; }
 .section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [data-rhythm-domain]:has([data-rhythm-month]) [class*="rhythmCardHeader"] { display: none; }
 .section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="rhythmCard"] > * + * { margin-top: 0; }
-.section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] :is([class*="annualRiver"], [class*="monthInteractionLayer"]) {
-  height: clamp(42px, var(--spark), 137px);
-}
-.section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [data-rhythm-domain]:has([data-rhythm-month]) :is([class*="annualRiver"], [class*="monthInteractionLayer"]) {
-  height: clamp(42px, calc(var(--spark) * .7), 104px);
-}
 .section[data-global-section="food"] .atom[data-density="1"] [class*="rhythmAnnotations"],
 .section[data-global-section="food"] .atom[data-density="2"] [class*="rhythmAnnotations"] { display: none; }
 .section[data-global-section="car"] [class*="carAnnualLayout"] {
@@ -480,11 +476,63 @@
 .section[data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] { padding: 2px 0 0 7px; border-top: 0; border-inline-start: 1px solid var(--atomic-line); }
 .section[data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] > header { gap: 3px; }
 .section[data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] > header span { display: none; }
-.section[data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] > div { height: clamp(24px, calc(var(--spark) * .7), 84px); }
+.section[data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] > div { height: 34px; }
 .section:is([data-global-section="car"], [data-global-section="food"]) [class*="backgroundSkeleton"] { padding: 4px 7px; gap: 5px; border-radius: 8px; }
 .section:is([data-global-section="car"], [data-global-section="food"]) [class*="backgroundSkeleton"] span:nth-child(2) { height: 16px; }
 .section:is([data-global-section="car"], [data-global-section="food"]) [class*="backgroundSkeleton"] span:nth-child(3) { height: clamp(22px,var(--spark),100px); }
 
 @media (min-width: 768px) and (max-height: 740px) {
   .section[data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] h5 { font-size: .67rem; }
+}
+
+.chartActions { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.chartActions .focusLink { white-space: nowrap; }
+.sectionHeader .focusLink[aria-pressed="true"] { background: #ece0f9; border-color: #c8ade2; }
+
+.section:is([data-global-section="car"], [data-global-section="food"]) {
+  --rhythm-label-height: 19px;
+  --rhythm-size: 37px;
+  padding-block: 4px;
+}
+.section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="annualVisualBody"] {
+  padding-top: 0; padding-bottom: var(--rhythm-label-height);
+}
+.section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="annualRiver"] { height: var(--rhythm-size); }
+.section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="monthInteractionLayer"] {
+  top: 0; height: calc(var(--rhythm-size) + var(--rhythm-label-height));
+}
+.section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="monthAnchor"] > span {
+  bottom: 1px; padding: 1px 0; font-size: .71rem; line-height: 1.15; color: var(--atomic-ink);
+}
+.section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="monthAnchor"]::after {
+  bottom: var(--rhythm-label-height); left: 1px; right: 1px;
+}
+.section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="selectedMonthGuide"] {
+  top: 0; height: var(--rhythm-size);
+}
+.section:is([data-global-section="car"], [data-global-section="food"]) [data-rhythm-domain]:has([data-rhythm-month]) { --rhythm-size: 41px; }
+
+.grid[data-chart-focus="car"] [data-global-section="car"],
+.grid[data-chart-focus="food"] [data-global-section="food"] {
+  --rhythm-size: clamp(108px, 20dvh, 216px);
+}
+.grid[data-chart-focus="car"] [data-global-section="car"] [data-density="4"],
+.grid[data-chart-focus="food"] [data-global-section="food"] [data-density="4"] {
+  --rhythm-size: clamp(123px, 24dvh, 244px);
+}
+.grid[data-chart-focus="car"] [data-global-section="car"] [class*="carAnnualLayout"] {
+  grid-template-columns: minmax(0, 1fr); gap: 8px;
+}
+.grid[data-chart-focus="car"] [data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] {
+  border-inline-start: 0; border-top: 1px solid var(--atomic-line); padding: 5px 0 0;
+}
+.grid[data-chart-focus="car"] [data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] > div {
+  height: clamp(31px, 6dvh, 72px);
+}
+.grid:not([data-chart-focus]) .section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="chartTooltip"] {
+  width: max-content; max-width: 145px; grid-auto-flow: column; align-items: baseline; gap: 3px 5px;
+}
+.grid:not([data-chart-focus]) .section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="chartTooltip"] > :not(strong, b) { display: none; }
+.grid:not([data-chart-focus]) .section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="chartTooltip"] b {
+  margin: 0; font-size: .73rem; white-space: nowrap;
 }

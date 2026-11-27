@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
-import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, ChevronLeft, ChevronRight, ExternalLink, Info, RefreshCw, Sparkles, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, ChevronLeft, ChevronRight, ExternalLink, Info, Maximize2, Minimize2, RefreshCw, Sparkles, X } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { parseMoney, type Money } from "@/core/money";
 import type { MetricEnvelope } from "@/core/metrics";
@@ -786,6 +786,7 @@ type AtomicFocus =
   | { readonly kind: "event"; readonly slot: "life"; readonly event: DashboardEvent }
   | { readonly kind: "person"; readonly slot: "profiles"; readonly person?: "adrien" | "manon" }
   | { readonly kind: "vehicle"; readonly slot: "car" }
+  | { readonly kind: "rhythm-chart"; readonly slot: RhythmSlot }
   | { readonly kind: "rhythm-month"; readonly slot: RhythmSlot; readonly month: string };
 
 type DashboardTimeline = GlobalLifeTimelineReadModel | GlobalLifeTimelineV2ReadModel | GlobalLifeTimelineV3ReadModel;
@@ -1022,13 +1023,19 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const open = useCallback<OpenFocus>((next) => {
     const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const inside = detailRef.current?.contains(active) ?? false;
-    if (!inside) origin.current = active;
+    if (!inside && next.kind !== "rhythm-month") origin.current = active;
     if (next.kind === "query") {
       const event = next.target.kind === "ENTITY_DETAIL" ? "global_entity_opened"
         : next.target.kind === "METHODOLOGY" ? "global_methodology_opened" : "global_module_expanded";
       emitGlobalV2UxEvent(event, { moduleKey: next.target.moduleKey });
     }
-    setTrail((current) => inside && current.at(-1)?.slot === next.slot ? [...current, next] : [next]);
+    setTrail((current) => {
+      const previous = current.at(-1);
+      if (next.kind === "rhythm-month" && previous?.slot === next.slot) {
+        return previous.kind === "rhythm-chart" ? [previous, next] : [...current.slice(0, -1), next];
+      }
+      return inside && previous?.slot === next.slot ? [...current, next] : [next];
+    });
   }, []);
   function close() {
     setTrail([]);
@@ -1108,7 +1115,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
 
 
   function detail(slot: AtomicSlot) {
-    if (focus?.slot !== slot || focus.kind === "rhythm-month") return undefined;
+    if (focus?.slot !== slot || (focus.kind === "rhythm-month" || focus.kind === "rhythm-chart")) return undefined;
     const title = focus.kind === "query" ? focus.target.title
       : focus.kind === "event" ? focus.event.canonicalName
       : focus.kind === "vehicle" ? "Assurance, entretien et coût du véhicule"
@@ -1130,13 +1137,24 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
     </Atom>;
   }
 
+  function chartSizeButton(slot: RhythmSlot) {
+    const enlarged = focus?.kind === "rhythm-chart" && focus.slot === slot;
+    const label = slot === "car" ? "du carburant" : "de l’alimentation";
+    return <button className={atomic.focusLink} type="button" aria-pressed={enlarged}
+      aria-label={`${enlarged ? "Réduire" : "Agrandir"} le graphique ${label}`}
+      onClick={() => enlarged ? close() : open({ kind: "rhythm-chart", slot })}>
+      {enlarged ? <Minimize2 size={14} aria-hidden /> : <Maximize2 size={14} aria-hidden />}
+      {enlarged ? "Réduire" : "Agrandir"}
+    </button>;
+  }
+
   function rhythm(slot: RhythmSlot) {
     const selected = focus?.kind === "rhythm-month" && focus.slot === slot ? focus.month : undefined;
     return <Atom name={`${slot}-chart`} priority={120} minimum={isFocusing && focus?.slot !== slot ? 0 : 1}>
       <AtomicDetailPages inline={selected === undefined}>
         <BackgroundRhythms runtime={runtime} result={background} view={slot} selectedMonth={selected} onMonthChange={month => {
           if (month) open({ kind: "rhythm-month", slot, month });
-          else if (selected !== undefined) close();
+          else if (selected !== undefined) setTrail(current => current.slice(0, -1));
         }} />
       </AtomicDetailPages>
     </Atom>;
@@ -1145,11 +1163,11 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   return <div className={atomic.dashboard} data-global-v2="" data-publication-id={bundle.initial.publicationMeta.publicationId} onKeyDown={(event) => {
     if (event.key === "Escape" && focus) { event.preventDefault(); close(); }
   }}>
-    <AppToolbarContent className={atomic.header}><GlobalClayIcon name="overview" size={28} /><h1>Analyse globale</h1><p>{period.label.replace("—", "→")}</p>
+    <AppToolbarContent className={atomic.header}><h1>Analyse globale</h1><p>{period.label.replace("—", "→")}</p>
       {visible.has("ECONOMIC") && <button type="button" className={atomic.method} onClick={() => open({ kind: "query", slot: "spending", target: methodOverlayTarget("ECONOMIC") })}><Info aria-hidden size={15} /> Méthode</button>}
     </AppToolbarContent>
     {bundle.newerPublication && <aside className={atomic.banner} role="status"><strong>Une version plus récente est disponible.</strong><button type="button" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={15} /> Actualiser</button></aside>}
-    <div className={atomic.grid} data-focus={focus?.slot} data-focus-size={focus?.kind === "event" && !("eventCost" in focus.event) ? "compact" : undefined}>
+    <div className={atomic.grid} data-focus={focus?.slot} data-chart-focus={focus?.kind === "rhythm-chart" ? focus.slot : undefined} data-focus-size={focus?.kind === "event" && !("eventCost" in focus.event) ? "compact" : undefined}>
       <div className={atomic.column} data-side="left">
         {visible.has("ECONOMIC") && <AtomicSection slot="spending" detail={detail("spending")}>
           <Atom name="financial-markers" priority={95} minimum={1}>{overview ? <div className={atomic.figures}>
@@ -1212,14 +1230,17 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
           </div></Atom>
         </AtomicSection>}
         {visible.has("RHYTHM") && <AtomicSection slot="car" detail={detail("car")} actions={
-          <button className={atomic.focusLink} type="button" aria-expanded={focus?.kind === "vehicle"}
-            onClick={() => focus?.kind === "vehicle" ? close() : open({ kind: "vehicle", slot: "car" })}>
-            Assurance et entretien <ChevronRight size={13} aria-hidden />
-          </button>
+          <div className={atomic.chartActions}>
+            {chartSizeButton("car")}
+            <button className={atomic.focusLink} type="button" aria-expanded={focus?.kind === "vehicle"}
+              onClick={() => focus?.kind === "vehicle" ? close() : open({ kind: "vehicle", slot: "car" })}>
+              Assurance et entretien <ChevronRight size={13} aria-hidden />
+            </button>
+          </div>
         }>
           {focus?.kind !== "vehicle" && rhythm("car")}
         </AtomicSection>}
-        {visible.has("RHYTHM") && <AtomicSection slot="food">
+        {visible.has("RHYTHM") && <AtomicSection slot="food" actions={chartSizeButton("food")}>
           {rhythm("food")}
         </AtomicSection>}
         {visible.has("CATEGORIES_NEEDS") && <AtomicSection slot="categories">
