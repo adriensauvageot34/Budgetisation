@@ -34,7 +34,7 @@ export function CarMobilityRoute({ car, runtime, onTimelineDestination, selected
   return <article className={styles.rhythmCard} data-rhythm-domain="car">
     <header className={styles.rhythmCardHeader}><div><span className={styles.cardEyebrow}>Mobilité</span><h4>Notre mobilité en voiture</h4><p>Ce que nos déplacements en voiture ont consommé au fil de l’année.</p></div><div className={styles.annualKpi}><strong>≈{formatMoney(car.annual.modeledUsage.estimatedFuelCost)}</strong><span>de carburant estimé pour nos déplacements</span><small>{formatInteger(car.annual.modeledUsage.distanceKm)} km reconstitués · ≈{formatInteger(car.annual.modeledUsage.estimatedFuelLiters)} L estimés</small></div></header>
     <div className={styles.legend} aria-label="Légende"><span data-tone="car-work">Travail / autour du travail</span><span data-tone="car-outside">Hors travail</span><span data-tone="car-unresolved">Non classé</span></div>
-    <div className={styles.carAnnualLayout}>
+    <div data-car-annual-layout>
       <div className={`${styles.annualVisualBody} ${styles.carAnnualVisual}`}>
         <svg className={styles.annualRiver} viewBox={`0 0 ${geometry.width} ${geometry.height}`} preserveAspectRatio="none" aria-hidden="true">
           <path className={styles.carWork} d={geometry.paths[0]} />

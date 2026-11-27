@@ -469,10 +469,10 @@
 .section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="rhythmCard"] > * + * { margin-top: 0; }
 .section[data-global-section="food"] .atom[data-density="1"] [class*="rhythmAnnotations"],
 .section[data-global-section="food"] .atom[data-density="2"] [class*="rhythmAnnotations"] { display: none; }
-.section[data-global-section="car"] [class*="carAnnualLayout"] {
-  display: grid; grid-template-columns: minmax(0, 2.25fr) minmax(122px,1fr); align-items: end; gap: 8px;
+.section[data-global-section="car"] [data-car-annual-layout] {
+  display: grid; grid-template-columns: minmax(0, 2.65fr) minmax(134px,1fr); align-items: end; gap: 8px;
 }
-.section[data-global-section="car"] [data-rhythm-domain]:has([data-rhythm-month]) [class*="carAnnualLayout"] { grid-template-columns: minmax(0,1fr); }
+.section[data-global-section="car"] [data-rhythm-domain]:has([data-rhythm-month]) [data-car-annual-layout] { grid-template-columns: minmax(0,1fr); }
 .section[data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] { padding: 2px 0 0 7px; border-top: 0; border-inline-start: 1px solid var(--atomic-line); }
 .section[data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] > header { gap: 3px; }
 .section[data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] > header span { display: none; }
@@ -518,9 +518,9 @@
 }
 .grid[data-chart-focus="car"] [data-global-section="car"] [data-density="4"],
 .grid[data-chart-focus="food"] [data-global-section="food"] [data-density="4"] {
-  --rhythm-size: clamp(123px, 24dvh, 244px);
+  --rhythm-size: clamp(123px, 22dvh, 226px);
 }
-.grid[data-chart-focus="car"] [data-global-section="car"] [class*="carAnnualLayout"] {
+.grid[data-chart-focus="car"] [data-global-section="car"] [data-car-annual-layout] {
   grid-template-columns: minmax(0, 1fr); gap: 8px;
 }
 .grid[data-chart-focus="car"] [data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] {
@@ -535,4 +535,17 @@
 .grid:not([data-chart-focus]) .section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="chartTooltip"] > :not(strong, b) { display: none; }
 .grid:not([data-chart-focus]) .section:is([data-global-section="car"], [data-global-section="food"]) [data-workspace-rhythm] [class*="chartTooltip"] b {
   margin: 0; font-size: .73rem; white-space: nowrap;
+}
+
+.grid[data-chart-focus="car"] {
+  --profiles-size: clamp(75px, 9.5dvh, 96px);
+  --car-size: clamp(269px, 40dvh, 390px);
+  --food-size: clamp(132px, 15dvh, 144px);
+  --categories-size: 1fr;
+}
+.grid[data-chart-focus="food"] {
+  --profiles-size: clamp(75px, 9.5dvh, 96px);
+  --car-size: clamp(140px, 15.2dvh, 148px);
+  --food-size: clamp(226px, 36dvh, 364px);
+  --categories-size: 1fr;
 }
