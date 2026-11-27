@@ -25,11 +25,9 @@
   display: grid; flex: 1; min-height: 0;
   grid-template-columns: minmax(0, .76fr) minmax(0, 1.24fr);
   gap: 0 clamp(9px, 1.7vw, 28px);
-  transition: grid-template-columns 200ms cubic-bezier(.22,.75,.22,1);
 }
 .column {
   display: grid; grid-auto-rows: minmax(0,1fr); min-height: 0; min-width: 0;
-  transition: grid-template-rows 200ms cubic-bezier(.22,.75,.22,1);
 }
 .column[data-side="left"]:has(> :nth-child(2)) { grid-template-rows: minmax(min(246px,60%), 1.22fr) minmax(0,.78fr); }
 .column[data-side="right"]:has(> :nth-child(4)) {
@@ -50,8 +48,14 @@
 .grid:is([data-focus="categories"], [data-focus="profiles"], [data-focus="car"], [data-focus="food"]) { grid-template-columns: minmax(0,.65fr) minmax(0,1.35fr); }
 .grid[data-focus="spending"] .column[data-side="left"]:has(> :nth-child(2)) { grid-template-rows: minmax(0,var(--large)) minmax(85px,var(--small)); }
 .grid[data-focus="life"] .column[data-side="left"]:has(> :nth-child(2)) { grid-template-rows: minmax(104px,.38fr) minmax(0,1.62fr); }
-.section { min-height: 0; min-width: 0; overflow: clip; padding: clamp(5px, 1dvh, 13px) 0; border-top: 1px solid var(--atomic-line); }
+.section { contain: layout; min-height: 0; min-width: 0; overflow: clip; padding: clamp(5px, 1dvh, 13px) 0; border-top: 1px solid var(--atomic-line); }
 .column[data-side="right"] > .section { border-inline-start: 1px solid var(--atomic-line); padding-inline-start: clamp(8px, 1.15vw, 20px); }
+:global(html:active-view-transition-type(global-layout)) .section[data-global-section="spending"] { view-transition-name: global-spending; }
+:global(html:active-view-transition-type(global-layout)) .section[data-global-section="life"] { view-transition-name: global-life; }
+:global(html:active-view-transition-type(global-layout)) .section[data-global-section="profiles"] { view-transition-name: global-profiles; }
+:global(html:active-view-transition-type(global-layout)) .section[data-global-section="car"] { view-transition-name: global-car; }
+:global(html:active-view-transition-type(global-layout)) .section[data-global-section="food"] { view-transition-name: global-food; }
+:global(html:active-view-transition-type(global-layout)) .section[data-global-section="categories"] { view-transition-name: global-categories; }
 .flow { display: grid; gap: clamp(3px, .73dvh, 8px); }
 .atom, .motion { min-width: 0; }
 .motion { display: flow-root; }
@@ -130,9 +134,7 @@
 .detail {
   min-width: 0; padding: 5px 7px; border: 1px solid #cfb5e6; border-radius: 11px;
   background: #fffbff; box-shadow: 0 3px 12px #54327115;
-  animation: show-detail 180ms cubic-bezier(.22,.75,.22,1) both;
 }
-@keyframes show-detail { from { opacity: .4; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
 .detailHeader { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; min-height: 24px; }
 .detailHeader h3 { margin: 0; flex: 1; min-width: 0; font-size: .87rem; font-weight: 820; line-height: 1.2; }
 .detailHeader h3:focus { outline: 0; }
@@ -162,10 +164,6 @@
 .note { margin: 2px 0; color: var(--atomic-muted); font-size: .78rem; }
 .flow [class*="skeleton"] { min-height: 34px; padding: 7px; margin: 0; }
 .dashboard :is(button, a, select):focus-visible { outline: 2px solid #784bab; outline-offset: -2px; }
-@media (prefers-reduced-motion: reduce) {
-  .grid, .column { transition: none; }
-  .detail { animation: none; }
-}
 
 .portraitImage { position: relative; display: grid; place-items: center; width: var(--portrait); height: var(--portrait); }
 .portraitImage > img { position: absolute; inset: 0; }
@@ -247,11 +245,7 @@
 .atom[data-density="1"] .profileSummary button { padding: 2px 5px; }
 .atom[data-density="1"] .profileBlockIcon { width: 16px; }
 .profileOverview[data-profile-open] .profileSummary ul { grid-template-columns: repeat(auto-fit,minmax(min(123px,100%),1fr)); }
-.profileExpanded { animation: show-detail 180ms ease-out both; }
 .profileOwner { display: block; margin: 2px 0; font-size: .72rem; color: var(--atomic-muted); }
-@media (prefers-reduced-motion: reduce) {
-  .profileExpanded { animation: none; }
-}
 .profileTopicDetail {
   display: grid;
   gap: 4px;
@@ -327,15 +321,11 @@
 .atom[data-density="3"] { --ranking-height: clamp(162px, 20dvh, 215px); }
 .atom[data-density="4"] { --ranking-height: clamp(216px, 28dvh, 318px); }
 .ranking[data-expanded] { max-height: max(76px, calc(var(--region-available-height, 440px) - 103px)); }
-.ranking > li > :is(button, .passiveBar) { transition: padding 180ms ease; }
 .ranking[data-expanded] > li:not([data-expanded]) > :is(button, .passiveBar) { padding-block: 2px; font-size: .74rem; }
 .ranking[data-expanded] > li:not([data-expanded]) > :is(button, .passiveBar) > i { height: 2px; }
 .ranking > li > [data-balance-atom="detail"] { margin: 2px 2px 4px 8px; }
 
 .detailViewport { scrollbar-width: thin; scrollbar-color: #bca0d4 transparent; }
-@media (prefers-reduced-motion: reduce) {
-  .ranking > li > :is(button, .passiveBar) { transition: none; }
-}
 
 .topics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; }
 .topics button {

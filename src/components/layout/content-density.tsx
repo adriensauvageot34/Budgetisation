@@ -19,9 +19,11 @@ export function DensityAtom({ name, priority, minimum = 0, className, motionClas
   </div>;
 }
 
-export function useContentDensity(detailViewportSelector?: string) {
+export function useContentDensity(detailViewportSelector?: string, layoutRevision?: number) {
   const region = useRef<HTMLElement>(null);
   const flow = useRef<HTMLDivElement>(null);
+  const fitLayout = useRef<() => void>(null);
+  const animateAtoms = layoutRevision === undefined;
 
   useLayoutEffect(() => {
     const container = region.current;
@@ -31,7 +33,14 @@ export function useContentDensity(detailViewportSelector?: string) {
     let frame = 0;
     let positions = new Map<HTMLElement, number>();
     const observed = new Set<HTMLElement>();
-    const resize = new ResizeObserver(schedule);
+    const fittedSizes = new WeakMap<Element, readonly [number, number]>();
+    const resize = new ResizeObserver(entries => {
+      if (animateAtoms || entries.some(entry => {
+        const fitted = fittedSizes.get(entry.target);
+        const size = entry.borderBoxSize[0];
+        return !fitted || !size || Math.abs(size.inlineSize - fitted[0]) > 1 || Math.abs(size.blockSize - fitted[1]) > 1;
+      })) schedule();
+    });
     const mutation = new MutationObserver(schedule);
 
     function schedule() {
@@ -39,6 +48,7 @@ export function useContentDensity(detailViewportSelector?: string) {
     }
 
     function fit() {
+      cancelAnimationFrame(frame);
       frame = 0;
       const atoms = [...content!.querySelectorAll<HTMLElement>(":scope > [data-balance-atom]")]
         .toSorted((a, b) => Number(b.dataset.priority) - Number(a.dataset.priority));
@@ -81,6 +91,13 @@ export function useContentDensity(detailViewportSelector?: string) {
         }
       }
 
+      if (!animateAtoms) {
+        // Changes already included in this fit do not need another pass on the next frame.
+        mutation.takeRecords();
+        for (const node of [container!, ...atoms]) fittedSizes.set(node, [node.offsetWidth, node.offsetHeight]);
+        return;
+      }
+
       const nextPositions = new Map<HTMLElement, number>();
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       for (const node of atoms) {
@@ -99,12 +116,19 @@ export function useContentDensity(detailViewportSelector?: string) {
 
     resize.observe(container);
     mutation.observe(content, { childList: true, subtree: true, characterData: true });
-    fit();
+    fitLayout.current = fit;
+    if (animateAtoms) fit();
     return () => {
+      fitLayout.current = null;
       cancelAnimationFrame(frame);
       resize.disconnect();
       mutation.disconnect();
     };
-  }, [detailViewportSelector]);
+  }, [animateAtoms, detailViewportSelector]);
+
+  useLayoutEffect(() => {
+    if (layoutRevision !== undefined) fitLayout.current?.();
+  }, [layoutRevision]);
+
   return { region, flow };
 }

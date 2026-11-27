@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { GlobalLayoutMotion } from "../global-layout-motion";
 import type { PersonaDirectBlock, PersonaDirectFact, PersonaDirectProfile } from "@/query-api/global-v2/persona-direct-presentation";
 import type { PersonaEditorialModel } from "@/query-api/global-v2/persona-editorial";
 import type { GlobalV2PersonaPanelModel } from "@/query-api/global-v2/persona-panel";
@@ -37,6 +38,7 @@ function ProfileTopicDetail({ block }: { readonly block: PersonaDirectBlock }) {
 
 function ProfileSummary({ profiles, editorial }: { readonly profiles: readonly PersonaDirectProfile[]; readonly editorial?: PersonaEditorialModel }) {
   const [selection, setSelection] = useState<string>();
+  const { changeLayout } = useContext(GlobalLayoutMotion);
   const entries = profiles.map((profile) => ({ profile, blocks: profileBlocks(profile, editorial) }));
   const current = entries.flatMap(({ profile, blocks }) => blocks.map((block) => ({ profile, block })))
     .find(({ profile, block }) => `${profile.personId}:${block.key}` === selection);
@@ -57,7 +59,7 @@ function ProfileSummary({ profiles, editorial }: { readonly profiles: readonly P
                 : (fact ? block.items[1]?.title : block.items.slice(0, 2).map(({ title }) => title).join(" · "));
               return <li key={id}>
                 <button type="button" aria-pressed={selection === id} aria-controls={selection === id ? "global-profile-block" : undefined}
-                  onClick={() => setSelection(selection === id ? undefined : id)}>
+                  onClick={() => changeLayout(() => setSelection(current => current === id ? undefined : id))}>
                   <GlobalClayIcon name={icons[block.key] ?? "activity"} size={26} className={styles.profileBlockIcon} />
                   <strong>{block.title}</strong>
                   {current === undefined && fact && <span className={styles.profileMeasure}><b>{fact.value}</b><small>{block.facts.length ? fact.label : firstItem?.title}</small></span>}
