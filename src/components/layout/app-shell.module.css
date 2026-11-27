@@ -7,7 +7,6 @@
 .toolbar { flex: 1; min-width: 0; }
 .toolbar:empty { display: none; }
 .period { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
-.account { margin-inline-start: auto; flex: none; }
 .logoMenu { position: relative; z-index: 40; flex: none; }
 .logoButton { display: flex; align-items: center; gap: 7px; cursor: pointer; list-style: none; }
 .logoButton::-webkit-details-marker { display: none; }
@@ -82,12 +81,12 @@
   background: #fefbffdc;
   box-shadow: 0 2px 12px #512e7809;
 }
-.clayShell .period :is(select, a), .clayShell .account button {
+.clayShell .period :is(select, a) {
   border-color: var(--color-border);
   background: #fffafd;
   color: var(--color-primary-deep);
 }
-.globalMain { min-width: 0; padding: 12px clamp(12px, 2vw, 28px); }
+.globalMain { min-width: 0; }
 .calendarShell { display: grid; grid-template-rows: auto 1fr; }
 .calendarShell > header { position: sticky; z-index: 35; top: 0; }
 .calendarMain { min-width: 0; padding: 8px clamp(7px, 1.1vw, 20px) 12px; }
@@ -95,7 +94,6 @@
   .globalShell { display: grid; height: 100dvh; grid-template-rows: auto minmax(0, 1fr); overflow: clip; }
   .globalMain { min-height: 0; overflow: clip; }
 }
-.bar:has(.toolbar:not(:empty)) .account > button { min-height: 34px; padding-block: 6px; }
 
 @media (min-width: 1121px) and (max-width: 1440px) {
   .bar:has(.toolbar:not(:empty)) { column-gap: 8px; padding-inline: 16px; }
@@ -121,3 +119,18 @@
   padding: 8px clamp(8px, 1.5vw, 24px) clamp(8px, 2vh, 22px);
   overflow: clip;
 }
+
+.menuAccount { margin-top: 4px; border-top: 1px solid #e7d9ef; padding-top: 4px; }
+.logoDropdown .menuAccount button {
+  display: flex; justify-content: flex-start; gap: 8px; margin: 0; padding: 8px;
+  border: 0; background: transparent; color: #563580; border-radius: 8px; font-weight: 690;
+}
+.logoDropdown .menuAccount button:hover { background: #f0e5fa; }
+.returnToMonths {
+  flex: none; margin-inline-start: auto; padding: 7px 10px; border-radius: 8px;
+  border: 1px solid #dfc9f0; color: #563580; background: #fffafd;
+  font-size: .79rem; font-weight: 730; white-space: nowrap;
+}
+.returnToMonths:hover { background: #f0e5fa; }
+.bar[data-global-header] { flex-wrap: nowrap; }
+.bar[data-global-header] .toolbar { order: 0; flex: 1 1 auto; }

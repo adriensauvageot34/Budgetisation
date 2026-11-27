@@ -28,10 +28,11 @@ export function isWorkspaceMonth(month: string) {
   return isArchivedRealizedMonth(month) || month === JULY_COMPOSER_MONTH || forecastWindowMonths.includes(month);
 }
 
-export function workspacePeriodHref(period: string, pathname: string, currentMonth = "") {
-  if (period === "global") {
-    return isWorkspaceMonth(currentMonth) ? `${globalAnalysisHref}?month=${currentMonth}` : globalAnalysisHref;
-  }
+export function globalAnalysisEntryHref(month = "") {
+  return isWorkspaceMonth(month) ? `${globalAnalysisHref}?month=${month}` : globalAnalysisHref;
+}
+
+export function workspacePeriodHref(period: string, pathname: string) {
   const realized = isArchivedRealizedMonth(period);
   const pilot = period === JULY_COMPOSER_MONTH;
   if (pathname === "/mois-a-venir/composer/bilan" && realized) return composerBalanceHref(period);

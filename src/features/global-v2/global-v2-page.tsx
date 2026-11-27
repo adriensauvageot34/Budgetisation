@@ -35,6 +35,7 @@ import { globalModulePresentation, globalUiCopy } from "./catalog";
 import { economicMetric, economicStructureGroups, economicStructureLabel } from "./economic-ui";
 import { emitGlobalV2UxEvent } from "./instrumentation";
 import { DensityAtom, useContentDensity } from "@/components/layout/content-density";
+import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { AtomicDetailPages } from "./atomic-detail-pages";
 import atomic from "./global-atomic.module.css";
 import { GlobalClayIcon } from "./global-clay-icon";
@@ -43,7 +44,7 @@ import { timelineEventAmount } from "./life-timeline-presentation";
 import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-collections";
 import { resolveRhythmDetailContext, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
 import { globalV2PersonaPanelResource, type GlobalV2PersonaPanelModel } from "@/query-api/global-v2/persona-panel";
-import { BackgroundRhythms } from "./background-rhythms";
+import { BackgroundRhythms, useBackgroundRhythms } from "./background-rhythms";
 import { useGlobalV2Resource } from "./use-global-resource";
 import { GlobalV2VisitRuntime, parseGlobalDeepLink, type GlobalV2UiRequest, type GlobalV2UiTransport } from "./visit-runtime";
 import styles from "./global-v2.module.css";
@@ -778,12 +779,14 @@ function ExpandedPreview({ runtime, moduleKey, sectionKey, children }: { readonl
   return <LoadingCard label="la visualisation" compact />;
 }
 
-type AtomicSlot = "spending" | "categories" | "life" | "profiles";
+type RhythmSlot = "car" | "food";
+type AtomicSlot = "spending" | "categories" | "life" | "profiles" | RhythmSlot;
 type AtomicFocus =
   | { readonly kind: "query"; readonly slot: AtomicSlot; readonly target: OverlayTarget }
   | { readonly kind: "event"; readonly slot: "life"; readonly event: DashboardEvent }
-  | { readonly kind: "person"; readonly slot: "profiles"; readonly person?: "adrien" | "manon"; readonly vehicle?: boolean }
-  | { readonly kind: "rhythm"; readonly slot: "life"; readonly view: "food" | "car" };
+  | { readonly kind: "person"; readonly slot: "profiles"; readonly person?: "adrien" | "manon" }
+  | { readonly kind: "vehicle"; readonly slot: "car" }
+  | { readonly kind: "rhythm-month"; readonly slot: RhythmSlot; readonly month: string };
 
 type DashboardTimeline = GlobalLifeTimelineReadModel | GlobalLifeTimelineV2ReadModel | GlobalLifeTimelineV3ReadModel;
 type DashboardEvent = DashboardTimeline["events"][number];
@@ -826,19 +829,24 @@ const atomicSections = {
   categories: { id: "categories", title: "Répartition des dépenses", icon: "categories" },
   life: { id: "rythmes", title: "Vie et dépenses", icon: "events" },
   profiles: { id: "profils", title: "Nos profils", icon: "profiles" },
+  car: { id: "voiture", title: "Voiture, trajets et carburant", icon: "car" },
+  food: { id: "alimentation", title: "Courses et alimentation", icon: "groceries" },
 } as const;
 
 function Atom(props: Omit<ComponentProps<typeof DensityAtom>, "className" | "motionClassName">) {
   return <DensityAtom {...props} className={atomic.atom} motionClassName={atomic.motion} />;
 }
 
-function AtomicSection({ slot, children, detail }: { readonly slot: AtomicSlot; readonly children: ReactNode; readonly detail?: ReactNode }) {
+function AtomicSection({ slot, children, detail, actions }: { readonly slot: AtomicSlot; readonly children: ReactNode; readonly detail?: ReactNode; readonly actions?: ReactNode }) {
   const { region, flow } = useContentDensity(`.${atomic.detailViewport}[data-fit-detail]`);
   const { id, title, icon } = atomicSections[slot];
   return <section className={atomic.section} data-global-section={slot} data-focused={detail !== undefined} id={id} aria-labelledby={`${id}-title`} ref={region}>
     <div ref={flow} className={atomic.flow}>
       <Atom name="heading" priority={100} minimum={1}>
-        <h2 id={`${id}-title`} className={atomic.heading}><GlobalClayIcon name={icon} size={34} />{title}</h2>
+        <div className={atomic.sectionHeader}>
+          <h2 id={`${id}-title`} className={atomic.heading}><GlobalClayIcon name={icon} size={34} />{title}</h2>
+          {actions}
+        </div>
       </Atom>
       {children}
       {detail}
@@ -1034,6 +1042,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const timelineResult = useGlobalV2Resource<DashboardTimeline>(runtime, timelineRequest, visible.has("RHYTHM"), "BACKGROUND");
   const recurrences = useExpandedModule(runtime, "ECONOMIC", "PATTERNS", visible.has("ECONOMIC"));
   const structureResult = useExpandedModule(runtime, "ECONOMIC", "BREAKDOWN", visible.has("CATEGORIES_NEEDS") && distribution !== "categories");
+  const background = useBackgroundRhythms(runtime, visible.has("RHYTHM"));
   const recurring = transportData(recurrences.state);
   const structure = transportData(structureResult.state);
   const overview = transportData(figures.state);
@@ -1099,11 +1108,11 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
 
 
   function detail(slot: AtomicSlot) {
-    if (focus?.slot !== slot) return undefined;
+    if (focus?.slot !== slot || focus.kind === "rhythm-month") return undefined;
     const title = focus.kind === "query" ? focus.target.title
       : focus.kind === "event" ? focus.event.canonicalName
-      : focus.kind === "rhythm" ? focus.view === "car" ? "Dépenses et trajets en voiture" : "Rythme des courses et des repas"
-      : focus.vehicle ? "Voiture du foyer" : focus.person ? capitalize(focus.person) : "Adrien et Manon";
+      : focus.kind === "vehicle" ? "Assurance, entretien et coût du véhicule"
+      : focus.person ? capitalize(focus.person) : "Adrien et Manon";
     return <Atom name="detail" priority={240} minimum={1}>
       <article className={atomic.detail} ref={detailRef} aria-labelledby="global-detail-title">
         <header className={atomic.detailHeader}>
@@ -1111,22 +1120,34 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
           <h3 tabIndex={-1} id="global-detail-title" ref={detailHeading}>{title}</h3>
           <button type="button" onClick={close} aria-label="Fermer le détail"><X size={17} /></button>
         </header>
-        <AtomicDetailPages inline={categoryIsInline} key={focus.kind === "query" ? [focus.target.entityRef, focus.target.initialSection].join(":") : focus.kind === "event" ? focus.event.eventRef : focus.kind === "rhythm" ? focus.view : focus.vehicle ? "vehicle" : focus.person ?? "profiles"}>
+        <AtomicDetailPages inline={categoryIsInline} key={focus.kind === "query" ? [focus.target.entityRef, focus.target.initialSection].join(":") : focus.kind === "event" ? focus.event.eventRef : focus.kind === "vehicle" ? "vehicle" : focus.person ?? "profiles"}>
           {focus.kind === "query" ? <AtomicQueryDetail target={focus.target} slot={slot} runtime={runtime} certifiedThrough={certifiedThrough} open={open} />
             : focus.kind === "event" ? <AtomicEventDetail event={focus.event} runtime={runtime} certifiedThrough={certifiedThrough} open={open} />
-            : focus.kind === "person" ? <AtomicProfiles runtime={runtime} person={focus.person} vehicle={focus.vehicle} />
-            : <BackgroundRhythms runtime={runtime} view={focus.view} onMethod={() => open({ kind: "query", slot, target: methodOverlayTarget("RHYTHM") })} />}
+            : focus.kind === "person" ? <AtomicProfiles runtime={runtime} person={focus.person} />
+            : <AtomicProfiles runtime={runtime} vehicle />}
         </AtomicDetailPages>
       </article>
+    </Atom>;
+  }
+
+  function rhythm(slot: RhythmSlot) {
+    const selected = focus?.kind === "rhythm-month" && focus.slot === slot ? focus.month : undefined;
+    return <Atom name={`${slot}-chart`} priority={120} minimum={isFocusing && focus?.slot !== slot ? 0 : 1}>
+      <AtomicDetailPages inline={selected === undefined}>
+        <BackgroundRhythms runtime={runtime} result={background} view={slot} selectedMonth={selected} onMonthChange={month => {
+          if (month) open({ kind: "rhythm-month", slot, month });
+          else if (selected !== undefined) close();
+        }} />
+      </AtomicDetailPages>
     </Atom>;
   }
 
   return <div className={atomic.dashboard} data-global-v2="" data-publication-id={bundle.initial.publicationMeta.publicationId} onKeyDown={(event) => {
     if (event.key === "Escape" && focus) { event.preventDefault(); close(); }
   }}>
-    <header className={atomic.header}><GlobalClayIcon name="overview" size={38} /><h1>Analyse globale</h1><p>{period.label.replace("—", "→")}</p>
+    <AppToolbarContent className={atomic.header}><GlobalClayIcon name="overview" size={28} /><h1>Analyse globale</h1><p>{period.label.replace("—", "→")}</p>
       {visible.has("ECONOMIC") && <button type="button" className={atomic.method} onClick={() => open({ kind: "query", slot: "spending", target: methodOverlayTarget("ECONOMIC") })}><Info aria-hidden size={15} /> Méthode</button>}
-    </header>
+    </AppToolbarContent>
     {bundle.newerPublication && <aside className={atomic.banner} role="status"><strong>Une version plus récente est disponible.</strong><button type="button" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={15} /> Actualiser</button></aside>}
     <div className={atomic.grid} data-focus={focus?.slot} data-focus-size={focus?.kind === "event" && !("eventCost" in focus.event) ? "compact" : undefined}>
       <div className={atomic.column} data-side="left">
@@ -1171,16 +1192,38 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
               if (next.kind === "event" && focus?.kind === "event" && next.event.eventRef === focus.event.eventRef) close();
               else open(next);
             }} selectedEvent={focus?.kind === "event" ? focus.event : undefined} onPeriodChange={() => { if (focus?.kind === "event") close(); }} />}
-          <Atom name="everyday-rhythms" priority={63} minimum={1}><div className={atomic.topics}>
-            <button type="button" aria-expanded={focus?.kind === "rhythm" && focus.view === "food"} onClick={() => focus?.kind === "rhythm" && focus.view === "food" ? close() : open({ kind: "rhythm", slot: "life", view: "food" })}><GlobalClayIcon name="groceries" size={33} /><strong>Courses et repas</strong><small>Rythme des dépenses</small></button>
-            <button type="button" aria-expanded={focus?.kind === "rhythm" && focus.view === "car"} onClick={() => focus?.kind === "rhythm" && focus.view === "car" ? close() : open({ kind: "rhythm", slot: "life", view: "car" })}><GlobalClayIcon name="car" size={33} /><strong>Voiture</strong><small>Trajets et carburant</small></button>
-            <button type="button" aria-expanded={focus?.kind === "query" && focus.slot === "life" && focus.target.initialSection === "PATTERNS"} onClick={() => selectSection("life", "RHYTHM", "PATTERNS", "Coûts des habitudes")}><GlobalClayIcon name="activity" size={33} /><strong>Coûts des habitudes</strong><small>Fréquence et coût observé</small></button>
+          <Atom name="everyday-rhythms" priority={63} minimum={1}><div className={atomic.actions}>
+            <FocusLink onClick={() => selectSection("life", "RHYTHM", "PATTERNS", "Coûts des habitudes")}>Coûts des habitudes</FocusLink>
+            <button className={atomic.focusLink} type="button" onClick={() => open({ kind: "query", slot: "life", target: methodOverlayTarget("RHYTHM") })}><Info size={13} aria-hidden /> Fiabilité et méthode</button>
           </div></Atom>
         </AtomicSection>}
       </div>
       <div className={atomic.column} data-side="right">
+        {visible.has("PERSONAS") && <AtomicSection slot="profiles" detail={detail("profiles")}>
+          <Atom name="portraits" priority={86} minimum={1}><div className={atomic.portraits}>
+            {(["adrien", "manon"] as const).map((person) => <button type="button" key={person} aria-pressed={focus?.kind === "person" && focus.person === person}
+              onClick={() => focus?.kind === "person" && focus.person === person ? close() : open({ kind: "person", slot: "profiles", person })}>
+              <span className={atomic.portraitImage} aria-hidden>
+                <GlobalClayIcon name="profiles" size={84} />
+                <Image src={`/api/persona-portrait/${person}`} alt="" width={84} height={84} unoptimized onError={(event) => { event.currentTarget.hidden = true; }} />
+              </span>
+              <span><strong>{capitalize(person)}</strong><small>Travail, habitudes et projets</small></span><ChevronRight size={16} aria-hidden />
+            </button>)}
+          </div></Atom>
+        </AtomicSection>}
+        {visible.has("RHYTHM") && <AtomicSection slot="car" detail={detail("car")} actions={
+          <button className={atomic.focusLink} type="button" aria-expanded={focus?.kind === "vehicle"}
+            onClick={() => focus?.kind === "vehicle" ? close() : open({ kind: "vehicle", slot: "car" })}>
+            Assurance et entretien <ChevronRight size={13} aria-hidden />
+          </button>
+        }>
+          {focus?.kind !== "vehicle" && rhythm("car")}
+        </AtomicSection>}
+        {visible.has("RHYTHM") && <AtomicSection slot="food">
+          {rhythm("food")}
+        </AtomicSection>}
         {visible.has("CATEGORIES_NEEDS") && <AtomicSection slot="categories">
-          <Atom name="distribution-controls" priority={90} minimum={1}>
+          <Atom name="distribution-controls" priority={90} minimum={isFocusing && focus?.slot !== "categories" ? 0 : 1}>
             <div role="group" aria-label="Mode de répartition" className={atomic.distributionModes}>
               {(Object.keys(distributionModes) as DistributionMode[]).map((mode) => <button key={mode} type="button"
                 aria-pressed={mode === distribution} onClick={() => {
@@ -1190,7 +1233,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
             </div>
             <p className={atomic.distributionPeriod}>{distribution === "categories" ? period.label.split(" · ")[0] : period.targetLabel}</p>
           </Atom>
-          <Atom name="category-ranking" priority={75} minimum={1}>
+          <Atom name="category-ranking" priority={75} minimum={isFocusing && focus?.slot !== "categories" ? 0 : 1}>
             {distribution !== "categories" ? structure ? <MonthlyDistribution model={structure} axis={distribution} /> :
               structureResult.state.status === "ERROR" ? <LocalError retry={structureResult.retry} /> : <LoadingCard label="répartition du mois" compact /> :
               categories === undefined ? categoriesResult.state.status === "ERROR" ? <LocalError retry={categoriesResult.retry} /> : <LoadingCard label="catégories" compact /> :
@@ -1207,22 +1250,6 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
                   </li>;
                 })}</ul>}
           </Atom>
-        </AtomicSection>}
-        {visible.has("PERSONAS") && <AtomicSection slot="profiles" detail={detail("profiles")}>
-          <Atom name="portraits" priority={86} minimum={1}><div className={atomic.portraits}>
-            {(["adrien", "manon"] as const).map((person) => <button type="button" key={person} aria-pressed={focus?.kind === "person" && focus.person === person}
-              onClick={() => focus?.kind === "person" && focus.person === person ? close() : open({ kind: "person", slot: "profiles", person })}>
-              <span className={atomic.portraitImage} aria-hidden>
-                <GlobalClayIcon name="profiles" size={84} />
-                <Image src={`/api/persona-portrait/${person}`} alt="" width={84} height={84} unoptimized onError={(event) => { event.currentTarget.hidden = true; }} />
-              </span>
-              <span><strong>{capitalize(person)}</strong><small>Travail, habitudes et projets</small></span><ChevronRight size={16} aria-hidden />
-            </button>)}
-          </div></Atom>
-          <Atom name="shared-portraits" priority={52} minimum={isFocusing ? 0 : 1}><div className={atomic.actions}>
-            <FocusLink onClick={() => open({ kind: "person", slot: "profiles" })}>Comparer les portraits</FocusLink>
-            <FocusLink onClick={() => open({ kind: "person", slot: "profiles", vehicle: true })}>Voiture du foyer</FocusLink>
-          </div></Atom>
         </AtomicSection>}
       </div>
     </div>
