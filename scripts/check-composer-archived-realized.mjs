@@ -3,7 +3,7 @@ import Module from "node:module";
 import { require } from "./lib/phase2-ts-loader.mjs";
 
 const { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, realizedComposerHref } = require("@/domain/phase2/planner/realized-month-entry");
-const { forecastWindowMonths, workspacePeriodHref } = require("@/app/mois-a-venir/month-entry");
+const { forecastWindowMonths, globalAnalysisEntryHref, workspacePeriodHref } = require("@/app/mois-a-venir/month-entry");
 const { realizedPlace, probableMerchantPlace } = require("@/server/phase2/planner/realized-places");
 const { buildHistoricalRealizedContext } = require("@/server/phase2/planner/historical-realized-context");
 const { detailedRealizedCards } = require("@/app/mois-a-venir/composer/realized-card-view");
@@ -24,10 +24,10 @@ assert.equal(isArchivedRealizedMonth("2026-07"), false);
 assert.equal(forecastWindowMonths.length, 14);
 assert.equal(forecastWindowMonths[0], "2026-08");
 assert.equal(forecastWindowMonths.at(-1), "2027-09");
-assert.equal(workspacePeriodHref("global", "/mois-a-venir"), "/analyse-globale");
-assert.equal(workspacePeriodHref("global", "/mois-a-venir/composer", "2026-07"), "/analyse-globale?month=2026-07");
-assert.equal(workspacePeriodHref("global", "/mois-a-venir/composer/calendrier", "2027-09"), "/analyse-globale?month=2027-09");
-assert.equal(workspacePeriodHref("global", "/mois-a-venir", "2027-10"), "/analyse-globale");
+assert.equal(globalAnalysisEntryHref(), "/analyse-globale");
+assert.equal(globalAnalysisEntryHref("2026-07"), "/analyse-globale?month=2026-07");
+assert.equal(globalAnalysisEntryHref("2027-09"), "/analyse-globale?month=2027-09");
+assert.equal(globalAnalysisEntryHref("2027-10"), "/analyse-globale");
 assert.equal(workspacePeriodHref("2025-08", "/analyse-globale"), "/mois-a-venir/composer?month=2025-08");
 for (const month of ["2026-08", "2026-09", "2026-10"]) {
   assert.equal(workspacePeriodHref(month, "/analyse-globale"), realizedComposerHref(month));

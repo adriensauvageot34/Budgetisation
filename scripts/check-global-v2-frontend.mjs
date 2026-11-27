@@ -264,7 +264,7 @@ check(() => assert.match(pageSource, /> Méthode</u));
 check(() => assert.doesNotMatch(pageSource, /ANALYSE GLOBALE · NOUVELLE ARCHITECTURE|synthèse non importée|Non importée/u));
 check(() => assert.doesNotMatch(pageSource, /role="tablist"|role="tabpanel"|<OverlayFrame/u));
 check(() => assert.match(pageSource, /useContentDensity\([\s\S]*data-global-section[\s\S]*name="heading"/u));
-check(() => assert.match(pageSource, /<AtomicSection slot="spending"[\s\S]*<AtomicSection slot="life"[\s\S]*<AtomicSection slot="categories"[\s\S]*<AtomicSection slot="profiles"/u));
+check(() => assert.match(pageSource, /<AtomicSection slot="spending"[\s\S]*<AtomicSection slot="life"[\s\S]*<AtomicSection slot="profiles"[\s\S]*<AtomicSection slot="car"[\s\S]*<AtomicSection slot="food"[\s\S]*<AtomicSection slot="categories"/u));
 check(() => assert.match(pageSource, /<AtomicDetailPages[\s\S]*<AtomicQueryDetail/u));
 const detailNavigationSource = fs.readFileSync(path.join(root, "src/features/global-v2/atomic-detail-pages.tsx"), "utf8");
 const profileNavigationSource = fs.readFileSync(path.join(root, "src/features/global-v2/persona/atomic-persona.tsx"), "utf8");
@@ -605,7 +605,7 @@ check(() => assert.doesNotMatch(narrativeCaseD.relationships.map(({ statementKey
 check(() => assert.match(foodFocusSource, /groceryOccurrences[\s\S]*restaurantOccurrences[\s\S]*deliveryPurchaseCount[\s\S]*basketStructure\.small[\s\S]*basketStructure\.intermediate[\s\S]*basketStructure\.large/u));
 check(() => assert.doesNotMatch(lifePrimarySource, /rien n’a changé|aucun changement|aucune relation|rien à signaler/iu));
 check(() => assert.doesNotMatch(cssSource, /\.lifeMomentGrid/u));
-check(() => assert.match(backgroundSource, /Fiabilité & méthode/u));
+check(() => assert.match(pageSource, /Fiabilité et méthode/u));
 check(() => assert.match(cssSource, /\.methodLink\s*\{[^}]*color:\s*var\(--color-muted\)[^}]*font-size:\s*13px/u));
 check(() => assert.doesNotMatch(pageSource, /@\/analytics|@\/server|CanonicalRepository|FactSourceResolver/u));
 
@@ -644,7 +644,7 @@ check(() => assert.match(cssSource, /\.timelineFocusControl\[data-expanded="true
 check(() => assert.doesNotMatch(cssSource, /\.timelineLifeEventDetails/u));
 
 // D8: published background rhythms complete the timeline-first chapter without React analytics.
-check(() => assert.match(backgroundSource, /resource: "analysis_global_background_rhythms"[\s\S]*nearViewport\.near[\s\S]*"BACKGROUND"/u));
+check(() => assert.match(backgroundSource, /resource: "analysis_global_background_rhythms"[\s\S]*useGlobalV2Resource<GlobalBackgroundRhythmsReadModel>\(runtime, request, enabled, "BACKGROUND"/u));
 check(() => assert.match(foodRiverSource, /food\.months\.map[\s\S]*AnnualMonthInteractionLayer[\s\S]*FoodMonthFocus/u));
 check(() => assert.match(foodFocusSource, /passages courses[\s\S]*repas repérés[\s\S]*achats en livraison/u));
 check(() => assert.match(foodFocusSource, /Ce qui a composé le mois[\s\S]*Courses[\s\S]*Restaurants & repas à l’extérieur[\s\S]*Livraisons/u));

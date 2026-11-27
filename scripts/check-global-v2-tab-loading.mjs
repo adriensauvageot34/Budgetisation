@@ -84,13 +84,14 @@ try {
   await mount("");
   assert.deepEqual(requests(), ["OVERVIEW", "EVOLUTION"], "Both financial reads start together");
   assert.equal(root.root.findAllByProps({ role: "tablist" }).length, 0);
-  assert.deepEqual(root.root.findAllByType("h2").map(({ props }) => props.id), ["economie-title", "rythmes-title", "categories-title", "profils-title"]);
+  assert.deepEqual(root.root.findAllByType("h2").map(({ props }) => props.id), ["economie-title", "rythmes-title", "profils-title", "voiture-title", "alimentation-title", "categories-title"]);
   await reply(pending[1]);
   assert.equal(root.root.findAllByProps({ "aria-label": "Dépenses réelles et niveau habituel sur douze mois" }).length, 1);
   assert.equal(root.root.findAllByProps({ "aria-label": "Chargement de chiffres clés" }).length, 1);
   await reply(pending[0]);
   await reply(pending.find(({ request }) => request.params.sectionKey === "BREAKDOWN"));
   await reply(pending.find(({ request }) => request.params.sectionKey === "PATTERNS"));
+  await reply(pending.find(({ request }) => request.resource === "analysis_global_background_rhythms"));
   const timelineRead = pending.find(({ request }) => request.resource === "analysis_global_life_timeline");
   const timelineReply = await fixtureTransport(timelineRead.request);
   const seed = timelineReply.data.events.at(-1);

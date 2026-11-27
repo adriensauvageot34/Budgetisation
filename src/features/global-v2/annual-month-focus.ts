@@ -35,24 +35,29 @@ export function nextRovingMonthIndex(current: number, key: string, count: number
   return undefined;
 }
 
-export function useAnnualMonthFocus(months: readonly string[]) {
-  const [state, dispatch] = useReducer(annualMonthFocusReducer, { rovingMonth: 0 });
+export function useAnnualMonthFocus(months: readonly string[], selectedMonth: string | undefined, onMonthChange: (month: string | undefined) => void) {
+  const [interaction, dispatch] = useReducer(annualMonthFocusReducer, { rovingMonth: 0 });
+  const state = useMemo(() => ({ ...interaction, selectedMonth }), [interaction, selectedMonth]);
   const monthButtons = useRef<Array<HTMLButtonElement | null>>([]);
   const selectedIndex = state.selectedMonth === undefined ? state.rovingMonth : Math.max(0, months.indexOf(state.selectedMonth));
   const close = useCallback((restoreFocus = true) => {
     const target = monthButtons.current[selectedIndex];
     dispatch({ type: "CLOSE" });
+    if (selectedMonth !== undefined) onMonthChange(undefined);
     if (restoreFocus) window.requestAnimationFrame(() => target?.focus({ preventScroll: true }));
-  }, [selectedIndex]);
+  }, [onMonthChange, selectedIndex, selectedMonth]);
   return useMemo(() => ({
     state,
     monthButtons,
     displayMonth: state.previewMonth ?? state.selectedMonth,
     preview: (month?: string) => dispatch({ type: "PREVIEW", month }),
-    select: (month: string, index: number) => dispatch({ type: "SELECT", month, index }),
+    select: (month: string, index: number) => {
+      dispatch({ type: "SELECT", month, index });
+      onMonthChange(month === selectedMonth ? undefined : month);
+    },
     move: (index: number) => dispatch({ type: "MOVE", index }),
     close,
-  }), [close, state]);
+  }), [close, onMonthChange, selectedMonth, state]);
 }
 
 const monthFormatter = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" });

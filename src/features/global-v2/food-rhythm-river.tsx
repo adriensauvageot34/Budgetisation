@@ -13,9 +13,13 @@ function StreamValue({ label, value, tone }: { readonly label: string; readonly 
   return <span data-tone={tone}><span>{label}</span><span aria-hidden="true">{formatFoodMoney(value)}</span><span className={styles.srOnly}>{foodMoneyAccessibleLabel(value)}</span></span>;
 }
 
-export function FoodRhythmRiver({ food }: { readonly food: GlobalBackgroundFoodSemantic }) {
+export function FoodRhythmRiver({ food, selectedMonth, onMonthChange }: {
+  readonly food: GlobalBackgroundFoodSemantic;
+  readonly selectedMonth?: string;
+  readonly onMonthChange: (month: string | undefined) => void;
+}) {
   const months = useMemo(() => food.months.map(({ month }) => month), [food.months]);
-  const interaction = useAnnualMonthFocus(months);
+  const interaction = useAnnualMonthFocus(months, selectedMonth, onMonthChange);
   const geometry = useMemo(() => stackedAreaGeometry(food.months.map(({ money }) =>
     [Number(money.courses.amount), Number(money.restaurants.amount), Number(money.deliveries.amount)])), [food.months]);
   const fundingId = useId().replace(/:/gu, "");
