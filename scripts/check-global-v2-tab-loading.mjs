@@ -112,6 +112,16 @@ try {
   await act(async () => lastEvent.props.onClick());
   assert.equal(root.root.findByProps({ id: "global-detail-title" }).props.children, events.at(-1).canonicalName);
   await click({ "aria-label": "Fermer le détail" });
+  const expandCar = { "aria-label": "Agrandir le graphique du carburant" };
+  const reduceCar = { "aria-label": "Réduire le graphique du carburant" };
+  const expandFood = { "aria-label": "Agrandir le graphique de l’alimentation" };
+  await click(expandCar);
+  assert.ok(root.root.findByProps({ "data-chart-focus": "car" }));
+  await click(expandFood);
+  assert.ok(root.root.findByProps({ "data-chart-focus": "food" }));
+  assert.equal(root.root.findAllByProps(reduceCar).length, 0);
+  await click({ "aria-label": "Réduire le graphique de l’alimentation" });
+  assert.equal(root.root.findAllByProps({ "data-chart-focus": "food" }).length, 0);
   const recurringRegion = root.root.findAllByType("section").find(({ props }) => props["aria-label"] === "Dépenses récurrentes");
   assert.ok(recurringRegion.findAllByType("article").length > 0);
   assert.equal(recurringRegion.findAllByType("button").length, 0);
