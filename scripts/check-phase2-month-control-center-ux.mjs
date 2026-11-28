@@ -86,7 +86,12 @@ const restaurant100 = choice("household-restaurants", "REDUCE_PERCENT", "100").o
 const expense = (status = "PLANNED") => ({ id: randomUUID(), targetMonth: "2026-10", status, familyKey: "food", subtypeKey: "restaurant", title: "Repas synthétique",
   plannedDate: status === "PLANNED" ? "2026-10-22" : "2026-10-10", context: {}, costItems: [{ ...item("60.00", "restaurant:main", ["restaurant"]), baselineKey: "household-restaurants" }] });
 const first = wb(base, purpose, [restaurant100]), second = wb(base, purpose, [restaurant100, tobacco20]);
-await test("UX-001", () => { const story = src("app/mois-a-venir/month-story.tsx"); for (const text of ["Préciser le disponible bancaire", "Gérer les charges du mois", "Comprendre la fiabilité"]) assert(!story.includes(text)); assert.match(story, /ScenarioMilestone title="Projection de fin de mois"[^]*?\/>(?:\s*)<\/div>;/u); }, "STATIC");
+await test("UX-001", () => {
+  const story = src("app/mois-a-venir/month-story.tsx");
+  for (const text of ["Préciser le disponible bancaire", "Gérer les charges du mois", "Comprendre la fiabilité"]) assert(!story.includes(text));
+  assert.match(story, /ForecastGroup label="Scénarios de fin de mois"[^]*?ScenarioMilestone title="Projection de fin de mois"[^]*?id="final-projection"/u);
+  assert.match(src("app/mois-a-venir/month-forecast-view.tsx"), /<ForecastOverview[^]*?<MonthStory/u);
+}, "STATIC");
 await test("UX-002", () => { assert(nav.includes("data-month-actions")); assert(nav.includes("ml-auto flex shrink-0 items-center gap-2.5")); const actions = nav.slice(nav.indexOf("data-month-actions")); assert(actions.indexOf("<MonthControlLink") < actions.indexOf("+ Ajouter une dépense")); assert(!actions.includes("tabsViewport")); }, "STATIC");
 await test("UX-003", () => { const markup = html(MonthControlLink, { section: "overview", actionableCount: 3 }); assert(!markup.includes("notificationBadge")); assert(!markup.includes("3 éléments à vérifier")); assert(markup.includes("Centre de contrôle")); });
 await test("UX-004", () => { assert(!html(MonthControlLink, { section: "overview", actionableCount: 0 }).includes("notificationBadge")); assert(css.includes("position: absolute; top: -6px; right: -6px")); });
