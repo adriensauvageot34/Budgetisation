@@ -38,18 +38,20 @@ export function SpendingComparison({ actual, typical, range }: {
   </figure>;
 }
 
-export function DailySpendingTrend({ series, reference, onInspect }: {
+export function DailySpendingTrend({ series, reference, activeDate, onInspect }: {
   readonly series: Promise<BalanceDailySeries | null>;
   readonly reference: BalanceDailySeries["publicationMeta"];
+  readonly activeDate?: LocalDate;
   readonly onInspect: (date: LocalDate, label: string) => void;
 }) {
   const data = use(series);
   if (!data || !publicationMetasAreCoherent([reference, data.publicationMeta])) return null;
-  return <DailyAmounts days={data.days} onInspect={onInspect} />;
+  return <DailyAmounts days={data.days} activeDate={activeDate} onInspect={onInspect} />;
 }
 
-function DailyAmounts({ days, onInspect }: {
+function DailyAmounts({ days, activeDate, onInspect }: {
   readonly days: BalanceDailySeries["days"];
+  readonly activeDate?: LocalDate;
   readonly onInspect: (date: LocalDate, label: string) => void;
 }) {
   const [view, setView] = useState<"total" | "withoutFixed">("withoutFixed");
@@ -66,7 +68,7 @@ function DailyAmounts({ days, onInspect }: {
   const zero = -min / scale * 100;
   const peak = values.findIndex(value => value !== undefined && Number(value) === max);
   const selected = focusedIndex ?? Math.max(0, peak);
-  const display = days[selected];
+  const display = days.find(day => day.date === activeDate) ?? days[selected];
   return <section className={styles.dailyTrend} aria-label="Dépenses par jour">
     <header className={styles.dailyHeader}>
       <h3>Dépenses par jour</h3>
@@ -79,7 +81,7 @@ function DailyAmounts({ days, onInspect }: {
       {days.map((day, index) => {
         const value = values[index];
         const amount = Number(value ?? 0);
-        return <button type="button" key={day.date} aria-pressed={index === selected} tabIndex={index === selected ? 0 : -1} data-index={index}
+        return <button type="button" key={day.date} aria-expanded={day.date === activeDate} data-highlighted={index === selected} tabIndex={index === selected ? 0 : -1} data-index={index}
           data-missing={value === undefined} data-negative={amount < 0}
           aria-label={`${formatFrenchDate(day.date, false)} · ${value === undefined ? "montant indisponible" : formatMoney(value)}`}
           onFocus={() => setFocusedIndex(index)} onClick={() => {
@@ -106,20 +108,6 @@ function DailyAmounts({ days, onInspect }: {
     </p>}
   </section>;
 }
-export function CategoryRing({ shares }: { readonly shares: readonly (number | undefined)[] }) {
-  if (shares.some(share => share === undefined || share < 0 || share > 1)) return null;
-  let from = 0;
-  const segments = shares.map((share, index) => {
-    const end = Math.min(100, from + (share ?? 0) * 100);
-    const segment = `${categoryColors[index % categoryColors.length]} ${from}% ${end}%`;
-    from = end;
-    return segment;
-  });
-  return <div className={styles.categoryRing} aria-hidden="true" style={{
-    background: `conic-gradient(${[...segments, `#e1d6ed ${from}% 100%`].join(", ")})`,
-  }}><span>Part<br />du total</span></div>;
-}
-
 function daysInBalanceMonth(month: YearMonth) {
   const first = new Date(`${month}-01T00:00:00Z`);
   return new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();

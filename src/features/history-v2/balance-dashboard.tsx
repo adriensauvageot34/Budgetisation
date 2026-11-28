@@ -1,14 +1,16 @@
 "use client";
 
-import { Suspense, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ArrowDownRight, ArrowLeft, ArrowUpRight, ChartNoAxesColumn, ChevronDown, Landmark, MapPin, SlidersHorizontal, Sparkles, Wallet, X } from "lucide-react";
+import { createContext, Suspense, useContext, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { ArrowDownRight, ArrowLeft, ArrowUpRight, ChevronDown, Landmark, X } from "lucide-react";
+import { useLayoutMotion } from "@/components/layout/use-layout-motion";
+import { ClayIcon, type ClayIconName } from "@/components/layout/clay-icon";
 import type { YearMonth } from "@/core/time";
 import type { MetricValue } from "@/core/history-v2";
 import type { Money } from "@/core/money";
 import type { HistorySpendingSegmentDetailParams, MonthBalanceSummaryReadModel, MonthCategoriesReadModel, MonthLifeMoneyReadModel, MonthQuickOverviewReadModel, MonthSpendingNatureReadModel } from "@/query-api";
 import { BalanceDetail, type BalanceTarget, type DetailSelection, type OpenDetail } from "./balance-dashboard-details";
-import { AmountBar, PagedRows, chartMaximum, formatDelta, metricValue, stateValue, visibleValue } from "./balance-dashboard-widgets";
-import { CategoryRing, DailySpendingTrend, MonthTimeline, SpendingComparison, categoryColors } from "./balance-dashboard-charts";
+import { AmountBar, chartMaximum, formatDelta, metricValue, moneyAmount, stateValue, visibleValue } from "./balance-dashboard-widgets";
+import { DailySpendingTrend, MonthTimeline, SpendingComparison, categoryColors } from "./balance-dashboard-charts";
 import { formatCount, formatFrenchDateRange, formatHistoricalRank, spendingPresentationLabel } from "./presentation";
 import { BalanceAtom, useBalanceDensity } from "./balance-density";
 import { publicationMetasAreCoherent } from "./publication-coherence";
@@ -19,6 +21,7 @@ import { useHistoryPageState } from "./use-history-page-state";
 import styles from "./balance-dashboard.module.css";
 
 type PanelKind = "summary" | "categories" | "spending" | "life";
+type Placement = "distribution";
 
 const linkedDetailLabels: Record<HistoryOverlayTarget["kind"], string> = {
   bridge: "Écart avec mon compte",
@@ -31,47 +34,85 @@ const linkedDetailLabels: Record<HistoryOverlayTarget["kind"], string> = {
 };
 
 function detailKey(target: BalanceTarget) {
-  switch (target.kind) {
-    case "minimal": return target.kind;
-    default:
-      return overlayTargetKey(target);
-  }
+  return target.kind === "minimal" ? "minimal" : overlayTargetKey(target);
 }
 
-function panelFor(target?: BalanceTarget): PanelKind | undefined {
-  switch (target?.kind) {
+function panelFor(selection?: DetailSelection): PanelKind | undefined {
+  if (selection?.placement === "distribution") return "categories";
+  switch (selection?.target.kind) {
     case "bridge":
     case "journal":
-    case "minimal":
-      return "summary";
-    case "category":
-      return "categories";
-    case "segment":
-      return "spending";
-    case undefined:
-      return undefined;
-    default:
-      return "life";
+    case "minimal": return "summary";
+    case "category": return "categories";
+    case "segment": return "spending";
+    case undefined: return undefined;
+    default: return "life";
   }
 }
 
-export function ComposerBalanceDashboard({ month, monthName, initialState, initialDetail, subcategoryLabels, dailySeries }: {
+const BalanceInteraction = createContext<{
+  readonly root?: DetailSelection;
+  readonly revision: number;
+  readonly isActive: (target: BalanceTarget, placement?: Placement) => boolean;
+  readonly onOpen: OpenDetail;
+  readonly onLayout: (update: () => void) => void;
+  readonly reset: () => void;
+  readonly detail: ReactNode;
+}>({ revision: 0, isActive: () => false, onOpen: () => {}, onLayout: update => update(), reset: () => {}, detail: null });
+
+function DetailSlot({ kind, target, placement }: {
+  readonly kind?: BalanceTarget["kind"];
+  readonly target?: BalanceTarget;
+  readonly placement?: Placement;
+}) {
+  const { root, isActive, detail } = useContext(BalanceInteraction);
+  if (root?.placement !== placement) return null;
+  return (target ? isActive(target, placement) : root?.target.kind === kind) ? detail : null;
+}
+
+export function ComposerBalanceDashboard({ month, initialState, initialDetail, subcategoryLabels, dailySeries }: {
   readonly month: YearMonth;
-  readonly monthName: string;
   readonly initialState: Extract<HistoryV2InitialState, { kind: "balance" }>;
   readonly initialDetail?: HistoryOverlayTarget;
   readonly subcategoryLabels: Readonly<Record<string, string>>;
   readonly dailySeries: Promise<BalanceDailySeries | null>;
 }) {
   const state = useHistoryPageState(month, initialState);
+  const { revision, changeLayout } = useLayoutMotion("balance-layout");
   const [stack, setStack] = useState<readonly DetailSelection[]>(() =>
     initialDetail ? [{ target: initialDetail, label: linkedDetailLabels[initialDetail.kind] }] : []);
   const id = useId();
   const opener = useRef<HTMLElement | null>(null);
+  const restoreFocus = useRef<PanelKind | undefined>(undefined);
   const detailTitle = useRef<HTMLHeadingElement>(null);
+  const root = stack[0];
   const current = stack.at(-1);
-  const origin = panelFor(stack[0]?.target);
-  const focusRow = origin === undefined ? undefined : origin === "summary" || origin === "categories" ? "top" : "bottom";
+  const origin = panelFor(root);
+
+  useLayoutEffect(() => {
+    if (current) {
+      const heading = detailTitle.current;
+      const row = heading?.closest<HTMLElement>("[data-ranking-row]");
+      const ranking = row?.parentElement;
+      heading?.focus({ preventScroll: true });
+      if (!row || !ranking) return;
+      const keepDetailVisible = () => {
+        const bounds = ranking.getBoundingClientRect();
+        const selected = row.getBoundingClientRect();
+        if (selected.top < bounds.top || selected.bottom > bounds.bottom)
+          ranking.scrollTop += selected.top - bounds.top;
+      };
+      keepDetailVisible();
+      const observer = new ResizeObserver(keepDetailVisible);
+      observer.observe(row);
+      return () => observer.disconnect();
+    } else if (restoreFocus.current) {
+      const source = opener.current;
+      const target = source?.isConnected && source.getClientRects().length > 0 ? source : document.getElementById(id + "-" + restoreFocus.current + "-heading");
+      target?.focus({ preventScroll: true });
+      restoreFocus.current = undefined;
+    }
+  }, [current, id]);
 
   if (state.kind !== "balance") return null;
 
@@ -85,103 +126,90 @@ export function ComposerBalanceDashboard({ month, monthName, initialState, initi
     return <p role="alert" className={styles.unavailable}>Le bilan rassemble des versions de données différentes. Actualise la page pour le consulter.</p>;
   }
 
-  function focusDetail() {
-    requestAnimationFrame(() => detailTitle.current?.focus({ preventScroll: true }));
+  function reset() {
+    restoreFocus.current = origin;
+    setStack([]);
   }
 
   function closeDetail() {
-    setStack([]);
-    requestAnimationFrame(() => {
-      const source = opener.current;
-      const target = source?.isConnected && source.getClientRects().length > 0 ? source : document.getElementById(`${id}-${origin}-heading`);
-      target?.focus({ preventScroll: true });
-    });
+    changeLayout(reset);
   }
 
   function previousDetail() {
-    if (stack.length <= 1) {
-      closeDetail();
-      return;
-    }
-    setStack(items => items.slice(0, -1));
-    focusDetail();
+    if (stack.length <= 1) closeDetail();
+    else changeLayout(() => setStack(items => items.slice(0, -1)));
+  }
+
+  function isActive(target: BalanceTarget, placement?: Placement) {
+    return root?.placement === placement && !!root && detailKey(root.target) === detailKey(target);
   }
 
   function showDetail(selection: DetailSelection) {
-    if (current && detailKey(current.target) === detailKey(selection.target)) {
+    if (isActive(selection.target, selection.placement) && root?.anchor === selection.anchor) {
       closeDetail();
       return;
     }
     if (document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
-    setStack([selection]);
-    focusDetail();
+    changeLayout(() => setStack([selection]));
   }
 
-  const detailId = `${id}-detail`;
-  function renderRegion(kind: PanelKind, title: string, icon: ReactNode, content: ReactNode) {
-    return <BalanceRegion kind={kind} headingId={`${id}-${kind}-heading`} title={title} icon={icon}>
-      {content}
-      {origin === kind && current && <BalanceAtom name="detail" priority={110} minimum={1} key={detailKey(current.target)}>
-        <section className={styles.inlineDetail} id={detailId} aria-labelledby={`${detailId}-title`}>
-          <div className={styles.detailHeader}>
-            {stack.length > 1 && <button type="button" aria-label="Revenir au détail précédent"
-              onClick={previousDetail}><ArrowLeft aria-hidden size={16} /></button>}
-            <h3 id={`${detailId}-title`} ref={detailTitle} tabIndex={-1}>{current.label}</h3>
-            <button type="button" aria-label="Fermer le détail" className={styles.close} onClick={closeDetail}>
-              <X aria-hidden size={17} />
-            </button>
-          </div>
-          <BalanceDetail selection={current} month={month} subcategoryLabels={subcategoryLabels}
-            onOpen={selection => {
-              setStack(items => [...items, selection]);
-              focusDetail();
-            }} />
-        </section>
-      </BalanceAtom>}
-    </BalanceRegion>;
-  }
-
-  return <div className={styles.dashboard} data-focus-row={focusRow}
-    onKeyDown={event => {
-      if (event.key !== "Escape" || !current) return;
-      event.preventDefault();
-      previousDetail();
-    }}>
-    <header className={styles.pageHeader}>
-      <h1>Bilan du mois</h1>
-      <span>{monthName}</span>
-    </header>
-    <div className={styles.panelGrid}>
-      {renderRegion("summary", "Dépenses du mois", <Wallet size={19} aria-hidden />,
-        summary ? <SummaryCard model={summary} dailySeries={dailySeries} overview={overview} onOpen={showDetail} />
-          : <DataStatus failed={state.summary.status === "error"} />)}
-      {renderRegion("categories", "Dépenses par catégorie", <ChartNoAxesColumn size={19} aria-hidden />,
-        categories ? <CategoryCard model={categories} total={metricValue(visibleValue(summary?.actualValue))}
-          activeId={current?.target.kind === "category" ? current.target.categoryId : undefined} onOpen={showDetail} detailId={detailId} />
-          : <DataStatus failed={state.categories.status === "error"} />)}
-      {renderRegion("spending", "Marges du mois", <SlidersHorizontal size={19} aria-hidden />,
-        spending ? <MarginCard model={spending} onOpen={showDetail} />
-          : <DataStatus failed={state.spendingNature.status === "error"} />)}
-      {renderRegion("life", "Vie et argent", <Sparkles size={19} aria-hidden />,
-        life ? <LifeCard model={life} month={month} activeId={current?.target.kind === "moment" ? current.target.momentId : undefined}
-          onOpen={showDetail} /> : <DataStatus failed={state.lifeMoney.status === "error"} />)}
+  const detailId = id + "-detail";
+  const detail = current && <section className={styles.inlineDetail} id={detailId} aria-labelledby={detailId + "-title"} key={detailKey(current.target)}>
+    <div className={styles.detailHeader}>
+      {stack.length > 1 && <button type="button" aria-label="Revenir au détail précédent"
+        onClick={previousDetail}><ArrowLeft aria-hidden size={16} /></button>}
+      <h3 id={detailId + "-title"} ref={detailTitle} tabIndex={-1}>{current.label}</h3>
+      <button type="button" aria-label="Fermer le détail" className={styles.close} onClick={closeDetail}><X aria-hidden size={17} /></button>
     </div>
-  </div>;
+    <BalanceDetail selection={current} month={month} subcategoryLabels={subcategoryLabels}
+      onOpen={selection => changeLayout(() => setStack(items => [...items, selection]))} />
+  </section>;
+  const size = root?.target.kind === "journal" || root?.target.kind === "place" || root?.target.kind === "segment" ? "compact" : "large";
+
+  return <BalanceInteraction.Provider value={{ root, revision, isActive, onOpen: showDetail, onLayout: changeLayout, reset, detail }}>
+    <div className={styles.dashboard} data-month-balance data-focus={origin} data-detail-size={origin ? size : undefined}
+      onKeyDown={event => {
+        if (event.key !== "Escape" || !current) return;
+        event.preventDefault();
+        previousDetail();
+      }}>
+      <div className={styles.panelGrid}>
+        <div className={styles.column} data-side="left">
+          <BalanceRegion kind="summary" headingId={id + "-summary-heading"} title="Dépenses du mois" icon="expenses">
+            {summary ? <SummaryCard model={summary} dailySeries={dailySeries} overview={overview} onOpen={showDetail} />
+              : <DataStatus failed={state.summary.status === "error"} />}
+          </BalanceRegion>
+          <BalanceRegion kind="spending" headingId={id + "-spending-heading"} title="Marges du mois" icon="overview">
+            {spending ? <MarginCard model={spending} /> : <DataStatus failed={state.spendingNature.status === "error"} />}
+          </BalanceRegion>
+        </div>
+        <div className={styles.column} data-side="right">
+          <BalanceRegion kind="categories" headingId={id + "-categories-heading"} title="Répartition des dépenses" icon="categories">
+            <CategoryCard model={categories} spending={spending} failed={state.categories.status === "error"} />
+          </BalanceRegion>
+          <BalanceRegion kind="life" headingId={id + "-life-heading"} title="Vie et argent" icon="events">
+            {life ? <LifeCard model={life} month={month} /> : <DataStatus failed={state.lifeMoney.status === "error"} />}
+          </BalanceRegion>
+        </div>
+      </div>
+    </div>
+  </BalanceInteraction.Provider>;
 }
 
 function BalanceRegion({ kind, title, icon, headingId, children }: {
   readonly kind: PanelKind;
   readonly title: string;
-  readonly icon: ReactNode;
+  readonly icon: ClayIconName;
   readonly headingId: string;
   readonly children: ReactNode;
 }) {
-  const { region, flow } = useBalanceDensity();
+  const { revision } = useContext(BalanceInteraction);
+  const { region, flow } = useBalanceDensity(undefined, revision);
   return <section ref={region} className={styles.panel} data-panel={kind} aria-labelledby={headingId}>
     <div ref={flow} className={styles.panelBody}>
       <BalanceAtom name="heading" priority={120} minimum={1}>
         <h2 id={headingId} className={styles.headingRow} tabIndex={-1}>
-          <span className={styles.panelIcon}>{icon}</span><span>{title}</span>
+          <ClayIcon name={icon} size={34} className={styles.clayHeading} /><span>{title}</span>
         </h2>
       </BalanceAtom>
       {children}
@@ -200,6 +228,7 @@ function SummaryCard({ model, onOpen, dailySeries, overview }: {
   readonly dailySeries: Promise<BalanceDailySeries | null>;
   readonly overview?: MonthQuickOverviewReadModel;
 }) {
+  const { root, isActive } = useContext(BalanceInteraction);
   const actual = visibleValue(model.actualValue);
   const typical = visibleValue(model.typicalValue);
   const comparison = metricValue(visibleValue(model.actualVsTypical));
@@ -212,7 +241,7 @@ function SummaryCard({ model, onOpen, dailySeries, overview }: {
   const bankInflows = visibleValue(flows?.bankInflows);
   const bankOutflows = visibleValue(flows?.bankOutflows);
   return <>
-    <BalanceAtom name="total" priority={100}>
+    <BalanceAtom name="total" priority={100} minimum={1}>
       <div className={styles.spentHeader}>
         {actual ? <MoneyMetric metric={actual} className={styles.bigAmount} /> : <strong>Dépenses à confirmer</strong>}
         {delta !== undefined && <span className={styles.delta} data-direction={direction}>
@@ -224,15 +253,16 @@ function SummaryCard({ model, onOpen, dailySeries, overview }: {
     {(metricValue(actual) !== undefined || metricValue(typical) !== undefined) && <BalanceAtom name="habit" priority={81}>
       <SpendingComparison actual={metricValue(actual)} typical={metricValue(typical)} range={zone} />
     </BalanceAtom>}
-    <BalanceAtom name="days" priority={89}>
+    <BalanceAtom name="days" priority={89} minimum={root?.target.kind === "journal" ? 1 : 0}>
       <Suspense fallback={<p className={styles.note} role="status">Chargement des dépenses par jour…</p>}>
-        <DailySpendingTrend series={dailySeries} reference={model.publicationMeta} onInspect={(date, label) =>
+        <DailySpendingTrend series={dailySeries} reference={model.publicationMeta} activeDate={root?.target.kind === "journal" ? root.target.date : undefined} onInspect={(date, label) =>
           onOpen({ target: { kind: "journal", date }, label })} />
       </Suspense>
+      <DetailSlot kind="journal" />
     </BalanceAtom>
-    <BalanceAtom name="bank" priority={65}>
+    <BalanceAtom name="bank" priority={65} minimum={root?.target.kind === "bridge" ? 1 : 0}>
       <div className={styles.panelFoot}>
-        <button type="button" className={styles.textButton} onClick={() => onOpen({ target: { kind: "bridge" }, label: "Écart avec mon compte" })}>
+        <button type="button" className={styles.textButton} aria-expanded={isActive({ kind: "bridge" })} onClick={() => onOpen({ target: { kind: "bridge" }, label: "Écart avec mon compte" })}>
           <Landmark size={14} aria-hidden /> Écart avec mon compte
         </button>
         {rank?.presentation === "RANKED" && <span className={styles.zone}>{formatHistoricalRank(rank.rank, rank.universeCount)}</span>}
@@ -241,249 +271,274 @@ function SummaryCard({ model, onOpen, dailySeries, overview }: {
         {bankInflows && metricValue(bankInflows) !== undefined && <div><dt>Crédits bancaires</dt><dd><MoneyMetric metric={bankInflows} /></dd></div>}
         {bankOutflows && metricValue(bankOutflows) !== undefined && <div><dt>Débits bancaires</dt><dd><MoneyMetric metric={bankOutflows} /></dd></div>}
       </dl>}
+      <DetailSlot kind="bridge" />
     </BalanceAtom>
-    {minimum !== undefined && <BalanceAtom name="minimum" priority={44}>
-      <button type="button" className={styles.textButton} onClick={() => onOpen({ target: { kind: "minimal" }, label: "Minimum estimé" })}>
+    {minimum !== undefined && <BalanceAtom name="minimum" priority={44} minimum={root?.target.kind === "minimal" ? 1 : 0}>
+      <button type="button" className={styles.textButton} aria-expanded={isActive({ kind: "minimal" })} onClick={() => onOpen({ target: { kind: "minimal" }, label: "Minimum estimé" })}>
         Minimum estimé <strong>{formatMoney(minimum)}</strong>
       </button>
+      <DetailSlot kind="minimal" />
     </BalanceAtom>}
     {model.importedSummary.text && <BalanceAtom name="editorial" priority={27}>
-      <PagedRows size={1} label="Résumé du mois" items={model.importedSummary.text.match(/.{1,210}(?:\s+|$)|\S+/gu) ?? [model.importedSummary.text]}>
-        {rows => <p className={styles.longNote}>{rows[0]}</p>}
-      </PagedRows>
+      <p className={styles.longNote} title={model.importedSummary.text}>{model.importedSummary.text}</p>
     </BalanceAtom>}
   </>;
 }
 
-function CategoryCard({ model, total, activeId, onOpen, detailId }:  {
-  readonly model: MonthCategoriesReadModel;
-  readonly total?: Money;
-  readonly activeId?: string;
-  readonly onOpen: OpenDetail;
-  readonly detailId: string;
+
+const distributionModes = {
+  categories: "Catégories",
+  behavior: "Fixes et variables",
+  necessity: "Degré de nécessité",
+  lifeScope: "Quotidien et hors quotidien",
+} as const;
+type DistributionMode = keyof typeof distributionModes;
+
+function CategoryCard({ model, spending, failed }: {
+  readonly model?: MonthCategoriesReadModel;
+  readonly spending?: MonthSpendingNatureReadModel;
+  readonly failed: boolean;
 }) {
-  const collection = visibleValue(model.categories);
-  const items = collection?.status === "KNOWN" || collection?.status === "PARTIAL" ? collection.items : [];
-  const rows = items.map(item => ({
-    id: item.categoryId, label: item.label, amount: item.actual, share: metricValue(item.shareOfActual), delta: metricValue(item.delta),
-  }));
+  const { root, isActive, onOpen, onLayout, reset } = useContext(BalanceInteraction);
+  const [mode, setMode] = useState<DistributionMode>("categories");
+  const collection = visibleValue(model?.categories);
+  const categories = collection?.status === "KNOWN" || collection?.status === "PARTIAL" ? collection.items : [];
+  const axis = mode === "categories" ? undefined : visibleValue(spending?.[mode]);
+  const rows = (mode === "categories" ? categories.map(item => ({
+    id: item.categoryId, label: item.label, amount: item.actual, share: metricValue(item.shareOfActual),
+    target: { kind: "category", categoryId: item.categoryId } as const,
+  })) : (metricValue(axis?.result) ?? []).map(bucket => ({
+    id: bucket.key, label: spendingPresentationLabel(bucket.key), amount: moneyAmount(bucket.amount), share: bucket.shareOfActual,
+    target: { kind: "segment", params: { axis: mode, bucket: bucket.key } } as const,
+  }))).toSorted((a, b) => Number(metricValue(b.amount) ?? 0) - Number(metricValue(a.amount) ?? 0));
+  const placement = mode === "categories" ? undefined : "distribution";
+  const expanded = rows.some(row => isActive(row.target, placement));
   const maximum = chartMaximum(rows);
-  const deviations = rows.flatMap(row => row.delta !== undefined && Number(row.delta) !== 0 ? [{ label: row.label, delta: row.delta, id: row.id }] : [])
-    .sort((left, right) => Math.abs(Number(right.delta)) - Math.abs(Number(left.delta))).slice(0, 3);
+  const deviations = categories.flatMap(row => {
+    const delta = metricValue(row.delta);
+    return delta === undefined || Number(delta) === 0 ? [] : [{ id: row.categoryId, label: row.label, delta }];
+  }).toSorted((a, b) => Math.abs(Number(b.delta)) - Math.abs(Number(a.delta))).slice(0, 3);
   const maximumDeviation = Math.max(1, ...deviations.map(row => Math.abs(Number(row.delta))));
-  const other = visibleValue(model.otherAmount);
-  const unclassified = visibleValue(model.unclassifiedAmount);
+  const other = mode === "categories" ? visibleValue(model?.otherAmount) : undefined;
+  const unclassified = mode === "categories" ? visibleValue(model?.unclassifiedAmount)
+    : axis ? moneyAmount(axis.unclassifiedAmount) : undefined;
+
   return <>
-    {!rows.length && <BalanceAtom name="status" priority={90}><p className={styles.note}>Aucun poste détaillé pour ce mois.</p></BalanceAtom>}
-    {rows.length > 0 && <BalanceAtom name="categories" priority={100}>
-    <div className={styles.categoryChart}>
-      {Number(total) > 0 && <CategoryRing shares={rows.map(row => {
-        const amount = metricValue(row.amount);
-        return amount === undefined ? undefined : Number(amount) / Number(total);
-      })} />}
-      <div className={styles.categoryLedger}>
-
-        <ul className={styles.categoryPlot}>
-          {rows.map((row, index) => <li key={row.id}>
-            <button type="button" style={{ "--category-color": categoryColors[index % categoryColors.length] } as CSSProperties}
-              onClick={() => onOpen({ target: { kind: "category", categoryId: row.id }, label: row.label })}
-              aria-controls={activeId === row.id ? detailId : undefined} aria-expanded={activeId === row.id}>
-              <i aria-hidden />
-              <AmountBar row={row} maximum={maximum} />
-
-              <ChevronDown size={14} aria-hidden />
+    <BalanceAtom name="distributionModes" priority={105} minimum={1}>
+      <div className={styles.distributionModes} role="group" aria-label="Mode de répartition">
+        {(Object.keys(distributionModes) as DistributionMode[]).map(value => <button key={value} type="button"
+          aria-pressed={value === mode} onClick={() => {
+            if (value === mode) return;
+            onLayout(() => {
+              if (root?.target.kind === "category" || root?.placement === "distribution") reset();
+              setMode(value);
+            });
+          }}>{distributionModes[value]}</button>)}
+      </div>
+    </BalanceAtom>
+    {rows.length === 0 ? (mode === "categories" && !model ? <DataStatus failed={failed} />
+      : <BalanceAtom name="status" priority={95}><p className={styles.note}>Aucun montant détaillé pour cette répartition.</p></BalanceAtom>) :
+      <BalanceAtom name="categories" priority={100} minimum={1}>
+        <ul className={styles.categoryPlot} data-expanded={expanded || undefined} aria-label={distributionModes[mode]}>
+          {rows.map((row, index) => {
+            const active = isActive(row.target, placement);
+            return <li key={row.id} data-ranking-row data-expanded={active || undefined}>
+              <button type="button" style={{ "--category-color": categoryColors[index % categoryColors.length] } as CSSProperties}
+                onClick={() => onOpen({ target: row.target, label: row.label, placement })} aria-expanded={active}>
+                <i aria-hidden /><AmountBar row={row} maximum={maximum} /><ChevronDown size={14} aria-hidden />
+              </button>
+              <DetailSlot target={row.target} placement={placement} />
+            </li>;
+          })}
+        </ul>
+      </BalanceAtom>}
+    {[other, unclassified].some(value => Number(metricValue(value) ?? 0) !== 0) && <BalanceAtom name="coverage" priority={97} minimum={1}>
+      <div className={styles.panelFoot}>
+        {other && Number(metricValue(other) ?? 0) !== 0 && <span className={styles.zone}>Autres catégories <strong><MoneyMetric metric={other} /></strong></span>}
+        {unclassified && Number(metricValue(unclassified) ?? 0) !== 0 && <span className={styles.zone}>Non classé <strong><MoneyMetric metric={unclassified} /></strong></span>}
+      </div>
+    </BalanceAtom>}
+    {mode === "categories" && !expanded && deviations.length > 0 && <BalanceAtom name="deviations" priority={36}>
+      <div className={styles.deviationPreview}>
+        <h3>Plus grands écarts à l’habitude</h3>
+        <ul className={styles.adjustments}>
+          {deviations.map(row => <li key={row.id}>
+            <button type="button" className={styles.deviationButton}
+              onClick={() => onOpen({ target: { kind: "category", categoryId: row.id }, label: row.label })}>
+              <span>{row.label}</span><strong>{formatDelta(row.delta)}</strong>
+              <span className={styles.adjustmentTrack} aria-hidden><i data-negative={Number(row.delta) < 0}
+                style={{ width: String(Math.abs(Number(row.delta)) / maximumDeviation * 50) + "%" }} /></span>
             </button>
           </li>)}
         </ul>
       </div>
-    </div>
-    <div className={styles.panelFoot}>
-      {other && Number(metricValue(other) ?? 0) !== 0 && <span className={styles.zone}>Autres catégories <strong><MoneyMetric metric={other} /></strong></span>}
-      {unclassified && Number(metricValue(unclassified) ?? 0) !== 0 && <span className={styles.zone}>Non classé <strong><MoneyMetric metric={unclassified} /></strong></span>}
-      {rows.length > 2 && <ContentPicker label="Choisir une catégorie" rows={rows} onChoose={row =>
-        onOpen({ target: { kind: "category", categoryId: row.id }, label: row.label })} />}
-    </div>
     </BalanceAtom>}
-    {deviations.length > 0 && <BalanceAtom name="deviations" priority={36}><div className={styles.deviationPreview}>
-      <h3>Plus grands écarts à l’habitude</h3>
-      <ul className={styles.adjustments}>
-        {deviations.map(row => <li key={row.id}>
-          <button type="button" className={styles.deviationButton} onClick={() => onOpen({ target: { kind: "category", categoryId: row.id }, label: row.label })}>
-            <span>{row.label}</span><strong>{formatDelta(row.delta)}</strong>
-            <span className={styles.adjustmentTrack} aria-hidden><i data-negative={Number(row.delta) < 0}
-              style={{ width: `${Math.abs(Number(row.delta)) / maximumDeviation * 50}%` }} /></span>
-          </button>
-        </li>)}
-      </ul>
-    </div></BalanceAtom>}
   </>;
 }
 
-function ContentPicker<T extends { readonly id: string; readonly label: string }>({ label, rows, onChoose, hasExtra }: {
+const spendingAxes = [
+  { name: "behavior", priority: 88 },
+  { name: "necessity", priority: 77 },
+  { name: "lifeScope", priority: 70 },
+] as const;
+const necessityRows = [
+  { key: "CONSTRAINED", label: "Contraintes" },
+  { key: "INDISPENSABLE", label: "Essentiel" },
+  { key: "OPTIONAL", label: "Optionnel" },
+] as const;
+const behaviors = ["FIXED", "VARIABLE"] as const;
+const necessityColors: Record<string, string> = { CONSTRAINED: "#7650b5", INDISPENSABLE: "#798cc1", OPTIONAL: "#be73a1" };
+
+function SegmentButton({ params, label, selected, children }: {
+  readonly params: HistorySpendingSegmentDetailParams;
   readonly label: string;
-  readonly rows: readonly T[];
-  readonly onChoose: (row: T) => void;
-  readonly hasExtra?: boolean;
+  readonly selected?: boolean;
+  readonly children: ReactNode;
 }) {
-  return <select aria-label={label} className={styles.contentPicker} data-extra={hasExtra} value="" onChange={event => {
-    const row = rows.find(candidate => candidate.id === event.target.value);
-    if (row) onChoose(row);
-  }}>
-    <option value="">{label}</option>
-    {rows.map(row => <option key={row.id} value={row.id}>{row.label}</option>)}
-  </select>;
+  const { onOpen, isActive } = useContext(BalanceInteraction);
+  const target = { kind: "segment", params } as const;
+  return <button type="button" aria-expanded={selected ?? isActive(target)}
+    onClick={() => onOpen({ target, label })}>{children}</button>;
 }
 
-const necessityColors: Record<string, string> = { CONSTRAINED: "#7650b5", INDISPENSABLE: "#798cc1", OPTIONAL: "#c279a0" };
-
-function MarginCard({ model, onOpen }: { readonly model: MonthSpendingNatureReadModel; readonly onOpen: OpenDetail }) {
+function MarginCard({ model }: { readonly model: MonthSpendingNatureReadModel }) {
+  const { root, isActive, onOpen } = useContext(BalanceInteraction);
   const matrix = visibleValue(model.matrix);
-  const necessity = visibleValue(model.necessity);
-  const buckets = metricValue(necessity?.result);
-
-  function openSegment(params: HistorySpendingSegmentDetailParams, label: string) {
-    onOpen({ target: { kind: "segment", params }, label });
-  }
-
-  const matrixRows = (matrix?.cells ?? []).flatMap(bucket => {
-    const [necessity, behavior] = bucket.key.split("__");
-    if ((necessity !== "CONSTRAINED" && necessity !== "INDISPENSABLE" && necessity !== "OPTIONAL")
-      || (behavior !== "FIXED" && behavior !== "VARIABLE")) return [];
-    return [{ id: bucket.key, label: spendingPresentationLabel(bucket.key), necessity, behavior } as const];
-  });
+  const immediate = { necessity: "OPTIONAL", behavior: "VARIABLE" } as const;
+  const medium = { necessity: "OPTIONAL", behavior: "FIXED" } as const;
+  const optionActive = root?.anchor !== "matrix" && (isActive({ kind: "segment", params: immediate }) || isActive({ kind: "segment", params: medium }));
+  const marginChoices = [
+    { params: immediate, label: "Ajustable maintenant", metric: matrix?.immediateMargin },
+    { params: medium, label: "Ajustable à moyen terme", metric: matrix?.mediumMargin },
+  ];
+  const matrixActive = root?.target.kind === "segment" && !("axis" in root.target.params) && !optionActive && !root.placement;
 
   return <>
-    <BalanceAtom name="margins" priority={100}>
+    <BalanceAtom name="margins" priority={100} minimum={1}>
       <div className={styles.marginStats}>
-        <button type="button" onClick={() => openSegment({ necessity: "OPTIONAL", behavior: "VARIABLE" }, "Ajustable maintenant")}>
-          <span>Ajustable maintenant</span><MarginAmount metric={matrix?.immediateMargin} />
-        </button>
-        <button type="button" onClick={() => openSegment({ necessity: "OPTIONAL", behavior: "FIXED" }, "Ajustable à moyen terme")}>
-          <span>Ajustable à moyen terme</span><MarginAmount metric={matrix?.mediumMargin} />
-        </button>
+        {marginChoices.map(({ params, label, metric }) => <SegmentButton key={label} params={params} label={label} selected={optionActive && isActive({ kind: "segment", params })}>
+          <span>{label}</span><MarginAmount metric={metric} />
+        </SegmentButton>)}
       </div>
+      {optionActive && <DetailSlot kind="segment" />}
     </BalanceAtom>
-    <SpendingStack name="behavior" priority={88} buckets={metricValue(visibleValue(model.behavior)?.result)}
-      onOpen={bucket => openSegment({ axis: "behavior", bucket }, spendingPresentationLabel(bucket))} />
-    {buckets && buckets.length > 0 && <BalanceAtom name="necessity" priority={77}><div className={styles.necessityPreview}>
-      <h3>Degré de nécessité</h3>
-      <ul>
-        {buckets.map(bucket => <li key={bucket.key} style={{ "--bucket-color": necessityColors[bucket.key] ?? "#807995" } as CSSProperties}>
-          <button type="button" onClick={() => openSegment({ axis: "necessity", bucket: bucket.key }, spendingPresentationLabel(bucket.key))}>
-            <span>{spendingPresentationLabel(bucket.key)}</span><strong>{formatMoney(bucket.amount)}</strong>
-            {bucket.shareOfActual !== undefined && <>
-              <small>{Math.round(bucket.shareOfActual * 100)} %</small>
-              <span className={styles.necessityMeter} aria-hidden><i style={{ width: `${Math.max(0, Math.min(1, bucket.shareOfActual)) * 100}%` }} /></span>
-            </>}
-          </button>
-        </li>)}
-      </ul>
-      {necessity && Number(necessity.unclassifiedAmount) !== 0 && <p className={styles.note}>{formatMoney(necessity.unclassifiedAmount)} non classés</p>}
-    </div></BalanceAtom>}
-    <SpendingStack name="scope" priority={59} title="Quotidien et hors quotidien"
-      buckets={metricValue(visibleValue(model.lifeScope)?.result)}
-      onOpen={bucket => openSegment({ axis: "lifeScope", bucket }, spendingPresentationLabel(bucket))} />
-    {matrixRows.length > 0 && <BalanceAtom name="matrix" priority={32}>
-      <ContentPicker label="Nécessité et type de dépense" rows={matrixRows}
-        onChoose={row => openSegment({ necessity: row.necessity, behavior: row.behavior }, row.label)} />
+    {spendingAxes.map(({ name, priority }) => {
+      const axis = visibleValue(model[name]);
+      const buckets = metricValue(axis?.result);
+      if (!buckets?.length) return null;
+      const active = root?.placement === undefined && root?.target.kind === "segment" && "axis" in root.target.params && root.target.params.axis === name;
+      return <BalanceAtom key={name} name={name} priority={priority} minimum={active ? 1 : 0}>
+        <div className={styles.breakdown}>
+          <h3>{distributionModes[name]}</h3>
+          <div className={styles.stack} role="group" aria-label={distributionModes[name]}>
+            {buckets.map((bucket, index) => bucket.shareOfActual === undefined ? null : <button key={bucket.key}
+              type="button" tabIndex={-1} aria-label={spendingPresentationLabel(bucket.key)}
+              style={{ width: String(Math.max(0, Math.min(1, bucket.shareOfActual)) * 100) + "%", background: necessityColors[bucket.key] ?? categoryColors[index % categoryColors.length] }}
+              onClick={() => onOpen({ target: { kind: "segment", params: { axis: name, bucket: bucket.key } }, label: spendingPresentationLabel(bucket.key) })} />)}
+          </div>
+          <div className={styles.legend}>
+            {buckets.map((bucket, index) => <SegmentButton key={bucket.key} params={{ axis: name, bucket: bucket.key }} label={spendingPresentationLabel(bucket.key)}>
+              <i style={{ background: necessityColors[bucket.key] ?? categoryColors[index % categoryColors.length] }} aria-hidden />
+              {spendingPresentationLabel(bucket.key)} <strong>{formatMoney(bucket.amount)}</strong>
+              {bucket.shareOfActual !== undefined && <small>{Math.round(bucket.shareOfActual * 100)} %</small>}
+            </SegmentButton>)}
+          </div>
+          {active && <DetailSlot kind="segment" />}
+          {!!axis && Number(axis.unclassifiedAmount) !== 0 && <p className={styles.note}>{formatMoney(axis.unclassifiedAmount)} non classés</p>}
+        </div>
+      </BalanceAtom>;
+    })}
+    {matrix && matrix.cells.length > 0 && <BalanceAtom name="matrix" priority={68} minimum={matrixActive ? 1 : 0}>
+      <table className={styles.matrix}>
+        <caption>Nécessité × type de dépense</caption>
+        <thead><tr><td /><th scope="col">Fixe</th><th scope="col">Variable</th></tr></thead>
+        <tbody>{necessityRows.map(({ key, label }) => <MatrixRow key={key} rowKey={key} label={label}
+          cells={matrix.cells} rowActive={matrixActive && behaviors.some(behavior => isActive({ kind: "segment", params: { necessity: key, behavior } }))} />)}</tbody>
+      </table>
     </BalanceAtom>}
   </>;
 }
 
-function SpendingStack({ name, priority, title, buckets, onOpen }: {
-  readonly name: string;
-  readonly priority: number;
-  readonly title?: string;
-  readonly buckets?: readonly { readonly key: string; readonly amount: Money; readonly shareOfActual?: number }[];
-  readonly onOpen: (key: string) => void;
+function MatrixRow({ rowKey, label, cells, rowActive }: {
+  readonly rowKey: (typeof necessityRows)[number]["key"];
+  readonly label: string;
+  readonly cells: readonly { readonly key: string; readonly amount: Money }[];
+  readonly rowActive: boolean;
 }) {
-  if (!buckets?.length) return null;
-  return <BalanceAtom name={name} priority={priority}><div className={styles.breakdown}>
-    {title && <h3>{title}</h3>}
-    <div className={styles.stack} role="group" aria-label={title ?? "Fixes et variables"}>
-      {buckets.map((bucket, index) => bucket.shareOfActual === undefined ? null : <button key={bucket.key}
-        type="button" tabIndex={-1} aria-label={spendingPresentationLabel(bucket.key)} data-variable={index === 1}
-        onClick={() => onOpen(bucket.key)} style={{ width: `${Math.max(0, Math.min(1, bucket.shareOfActual)) * 100}%` }} />)}
-    </div>
-    <div className={styles.legend}>
-      {buckets.map((bucket, index) => <button key={bucket.key} type="button" data-variable={index === 1} onClick={() => onOpen(bucket.key)}>
-        <i aria-hidden /> {spendingPresentationLabel(bucket.key)} <strong>{formatMoney(bucket.amount)}</strong>
-        {bucket.shareOfActual !== undefined && <small>{Math.round(bucket.shareOfActual * 100)} %</small>}
-      </button>)}
-    </div>
-  </div></BalanceAtom>;
+  const { onOpen, isActive } = useContext(BalanceInteraction);
+  return <>
+    <tr><th scope="row">{label}</th>{behaviors.map(behavior => {
+      const key = rowKey + "__" + behavior;
+      const cell = cells.find(value => value.key === key);
+      const target = { kind: "segment", params: { necessity: rowKey, behavior } } as const;
+      return <td key={key}>{cell ? <button type="button" aria-expanded={rowActive && isActive(target)}
+        aria-label={spendingPresentationLabel(key) + " · " + formatMoney(cell.amount)}
+        onClick={() => onOpen({ target, label: spendingPresentationLabel(key), anchor: "matrix" })}>{formatMoney(cell.amount)}</button>
+        : <span aria-label="Montant indisponible">—</span>}</td>;
+    })}</tr>
+    {rowActive && <tr className={styles.matrixDetail}><td colSpan={3}><DetailSlot kind="segment" /></td></tr>}
+  </>;
 }
+
 function MarginAmount({ metric }: { readonly metric?: MetricValue<Money> }) {
   if (!metric) return <strong>À établir</strong>;
   if (metric.status !== "PARTIAL" || metric.partialMeaning !== "LOWER_BOUND") return <MoneyMetric metric={metric} />;
-  return <span>
-    <span className={styles.marginFull}><MoneyMetric metric={metric} /></span>
-    <span className={styles.marginCompact}>
-      <span aria-hidden="true">≥ </span><span className="sr-only">Au moins </span>
-      <MoneyMetric metric={metric} partialDisplay="value-only" />
-    </span>
-  </span>;
+  return <span>Au moins <MoneyMetric metric={metric} partialDisplay="value-only" /> <small>Partiel</small></span>;
 }
 
-function LifeCard({ model, month, activeId, onOpen }: {
-  readonly model: MonthLifeMoneyReadModel;
-  readonly month: YearMonth;
-  readonly activeId?: string;
-  readonly onOpen: OpenDetail;
-}) {
+function LifeCard({ model, month }: { readonly model: MonthLifeMoneyReadModel; readonly month: YearMonth }) {
+  const { onOpen, isActive, root } = useContext(BalanceInteraction);
   const activities = visibleValue(model.activities);
   const moments = visibleValue(model.moments);
   const places = visibleValue(model.places);
   const activityList = activities?.status === "KNOWN" || activities?.status === "PARTIAL" ? activities.items : [];
-  const momentList = moments?.status === "KNOWN" || moments?.status === "PARTIAL" ? moments.items : [];
+  const momentList = moments?.status === "KNOWN" || moments?.status === "PARTIAL" ? moments.items.toSorted((a, b) => a.startDate.localeCompare(b.startDate)) : [];
   const placeList = places?.status === "KNOWN" || places?.status === "PARTIAL" ? places.items : [];
-  const visibleMoments = momentList.slice(0, 5);
-
-  function openMoment(moment: (typeof momentList)[number]) {
-    onOpen({ target: { kind: "moment", momentId: moment.momentId }, label: moment.title });
-  }
+  const activeMoment = root?.target.kind === "moment" ? root.target.momentId : undefined;
 
   return <>
-    {momentList.length > 0 && <BalanceAtom name="timeline" priority={84}>
-      <MonthTimeline month={month} moments={momentList} activeId={activeId} onOpen={openMoment} />
-    </BalanceAtom>}
-    {visibleMoments.length > 0 && <BalanceAtom name="moments" priority={100}><div className={styles.lifeMoments}>
-      <h3>Moments marquants</h3>
-      <ul className={styles.lifeRows}>
-        {visibleMoments.map(moment => <li key={moment.momentId}>
-          <button type="button" aria-expanded={activeId === moment.momentId} onClick={() => openMoment(moment)}>
-            <span className={styles.dateChip}>{formatFrenchDateRange(moment.startDate, moment.endDate, false)}</span>
+    {momentList.length > 0 && <BalanceAtom name="moments" priority={100} minimum={1}>
+      <MonthTimeline month={month} moments={momentList} activeId={activeMoment}
+        onOpen={moment => onOpen({ target: { kind: "moment", momentId: moment.momentId }, label: moment.title, anchor: "timeline" })} />
+      {root?.anchor === "timeline" && <DetailSlot kind="moment" />}
+      <ul className={styles.lifeRail} aria-label="Moments marquants">
+        {momentList.map(moment => {
+          const target = { kind: "moment", momentId: moment.momentId } as const;
+          return <li key={moment.momentId}><button type="button" aria-expanded={isActive(target)} onClick={() => onOpen({ target, label: moment.title })}>
+            <span><ClayIcon name="events" size={22} />{formatFrenchDateRange(moment.startDate, moment.endDate, false)}</span>
             <strong title={moment.title}>{moment.title}</strong>
-            {metricValue(moment.causalCost) !== undefined && <MoneyMetric metric={moment.causalCost} partialDisplay="value-only" />}
-          </button>
-        </li>)}
+            {metricValue(moment.causalCost) === undefined ? <small>Coût non établi</small> : <MoneyMetric metric={moment.causalCost} />}
+          </button></li>;
+        })}
       </ul>
-      {momentList.length > 1 && <ContentPicker label="Choisir un moment" hasExtra={momentList.length > visibleMoments.length}
-        rows={momentList.map(moment => ({ id: moment.momentId, label: moment.title, moment }))} onChoose={row => openMoment(row.moment)} />}
-    </div></BalanceAtom>}
-    {(activityList.length > 0 || placeList.length > 0) && <BalanceAtom name="lifeFacts" priority={78}>
-      <ul className={`${styles.lifeRows} ${styles.lifeFacts}`}>
-        {activityList.slice(0, 1).map(activity => <li key={activity.activityTypeKey}>
-          <button type="button" onClick={() => onOpen({ target: { kind: "activity", activityTypeKey: activity.activityTypeKey }, label: activity.label })}>
-            <ChartNoAxesColumn size={16} aria-hidden /><span><small>Activité du mois</small><strong title={activity.label}>{activity.label}</strong></span>
-            <span>{formatCount(activity.occurrences, "fois", "fois")}</span>
-          </button>
-        </li>)}
-        {placeList.slice(0, 3).map(place => <li key={place.placeId}>
-          <button type="button" onClick={() => onOpen({ target: { kind: "place", placeId: place.placeId }, label: place.label })}>
-            <MapPin size={16} aria-hidden /><span><small>Lieu fréquenté</small><strong title={place.label}>{place.label}</strong></span>
-            <span>{formatCount(place.presenceDays, "jour")}</span>
-          </button>
-        </li>)}
+      {root?.anchor !== "timeline" && <DetailSlot kind="moment" />}
+    </BalanceAtom>}
+    {activityList.length > 0 && <BalanceAtom name="activities" priority={82} minimum={root?.target.kind === "activity" ? 1 : 0}>
+      <h3 className={styles.railTitle}>Activités du mois</h3>
+      <ul className={styles.lifeRail} aria-label="Activités du mois">
+        {activityList.map(activity => {
+          const target = { kind: "activity", activityTypeKey: activity.activityTypeKey } as const;
+          return <li key={activity.activityTypeKey}><button type="button" aria-expanded={isActive(target)} onClick={() => onOpen({ target, label: activity.label })}>
+            <span><ClayIcon name="activity" size={22} />{formatCount(activity.occurrences, "fois", "fois")}</span>
+            <strong title={activity.label}>{activity.label}</strong>
+            {metricValue(activity.cost) !== undefined && <small>{activity.costKind === "CAUSAL" ? "Lié" : "Associé"} · <MoneyMetric metric={activity.cost} /></small>}
+          </button></li>;
+        })}
       </ul>
-      {(activityList.length > 1 || placeList.length > 1) && <div className={styles.lifePickers}>
-        {activityList.length > 1 && <ContentPicker label="Choisir une activité"
-          rows={activityList.map(activity => ({ id: activity.activityTypeKey, label: activity.label }))}
-          onChoose={row => onOpen({ target: { kind: "activity", activityTypeKey: row.id }, label: row.label })} />}
-        {placeList.length > 1 && <ContentPicker label="Choisir un lieu"
-          rows={placeList.map(place => ({ id: place.placeId, label: place.label }))}
-          onChoose={row => onOpen({ target: { kind: "place", placeId: row.id }, label: row.label })} />}
-      </div>}
+      <DetailSlot kind="activity" />
+    </BalanceAtom>}
+    {placeList.length > 0 && <BalanceAtom name="places" priority={76} minimum={root?.target.kind === "place" ? 1 : 0}>
+      <h3 className={styles.railTitle}>Lieux fréquentés</h3>
+      <ul className={styles.lifeRail} aria-label="Lieux fréquentés">
+        {placeList.map(place => {
+          const target = { kind: "place", placeId: place.placeId } as const;
+          return <li key={place.placeId}><button type="button" aria-expanded={isActive(target)} onClick={() => onOpen({ target, label: place.label })}>
+            <span><ClayIcon name="travel" size={22} />{formatCount(place.presenceDays, "jour")}</span>
+            <strong title={place.label}>{place.label}</strong>
+          </button></li>;
+        })}
+      </ul>
+      <DetailSlot kind="place" />
     </BalanceAtom>}
     {!momentList.length && !activityList.length && !placeList.length && <BalanceAtom name="status" priority={80}>
       <p className={styles.note}>Aucune activité, aucun moment ni lieu renseigné.</p>

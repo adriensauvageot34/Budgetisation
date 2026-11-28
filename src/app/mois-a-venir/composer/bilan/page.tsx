@@ -9,9 +9,8 @@ import { ComposerBalanceDashboard } from "@/features/history-v2/balance-dashboar
 import { readAuthenticatedSubcategoryLabels } from "@/server/query/runtime";
 import { withProductAuthentication } from "@/app/product-query";
 import { composerCalendarHref, forecastWindowMonths } from "../../month-entry";
-import material from "../../month-material.module.css";
-import { monthLabel } from "../display";
 import styles from "../composer.module.css";
+import balanceStyles from "@/features/history-v2/balance-dashboard.module.css";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Bilan du mois · Composer" };
@@ -36,15 +35,15 @@ export default async function ComposerBalancePage({
   ]);
   const button = styles.reconstructionLink;
 
-  return <div className={`${material.page} h-full`}>
+  return <>
     <AppToolbarContent className={styles.compactToolbar}>
       <nav aria-label="Vues de Composer" className={styles.reconstructionModes}>
         <Link className={button} href={realizedComposerHref(month)}>Cartes</Link>
         <Link className={button} href={composerCalendarHref(month)}>Calendrier</Link>
-        <span className={button} aria-current="page">Bilan du mois</span>
+        <h1 className={button + " " + balanceStyles.balanceTitle} aria-current="page">Bilan du mois</h1>
       </nav>
     </AppToolbarContent>
-    <ComposerBalanceDashboard key={month} month={month} monthName={monthLabel(month)} initialState={initialState}
+    <ComposerBalanceDashboard key={month} month={month} initialState={initialState}
       subcategoryLabels={subcategoryLabels} initialDetail={parseHistoryOverlaySearch(search)} dailySeries={dailySeries} />
-  </div>;
+  </>;
 }

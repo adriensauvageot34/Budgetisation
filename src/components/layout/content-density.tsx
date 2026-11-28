@@ -60,7 +60,7 @@ export function useContentDensity(detailViewportSelector?: string, layoutRevisio
       }
       const style = getComputedStyle(container!);
       const available = container!.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
-      if (detailViewportSelector) container!.style.setProperty("--region-available-height", `${Math.max(0, available)}px`);
+      if (detailViewportSelector || !animateAtoms) container!.style.setProperty("--region-available-height", `${Math.max(0, available)}px`);
       for (const node of atoms) {
         if (!observed.has(node)) {
           resize.observe(node);
