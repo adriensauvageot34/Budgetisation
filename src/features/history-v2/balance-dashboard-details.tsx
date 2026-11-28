@@ -99,7 +99,7 @@ function DetailCanvas({ lead, side = false, categoryGroups, longComposition, chi
     <div className={styles.detailCanvas} data-side={side || undefined} data-category-groups={categoryGroups}
       data-long-composition={longComposition || undefined} data-budget-reveal>
       {lead}
-      <div className={categoryGroups ? styles.detailColumns : `${styles.detailColumns} inline-balance-data`}>{children}</div>
+      <div className={`${styles.detailColumns} inline-balance-data`}>{children}</div>
     </div>
   </BalanceCollections.Provider>;
 }
