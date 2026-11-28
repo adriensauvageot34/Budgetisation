@@ -230,7 +230,6 @@
   .detailRow, .detailLink { min-height: 24px; }
 }
 @media (max-height: 500px) {
-  .categoryPlot li:nth-child(n+3) { display: none; }
   .detailGroup .plot { gap: 5px; }
 }
 
@@ -571,19 +570,19 @@
 .atom[data-density="2"] { --ranking-size: 114px; }
 .atom[data-density="3"] { --ranking-size: 172px; }
 .atom[data-density="4"] { --ranking-size: clamp(160px, 31dvh, 325px); }
-.atom[data-balance-atom="categories"] .categoryPlot {
+.atom [data-category-list] {
   max-height: min(var(--ranking-size), max(52px, calc(var(--region-available-height, 270px) - 86px)));
   overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #bd9dd6 transparent;
   padding: 0 4px 2px 1px;
 }
-.atom[data-balance-atom="categories"] .categoryPlot[data-expanded] { max-height: max(92px, calc(var(--region-available-height, 350px) - 100px)); }
-.atom[data-balance-atom="categories"] .categoryPlot > li { display: block; min-width: 0; }
+.atom [data-category-list][data-compact-list] { max-height: min(var(--ranking-size), 56px); }
+.atom .categoryPlot > li { display: block; min-width: 0; }
 .categoryPlot > li > button { grid-template-columns: auto minmax(0, 1fr) auto; min-height: 26px; }
 .categoryPlot > li > button > i { width: 7px; height: 7px; border-radius: 50%; }
 .categoryPlot > li > button > i, .categoryPlot > li > button .barTrack > span { background: var(--category-color); }
-.categoryPlot[data-expanded] > li:not([data-expanded]) > button { min-height: 22px; padding-block: 1px; }
-.categoryPlot[data-expanded] > li:not([data-expanded]) .amountBar { gap: 2px; }
-.categoryPlot[data-expanded] > li:not([data-expanded]) .barTrack { height: 2px; }
+.categoryPlot[data-compact-list] > li > button { min-height: 22px; padding-block: 1px; }
+.categoryPlot[data-compact-list] .amountBar { gap: 2px; }
+.categoryPlot[data-compact-list] .barTrack { height: 2px; }
 .categoryPlot > li > button[aria-expanded="true"] > svg { rotate: 180deg; }
 .categoryPlot .inlineDetail { margin-inline-start: 6px; }
 .breakdown h3, .railTitle, .matrix h3 { margin: 0; color: var(--strong); font-size: .82rem; font-weight: 790; }
@@ -866,8 +865,8 @@
 .categoryPlot > li[data-expanded] .inlineDetail { margin: 0 1px 2px 4px; border-color: color-mix(in srgb, var(--category-color) 25%, #efe2f5); box-shadow: none; }
 .categoryPlot > li > button > svg { transition: rotate var(--budget-reveal) var(--budget-ease); }
 .categoryPlot > li > button .barTrack { transition: height var(--budget-reveal) var(--budget-ease); }
-.atom[data-density="1"] .categoryPlot[data-expanded] > li:not([data-expanded]) .barTrack { height: 1px; }
-.atom[data-density="1"] .categoryPlot[data-expanded] > li:not([data-expanded]) > button { min-height: 19px; }
+.atom[data-density="1"] .categoryPlot[data-compact-list] .barTrack { height: 1px; }
+.atom[data-density="1"] .categoryPlot[data-compact-list] > li > button { min-height: 19px; }
 .categoryPlot > li[data-contributor] > button { background: #eee1f7; box-shadow: inset 2px 0 #8c56ba; }
 .contributionIntro { margin: 0; color: #6e488c; font-size: .74rem; }
 
@@ -932,7 +931,6 @@
 .detailLoading i { min-width: 0; height: 29px; border-radius: 7px; background: linear-gradient(120deg, #eadcf5, #f4ebf8); }
 .detailLoading i:first-child { height: 40px; }
 .inlineDetail :global(.inline-balance-data)[data-detail-overflow] { max-block-size: var(--balanced-detail-height); overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin; }
-.categoryPlot .inlineDetail :global(.inline-balance-data)[data-detail-overflow] { max-block-size: none; overflow: visible; }
 .lifeCards, .detailAmounts { --reveal-delay: 24ms; }
 [data-revealed-grid] :is(.lifeCards,.detailAmounts) > li:nth-child(n+5) { animation: balance-card-in var(--budget-reveal) var(--budget-ease) both; }
 [data-revealed-grid] :is(.lifeCards,.detailAmounts) > li:nth-child(6) { animation-delay: var(--reveal-delay); }
@@ -962,13 +960,41 @@
 .panel:is([data-panel="spending"], [data-panel="life"]) { container: bilan-panel / size; }
 .dashboard[data-focus="summary"]:has(.inlineDetail .detailGroup:nth-child(3)) .panel[data-panel="spending"]
   .atom:is([data-balance-atom="matrix"], [data-balance-atom="lifeScope"]) { display: none; }
-.dashboard[data-focus="categories"]:has(.categoryPlot .inlineDetail .detailGroup:nth-child(3)) .column[data-side="right"] {
-  grid-template-rows: minmax(0, 1.2fr) minmax(0, .8fr);
+.dashboard[data-focus="categories"]:has(.categoryPinned) .column[data-side="right"] {
+  grid-template-rows: minmax(0, 1fr) clamp(96px, 27%, 258px);
 }
-.dashboard[data-focus="categories"]:has(.categoryPlot .inlineDetail .detailGroup:nth-child(3)) .panel[data-panel="life"]
-  .atom[data-balance-atom="places"]:not(:has([data-collection-open])) { display: none; }
-.dashboard[data-focus="categories"]:has(.categoryPlot .inlineDetail .detailGroup:nth-child(3)) .panel[data-panel="life"] .lifeCards button {
-  padding-block: 2px;
+.dashboard[data-focus="categories"]:has(.categoryPinned [data-long-composition]) .column[data-side="right"] {
+  grid-template-rows: minmax(0, 1fr) clamp(72px, 17%, 140px);
+}
+.dashboard:has(.categoryPinned) .panel[data-panel="life"] .atom[data-balance-atom="places"]:not(:has([data-collection-open])) { display: none; }
+.dashboard:has(.categoryPinned) .panel[data-panel="life"] .lifeCards button { padding-block: 2px; }
+
+.categoryPinned .inlineDetail { container: category-detail / inline-size; position: relative; gap: 3px; padding: 5px 8px 6px; }
+.categoryPinned .detailHeader { gap: 5px; min-height: 20px; }
+.categoryPinned .detailHeader button { width: 23px; height: 23px; }
+.categoryPinned .detailHero { margin-inline: 0; padding-block: 0 5px; }
+.categoryPinned .detailHeroIcon { width: 29px; height: 29px; }
+.categoryPinned .detailGroup { gap: 3px; padding: 4px 3px 2px; }
+.categoryPinned .detailGroup h4 { line-height: 1.18; }
+.categoryPinned .detailGroup .note { font-size: .72rem; line-height: 1.2; }
+.categoryPinned .detailColumns { gap: 5px 9px; grid-template-columns: minmax(0, 1fr); padding: 3px 0 0; }
+.categoryPinned [data-category-groups="2"] .detailColumns { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
+.categoryPinned [data-category-groups="3"] .detailColumns { grid-template-columns: minmax(0, .82fr) minmax(0, .88fr) minmax(0, 1.45fr); }
+.categoryPinned [data-long-composition] .detailColumns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.categoryPinned [data-long-composition] .detailGroup:has(.categoryItems) { grid-column: 1 / -1; }
+.categoryItems .detailAmounts { grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); gap: 3px; }
+.categoryItems .detailAmounts > li {
+  grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto; align-items: baseline; gap: 4px;
+  padding: 3px 5px; background: #f1e8f8;
+}
+.categoryItems .detailAmountLabel { grid-area: 1 / 1; overflow-wrap: break-word; color: var(--strong); }
+.categoryItems .detailAmounts > li > strong { grid-area: 1 / 2; white-space: nowrap; justify-self: end; font-size: .77rem; }
+.categoryPinned .categoryAxes { gap: 4px 9px; }
+.categoryPinned .axisLegend { gap: 2px; }
+.categoryPinned .axisLegend li { font-size: .73rem; line-height: 1.16; }
+@container category-detail (max-width: 635px) {
+  .categoryPinned [data-category-groups="3"] .detailColumns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .categoryPinned [data-category-groups="3"] .detailGroup:has(.categoryItems) { grid-column: 1 / -1; }
 }
 @container bilan-panel (max-height: 264px) {
   .panelBody { gap: 3px; }

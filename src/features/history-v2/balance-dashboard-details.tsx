@@ -85,14 +85,21 @@ function DetailState<T>({ state, children }: { readonly state: UiTransportState<
   return <StateBoundary state={state} skeleton={<div className={styles.detailLoading} role="status" aria-label="Chargement du détail"><i /><i /><i /></div>}>{children}</StateBoundary>;
 }
 
-function DetailCanvas({ lead, side = false, children }: { readonly lead: ReactNode; readonly side?: boolean; readonly children: ReactNode }) {
+function DetailCanvas({ lead, side = false, categoryGroups, longComposition, children }: {
+  readonly lead: ReactNode;
+  readonly side?: boolean;
+  readonly categoryGroups?: number;
+  readonly longComposition?: boolean;
+  readonly children: ReactNode;
+}) {
   const [open, setOpen] = useState<string>();
   const ready = useContext(DetailReady);
   useLayoutEffect(ready, [ready]);
   return <BalanceCollections.Provider value={{ open, setOpen }}>
-    <div className={styles.detailCanvas} data-side={side || undefined} data-budget-reveal>
+    <div className={styles.detailCanvas} data-side={side || undefined} data-category-groups={categoryGroups}
+      data-long-composition={longComposition || undefined} data-budget-reveal>
       {lead}
-      <div className={`${styles.detailColumns} inline-balance-data`}>{children}</div>
+      <div className={categoryGroups ? styles.detailColumns : `${styles.detailColumns} inline-balance-data`}>{children}</div>
     </div>
   </BalanceCollections.Provider>;
 }
@@ -203,21 +210,21 @@ function CategoryDetail({ scope, id, labels }: { readonly scope: HistoryScope; r
     const kind = category.label.trim().toLocaleLowerCase("fr-FR");
     const rhythm = kind === "alimentation" ? "food" : kind === "transport & voiture" ? "car" : undefined;
     const drivers = explanation ? [...explanation.drivers, ...(explanation.compensator ? [explanation.compensator] : [])] : [];
-    return <DetailCanvas lead={<DetailHero icon="categories">
+    return <DetailCanvas categoryGroups={1 + Number(Boolean(rhythm)) + Number(drivers.length > 0)} longComposition={entries.length > 10} lead={<DetailHero icon="categories">
       <DetailMetric label="Ce mois"><MoneyMetric metric={category.actual} /></DetailMetric>
       <DetailMetric label="Mois habituel" secondary><MoneyMetric metric={category.typical} /></DetailMetric>
       {metricValue(category.delta) !== undefined && <DetailMetric label="Écart à l’habitude" secondary>{formatDelta(metricValue(category.delta)!)}</DetailMetric>}
     </DetailHero>}>
       {rhythm && <BalanceMonthRhythm key={scope.time.month + rhythm} month={scope.time.month} domain={rhythm} />}
       {drivers.length > 0 && <DetailGroup title="Postes qui expliquent l’écart">
-        <DetailRows label="Écarts par poste" items={drivers}>{rows => rows.map(row =>
+        {drivers.map(row =>
           <DetailRow key={row.stableId} label={subcategoryLabel(row.stableId, resolvedLabels)}>
             {metricValue(row.contribution) === undefined ? "À confirmer" : formatDelta(metricValue(row.contribution)!)}
           </DetailRow>
-        )}</DetailRows>
+        )}
       </DetailGroup>}
       <DetailGroup title="Composition du mois habituel" note={composition?.pivotMonthIds.length ? `Mois de référence · ${composition.pivotMonthIds.map(monthTitle).join(" et ")}` : undefined}>
-        {entries.length ? <DetailRows label="Sous-catégories" items={entries} cards>{rows => <DetailAmounts rows={rows} />}</DetailRows>
+        {entries.length ? <div className={styles.categoryItems}><DetailAmounts rows={entries} /></div>
           : <p className={styles.note}>Pas assez de données pour détailler un mois habituel.</p>}
       </DetailGroup>
       <CategoryProfile axes={[

@@ -95,6 +95,7 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
   const id = useId();
   const opener = useRef<HTMLElement | null>(null);
   const restoreFocus = useRef<PanelKind | undefined>(undefined);
+  const restoreCategory = useRef<string>(undefined);
   const detailTitle = useRef<HTMLHeadingElement>(null);
   const dashboard = useRef<HTMLDivElement>(null);
   const returnPurchase = useRef<string>(undefined);
@@ -155,25 +156,22 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
     if (current) {
       timing.current?.visible("structure");
       const heading = detailTitle.current;
-      const row = heading?.closest<HTMLElement>("[data-ranking-row]");
-      const ranking = row?.parentElement;
       if (!returnPurchase.current && !returnNested.current && !heading?.parentElement?.contains(document.activeElement)) heading?.focus({ preventScroll: true });
-      if (!row || !ranking) return;
-      const keepDetailVisible = () => {
-        const bounds = ranking.getBoundingClientRect();
-        const selected = row.getBoundingClientRect();
-        if (selected.top < bounds.top || selected.bottom > bounds.bottom)
-          ranking.scrollTop += selected.top - bounds.top;
-      };
-      keepDetailVisible();
-      const observer = new ResizeObserver(keepDetailVisible);
-      observer.observe(row);
-      return () => observer.disconnect();
     } else if (restoreFocus.current) {
       const source = opener.current;
-      const target = source?.isConnected && source.getClientRects().length > 0 ? source : document.getElementById(id + "-" + restoreFocus.current + "-heading");
+      const category = restoreCategory.current;
+      const restoredRow = category ? dashboard.current?.querySelector<HTMLElement>(`[data-category-list] [data-category-trigger="${CSS.escape(category)}"]`) : null;
+      const target = source?.isConnected && source.getClientRects().length > 0 ? source : restoredRow ?? document.getElementById(id + "-" + restoreFocus.current + "-heading");
+      const list = target?.closest<HTMLElement>("[data-category-list]");
+      if (list && target) {
+        const rowBounds = target.getBoundingClientRect();
+        const listBounds = list.getBoundingClientRect();
+        if (rowBounds.top < listBounds.top) list.scrollTop += rowBounds.top - listBounds.top;
+        else if (rowBounds.bottom > listBounds.bottom) list.scrollTop += rowBounds.bottom - listBounds.bottom;
+      }
       target?.focus({ preventScroll: true });
       restoreFocus.current = undefined;
+      restoreCategory.current = undefined;
     }
   }, [current, id, month, root, stack.length]);
 
@@ -195,6 +193,7 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
     returnPurchase.current = undefined;
     returnNested.current = undefined;
     restoreFocus.current = origin;
+    restoreCategory.current = root?.target.kind === "category" ? root.target.categoryId : undefined;
     setStack([]);
   }
 
@@ -398,6 +397,8 @@ function CategoryCard({ model, spending, failed }: {
 }) {
   const { root, isActive, onOpen, onLayout, prepare, reset, contributors } = useContext(BalanceInteraction);
   const [mode, setMode] = useState<DistributionMode>("categories");
+  const categoryList = useRef<HTMLUListElement>(null);
+  const rankingScroll = useRef(0);
   const collection = visibleValue(model?.categories);
   const categories = collection?.status === "KNOWN" || collection?.status === "PARTIAL" ? collection.items : [];
   const axis = mode === "categories" ? undefined : visibleValue(spending?.[mode]);
@@ -423,6 +424,11 @@ function CategoryCard({ model, spending, failed }: {
   }) : [];
   const placement = mode === "categories" ? undefined : "distribution";
   const expanded = rows.some(row => isActive(row.target, placement));
+  const selected = mode === "categories" ? rows.find(row => isActive(row.target)) : undefined;
+  const selectedId = selected?.id;
+  useLayoutEffect(() => {
+    if (categoryList.current) categoryList.current.scrollTop = selectedId ? 0 : rankingScroll.current;
+  }, [mode, selectedId]);
   const maximum = chartMaximum(rows);
   const previewMaximum = chartMaximum(segmentPreviews.flatMap(preview => preview.rows));
   const deviations = categories.flatMap(row => {
@@ -435,6 +441,20 @@ function CategoryCard({ model, spending, failed }: {
     : axis ? moneyAmount(axis.unclassifiedAmount) : undefined;
   const marginLabel = root?.anchor === "margin" ? root.label : undefined;
   const contributingCategories = marginLabel ? categories.filter(category => contributors.has(category.categoryId)) : [];
+
+  function categoryRow(row: (typeof rows)[number], index: number, active = false) {
+    const contributes = contributors.has(row.id);
+    return <li key={row.id} data-expanded={active || undefined} data-contributor={contributes || undefined}
+      style={{ "--category-color": categoryColors[index % categoryColors.length] } as CSSProperties}>
+      <button type="button" data-category-trigger={row.id} aria-label={contributes ? `${row.label} · contribue à ${marginLabel?.toLocaleLowerCase("fr-FR")}` : undefined}
+        onFocus={() => prepare(row.target)} onBlur={() => prepare()}
+        onPointerEnter={event => { if (event.pointerType === "mouse") prepare(row.target); }} onPointerLeave={() => prepare()}
+        onClick={() => onOpen({ target: row.target, label: row.label, placement })} aria-expanded={active}>
+        <i aria-hidden /><AmountBar row={row} maximum={maximum} /><ChevronDown size={14} aria-hidden />
+      </button>
+      {active && <DetailSlot target={row.target} placement={placement} />}
+    </li>;
+  }
 
   return <>
     <BalanceAtom name="distributionModes" priority={105} minimum={1}>
@@ -456,24 +476,20 @@ function CategoryCard({ model, spending, failed }: {
     </BalanceAtom>}
     {rows.length === 0 ? (mode === "categories" && !model ? <DataStatus failed={failed} />
       : <BalanceAtom name="status" priority={95}><p className={styles.note}>Aucun montant détaillé pour cette répartition.</p></BalanceAtom>) :
-      mode === "categories" ? <BalanceAtom name="categories" priority={100} minimum={1}>
-        <ul className={styles.categoryPlot} data-expanded={expanded || undefined} aria-label={`${distributionModes[mode]} · parts des dépenses du mois`}>
-          {rows.map((row, index) => {
-            const active = isActive(row.target, placement);
-            const contributes = contributors.has(row.id);
-            return <li key={row.id} data-ranking-row data-expanded={active || undefined} data-contributor={contributes || undefined}
-              style={{ "--category-color": categoryColors[index % categoryColors.length] } as CSSProperties}>
-              <button type="button" aria-label={contributes ? `${row.label} · contribue à ${marginLabel?.toLocaleLowerCase("fr-FR")}` : undefined}
-                onFocus={() => prepare(row.target)} onBlur={() => prepare()}
-                onPointerEnter={event => { if (event.pointerType === "mouse") prepare(row.target); }} onPointerLeave={() => prepare()}
-                onClick={() => onOpen({ target: row.target, label: row.label, placement })} aria-expanded={active}>
-                <i aria-hidden /><AmountBar row={row} maximum={maximum} /><ChevronDown size={14} aria-hidden />
-              </button>
-              <DetailSlot target={row.target} placement={placement} />
-            </li>;
-          })}
-        </ul>
-      </BalanceAtom> : <BalanceAtom name="distribution" priority={100} minimum={1}>
+      mode === "categories" ? <>
+        {selected && <BalanceAtom name="selectedCategory" priority={115} minimum={1}>
+          <ul className={`${styles.categoryPlot} ${styles.categoryPinned}`} data-open-category aria-label="Catégorie ouverte">
+            {categoryRow(selected, rows.indexOf(selected), true)}
+          </ul>
+        </BalanceAtom>}
+        {(!selected || rows.length > 1) && <BalanceAtom name="categories" priority={selected ? 56 : 100} minimum={selected ? 0 : 1}>
+          <ul ref={categoryList} className={styles.categoryPlot} data-category-list data-compact-list={selected ? "" : undefined}
+            aria-label={selected ? "Autres catégories" : "Catégories · parts des dépenses du mois"}
+            onScroll={event => { if (!selected) rankingScroll.current = event.currentTarget.scrollTop; }}>
+            {rows.map((row, index) => row.id === selectedId ? null : categoryRow(row, index))}
+          </ul>
+        </BalanceAtom>}
+      </> : <BalanceAtom name="distribution" priority={100} minimum={1}>
         <CompositionSegments key={mode} axis={mode} label={distributionModes[mode]} buckets={metricValue(axis?.result) ?? []} coverage={axis?.coverageRatio} unclassified={axis?.unclassifiedAmount} placement="distribution" />
         {expanded && <DetailSlot kind="segment" placement="distribution" />}
       </BalanceAtom>}
