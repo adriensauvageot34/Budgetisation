@@ -405,7 +405,7 @@
 .distributionList b { display: block; height: 100%; max-width: 100%; border-radius: inherit; }
 
 .categoryPinned { container: global-category-detail / inline-size; }
-[data-global-section="categories"] { --category-gap: 5px; --category-text: .73rem; --category-amount: .88rem; --category-chart: clamp(79px, 12dvh, 120px); }
+.section[data-global-section="categories"] { --category-gap: 5px; --category-text: .73rem; --category-amount: .88rem; --category-chart: clamp(79px, 12dvh, 120px); }
 .atom[data-balance-atom="selectedCategory"][data-density="3"] { --category-gap: 7px; --category-text: .79rem; --category-amount: .98rem; --category-chart: clamp(95px, 14dvh, 140px); }
 .atom[data-balance-atom="selectedCategory"][data-density="4"] { --category-gap: 9px; --category-text: .84rem; --category-amount: 1.08rem; --category-chart: clamp(112px,16dvh,160px); }
 .categoryDetail { display: grid; gap: var(--category-gap, 5px); }
