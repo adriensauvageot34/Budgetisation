@@ -169,16 +169,16 @@ const router={refresh(){},push(){},replace(){},back(){},forward(){},prefetch(){}
 const storyProps={reference:live.referencePlan,targetMonth:"2026-10",plannedExpenses:[],persons:[],places:[],vehicle:null,prices:[],wallets:[],today:"2026-10-01",references:{}};
 const renderStory=props=>renderToStaticMarkup(React.createElement(AppRouterContext.Provider,{value:router},React.createElement(MonthStory,{...storyProps,...props})));
 const html=renderStory({scenario:deriveMonthScenario(live,inputs,null,"2026-10-01")});
-const titles=["Nos ressources","Charges fixes du mois","Calendrier du mois","Après nos charges certaines","Dépenses du quotidien","Après l’essentiel du mois","Dépenses variables et extras","Projection de fin de mois"];
-let previous=-1;for(const title of titles){const index=html.indexOf(title);assert(index>previous,title);previous=index;}
-assert.doesNotMatch(html,/Comment se construit notre mois|Ce qu’on dépense parfois en plus|Reste projeté en fin de mois/);
-assert.match(html,/Déjà observé/);assert.match(html,/Encore possible/);assert.match(html,/Mois plus coûteux/);
+const modules = [...html.matchAll(/data-forecast-module="([^"]+)"/g)].map(([_, id]) => id);
+assert.deepEqual(modules, ["resources", "charges", "projection", "essentials", "extras", "projects"]);
+for (const title of ["Nos ressources", "Charges fixes du mois", "Projection de fin de mois", "Dépenses du quotidien", "Dépenses variables et extras", "Après l’essentiel du mois"]) assert(html.includes(title), title);
+assert.doesNotMatch(html,/forecast-reading|data-forecast-detail|Comment se construit notre mois|Ce qu’on dépense parfois en plus/);
 const partial=deriveMonthScenario(live,{...inputs,declaredResources:{"benefit:swile":"190.00"}},null,"2026-10-01");
 assert.equal(partial.economicPlan,null);
 assert.deepEqual(partial.planningReference.resources.map(resource=>resource.amount),["1988.39","1560.60","190.00",null]);
 assert.deepEqual(partial.planningReference.certainOutflows,first.certainOutflows);
 const partialHtml=renderStory({scenario:partial,draft:{composerHref:"/mois-a-venir/composer?month=2026-10",rootCount:2}});
-for(const title of ["Nos ressources","Charges fixes du mois","Calendrier du mois","Dépenses du quotidien","Dépenses variables et extras","Fourchette estimée","2 cartes enregistrées","Compléter les ressources"])
+for(const title of ["Nos ressources","Charges fixes du mois","Dépenses du quotidien","Dépenses variables et extras","Fourchette estimée","2 cartes enregistrées","Projection à compléter"])
   assert.ok(partialHtml.includes(title),title);
 assert.doesNotMatch(partialHtml,/id="essential-projection"/);
 const observedId=randomUUID();
@@ -217,8 +217,8 @@ const archive=renderToStaticMarkup(React.createElement(AppRouterContext.Provider
 })));
 assert.match(archive,/Prévisions de référence/);
 assert.match(archive,/month=2026-10&amp;vue=bilan/);
-assert.match(archive,/value="2026-08"/);
-assert.match(archive,/value="2027-09"/);
+assert.match(archive,/data-forecast-workspace/);
+assert.match(archive,/data-forecast-module="extras"/);
 assert.doesNotMatch(archive,/Modifier le solde Banque|Ajouter une dépense|Compléter les ressources|Déjà observé/);
 // Precision controls now belong to the existing OverlayFrame, outside the narrative.
 assert(!fs.readFileSync("src/app/mois-a-venir/month-forecast-view.tsx","utf8").includes("Améliorer la précision du mois"));

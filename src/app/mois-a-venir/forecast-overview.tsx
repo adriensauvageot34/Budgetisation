@@ -8,8 +8,9 @@ const dateLabel = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "lon
 
 type Deadline = { label: string; date: string; amount: string | null; estimated?: boolean };
 
-export function ForecastOverview({ amount, basis, deadline, calendarHref, decisions, decisionAction }: {
+export function ForecastOverview({ amount, heading = "Marge prévue en fin de mois", basis, deadline, calendarHref, decisions, decisionAction }: {
   amount: string | null;
+  heading?: string;
   basis: string;
   deadline?: Deadline;
   calendarHref: string;
@@ -18,7 +19,7 @@ export function ForecastOverview({ amount, basis, deadline, calendarHref, decisi
 }) {
   return <section className={styles.overview} aria-label="Repères des prévisions">
     <div className={styles.lead}>
-      <h2>Marge prévue en fin de mois</h2>
+      <h2>{heading}</h2>
       <strong data-budget-amount="lead">{amount === null ? "À confirmer" : euros.format(Number(amount))}</strong>
       <span>{basis}</span>
     </div>
@@ -36,11 +37,4 @@ export function ForecastOverview({ amount, basis, deadline, calendarHref, decisi
       {decisionAction}
     </div>
   </section>;
-}
-
-export function ForecastGroup({ label, summary, children }: { label: string; summary?: string; children: ReactNode }) {
-  return <details name="forecast-reading" className={styles.group}>
-    <summary><span>{label}</span>{summary && <strong data-budget-amount>{summary}</strong>}<ChevronRight size={15} aria-hidden /></summary>
-    <div className={styles.groupBody}>{children}</div>
-  </details>;
 }

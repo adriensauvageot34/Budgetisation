@@ -28,11 +28,7 @@ export function MonthSectionNav({ hasProjects, actionableCount, composerHref, ap
       <span className={scene.readingProgress} aria-hidden="true" />
       <div className={`${scene.tabsViewport} flex-1`}><div ref={tabs} className={scene.tabs}>
         <span ref={indicator} className={scene.indicator} aria-hidden="true" />
-        {available.map(([id, label]) => <a key={id} href={`#${id}`} aria-current={active === id ? "location" : undefined}
-          onClick={() => {
-            const group = document.getElementById(id)?.closest<HTMLDetailsElement>('details[name="forecast-reading"]');
-            if (group) group.open = true;
-          }} className={`${material.tab} rounded-xl px-3 py-2 text-xs font-bold text-slate-600`}>{label}</a>)}
+        {available.map(([id, label]) => <a key={id} href={`#${id}`} aria-current={active === id ? "location" : undefined} className={`${material.tab} rounded-xl px-3 py-2 text-xs font-bold text-slate-600`}>{label}</a>)}
       </div></div>
       </>}
       <div data-month-actions className="relative z-10 ml-auto flex shrink-0 items-center gap-2.5">
