@@ -36,6 +36,10 @@ import { economicMetric, economicStructureGroups, economicStructureLabel } from 
 import { emitGlobalV2UxEvent } from "./instrumentation";
 import { DensityAtom, useContentDensity } from "@/components/layout/content-density";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
+import { replaceViewSearch } from "@/components/layout/view-search";
+import { startDetailTiming } from "@/components/layout/detail-timing";
+import { composerBalanceHref } from "@/app/mois-a-venir/month-entry";
+import { isArchivedRealizedMonth } from "@/domain/phase2/planner/realized-month-entry";
 import { AtomicDetailPages } from "./atomic-detail-pages";
 import { GlobalLayoutMotion, useGlobalLayoutMotion } from "./global-layout-motion";
 import atomic from "./global-atomic.module.css";
@@ -935,12 +939,16 @@ function AtomicTimeline({ model, open, selectedEvent, onPeriodChange, compact }:
   readonly onPeriodChange: () => void;
   readonly compact: boolean;
 }) {
-  const [selected, setSelected] = useState<string>();
+  const [month, setSelected] = useState<string>();
   const { changeLayout } = useContext(GlobalLayoutMotion);
   const months = useMemo(() => groupTimelineEvents(model.events).flatMap((year) => year.months), [model.events]);
-  const current = months.find(({ key }) => key === selected);
+  const current = months.find(({ key }) => key === month);
   const busiestMonth = Math.max(1, ...months.map(({ events }) => events.length));
   const events = current?.events ?? model.events;
+  useEffect(() => {
+    const month = new URLSearchParams(window.location.search).get("mois-evenements");
+    if (months.some(entry => entry.key === month)) setSelected(month ?? undefined);
+  }, [months]);
   return <>
     {months.length > 0 && <Atom name="event-months" priority={72} minimum={compact ? 0 : 1}>
       <div className={atomic.timelineSummary}>
@@ -948,7 +956,9 @@ function AtomicTimeline({ model, open, selectedEvent, onPeriodChange, compact }:
         <div className={atomic.ruler}>{months.map(({ key, events }) =>
           <button key={key} type="button" aria-pressed={current?.key === key} aria-label={`${capitalize(frenchMonth(key))} · ${events.length} ${events.length === 1 ? "événement" : "événements"}`}
             onClick={() => changeLayout(() => {
-              setSelected((month) => month === key ? undefined : key);
+              const next = month === key ? undefined : key;
+              setSelected(next);
+              replaceViewSearch({ "mois-evenements": next });
               onPeriodChange();
             })}>
             <span className={atomic.barWell}><i style={{ height: `${events.length / busiestMonth * 100}%` }} /></span>
@@ -1021,10 +1031,13 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const [trail, setTrail] = useState<readonly AtomicFocus[]>([]);
   const focus = trail.at(-1);
   const [selectedMonth, setSelectedMonth] = useState<string>();
+  const [previewMonth, setPreviewMonth] = useState<string>();
   const [distribution, setDistribution] = useState<DistributionMode>("categories");
   const origin = useRef<HTMLElement | null>(null);
   const detailRef = useRef<HTMLElement>(null);
   const detailHeading = useRef<HTMLHeadingElement>(null);
+  const timing = useRef<ReturnType<typeof startDetailTiming>>(null);
+  const restored = useRef(false);
   const open = useCallback<OpenFocus>((next) => {
     const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const inside = detailRef.current?.contains(active) ?? false;
@@ -1034,6 +1047,13 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
         : next.target.kind === "METHODOLOGY" ? "global_methodology_opened" : "global_module_expanded";
       emitGlobalV2UxEvent(event, { moduleKey: next.target.moduleKey });
     }
+    timing.current?.cancel();
+    timing.current = startDetailTiming("analyse-globale");
+    replaceViewSearch({
+      "categorie-analyse": next.kind === "query" && next.slot === "categories" ? next.target.entityRef : undefined,
+      profil: next.kind === "person" ? next.person ?? "comparaison" : undefined,
+      "evenement-analyse": next.kind === "event" ? next.event.eventRef : undefined,
+    });
     changeLayout(() => setTrail((current) => {
       const previous = current.at(-1);
       if (next.kind === "rhythm-month" && previous?.slot === next.slot) {
@@ -1048,6 +1068,8 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   }
 
   function resetFocus() {
+    timing.current?.cancel();
+    replaceViewSearch({ "categorie-analyse": undefined, profil: undefined, "evenement-analyse": undefined });
     setTrail([]);
     if (window.location.hash) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
     origin.current?.focus({ preventScroll: true });
@@ -1060,6 +1082,8 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const recurrences = useExpandedModule(runtime, "ECONOMIC", "PATTERNS", visible.has("ECONOMIC"));
   const structureResult = useExpandedModule(runtime, "ECONOMIC", "BREAKDOWN", visible.has("CATEGORIES_NEEDS") && distribution !== "categories");
   const background = useBackgroundRhythms(runtime, visible.has("RHYTHM"));
+  const recentChanges = useExpandedModule(runtime, "CATEGORIES_NEEDS", "COMPARISONS",
+    !!selectedMonth && selectedMonth === certifiedThrough.slice(0, 7) && visible.has("CATEGORIES_NEEDS"));
   const recurring = transportData(recurrences.state);
   const structure = transportData(structureResult.state);
   const overview = transportData(figures.state);
@@ -1067,6 +1091,29 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const categories = transportData(categoriesResult.state);
   const timeline = transportData(timelineResult.state);
   const period = analysisPeriod(certifiedThrough);
+
+  useEffect(() => () => timing.current?.cancel(), []);
+
+  useEffect(() => {
+    if (restored.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const month = params.get("mois-depenses");
+    const person = params.get("profil");
+    const categoryId = params.get("categorie-analyse");
+    const eventId = params.get("evenement-analyse");
+    if ((month && !evolution) || (categoryId && !categories) || (eventId && !timeline)) return;
+    restored.current = true;
+    if (month && evolution?.series.some(series => series.seriesId === "economic:actual" && series.points.some(point => point.unitKey === month))) setSelectedMonth(month);
+    const category = categories?.rows.find(row => row.entityRef === categoryId);
+    const event = timeline?.events.find(entry => entry.eventRef === eventId);
+    if (category?.entityRef) {
+      const target = entityOverlayTarget("CATEGORIES_NEEDS", category.entityRef, humanLabel(category.labelKey), "BREAKDOWN");
+      if (target) setTrail([{ kind: "query", slot: "categories", target }]);
+    } else if (event) setTrail([{ kind: "event", slot: "life", event }]);
+    else if (visible.has("PERSONAS") && (person === "adrien" || person === "manon" || person === "comparaison")) {
+      setTrail([{ kind: "person", slot: "profiles", person: person === "comparaison" ? undefined : person }]);
+    }
+  }, [categories, evolution, timeline, visible]);
 
   useEffect(() => {
     function followHash() {
@@ -1079,7 +1126,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
       if (!raw || slot === "categories") { setTrail([]); return; }
       setTrail([{ kind: "query", slot, target: moduleOverlayTarget(moduleKey, raw.toUpperCase() as GlobalExpandedSectionKey) }]);
     }
-    followHash();
+    if (window.location.hash) followHash();
     window.addEventListener("hashchange", followHash);
     return () => window.removeEventListener("hashchange", followHash);
   }, [visible]);
@@ -1096,12 +1143,21 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
 
   useLayoutEffect(() => {
     if (!focus) return;
+    timing.current?.visible("structure");
     detailHeading.current?.focus({ preventScroll: true });
+    const panel = detailRef.current;
+    const markReady = () => {
+      if (!panel?.querySelector('[aria-busy="true"]')) timing.current?.visible("content");
+    };
+    markReady();
+    const observer = new MutationObserver(markReady);
+    if (panel) observer.observe(panel, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-busy"] });
     const bar = detailRef.current?.closest("li[data-expanded]");
     const ranking = bar?.closest(`.${atomic.ranking}`);
     if (bar && ranking && bar.getBoundingClientRect().bottom > ranking.getBoundingClientRect().bottom) {
       ranking.scrollTop += bar.getBoundingClientRect().top - ranking.getBoundingClientRect().top;
     }
+    return () => observer.disconnect();
   }, [focus]);
 
   const query = (slot: AtomicSlot, moduleKey: GlobalPrimaryModuleKey, section: GlobalExpandedSectionKey, title: string) =>
@@ -1115,6 +1171,10 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const chartMonths = actual?.points ?? [];
   const monthActual = economicNumber(chartMonths.find(({ unitKey }) => unitKey === selectedMonth));
   const monthTypical = economicNumber(typical?.points.find(({ unitKey }) => unitKey === selectedMonth));
+  const chartReadoutMonth = previewMonth ?? selectedMonth;
+  const chartReadout = economicNumber(chartMonths.find(point => point.unitKey === chartReadoutMonth));
+  const chartReadoutReference = economicNumber(typical?.points.find(point => point.unitKey === chartReadoutMonth));
+  const latestDrivers = transportData(recentChanges.state)?.rows.slice(0, 3) ?? [];
   const activeCategory = focus?.kind === "query" && focus.slot === "categories" ? focus.target.entityRef : undefined;
   const categoryIsInline = visibleRows.some((row) => row.entityRef && row.entityRef === activeCategory);
   const isFocusing = focus !== undefined;
@@ -1135,6 +1195,8 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
         <header className={atomic.detailHeader}>
           {trail.length > 1 && <button type="button" onClick={() => changeLayout(() => setTrail(trail.slice(0, -1)))} aria-label="Revenir au détail précédent"><ChevronLeft size={17} /></button>}
           <h3 tabIndex={-1} id="global-detail-title" ref={detailHeading}>{title}</h3>
+          {focus.kind === "person" && focus.person && <button type="button" className={atomic.profileCompare}
+            onClick={() => open({ kind: "person", slot: "profiles" })}>Comparer avec {focus.person === "adrien" ? "Manon" : "Adrien"}</button>}
           <button type="button" onClick={close} aria-label="Fermer le détail"><X size={17} /></button>
         </header>
         <AtomicDetailPages inline={categoryIsInline} key={focus.kind === "query" ? [focus.target.entityRef, focus.target.initialSection].join(":") : focus.kind === "event" ? focus.event.eventRef : focus.kind === "vehicle" ? "vehicle" : focus.person ?? "profiles"}>
@@ -1194,19 +1256,40 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
             {evolution === undefined ? history.state.status === "ERROR" ? <LocalError retry={history.retry} /> : <LoadingCard label="graphique des dépenses" compact /> :
               chartMonths.length === 0 ? <p className={atomic.note}>Évolution indisponible sur cette période.</p> :
                 <section className={atomic.history} aria-label="Dépenses réelles et niveau habituel sur douze mois">
-                  <div className={atomic.historyTitle}><h3>Dépenses par mois</h3><span><i />Niveau habituel</span></div>
-                  <div className={atomic.ruler}>{chartMonths.map((point) => {
+                  <div className={atomic.historyTitle}><h3>Dépenses par mois</h3><span><i />Niveau habituel · échelle en euros</span></div>
+                  <div className={atomic.ruler} onPointerLeave={() => setPreviewMonth(undefined)}>{chartMonths.map((point) => {
                     const value = economicNumber(point);
                     const habitual = economicNumber(typical?.points.find(({ unitKey }) => unitKey === point.unitKey));
                     const title = capitalize(frenchMonth(point.unitKey));
                     return <button type="button" key={point.unitKey} aria-label={`${title} · ${formatMoney(value)}`} aria-pressed={selectedMonth === point.unitKey}
-                      onClick={() => changeLayout(() => setSelectedMonth((month) => month === point.unitKey ? undefined : point.unitKey))}>
+                      data-missing={value === undefined || undefined}
+                      onPointerEnter={event => { if (event.pointerType === "mouse") setPreviewMonth(point.unitKey); }}
+                      onFocus={() => setPreviewMonth(point.unitKey)} onBlur={() => setPreviewMonth(undefined)}
+                      onClick={() => changeLayout(() => {
+                        const next = selectedMonth === point.unitKey ? undefined : point.unitKey;
+                        setSelectedMonth(next);
+                        replaceViewSearch({ "mois-depenses": next });
+                      })}>
                       <span className={atomic.barWell}><i style={{ height: `${((value ?? 0) / chartMax) * 100}%` }} />
                       {habitual !== undefined && <b style={{ bottom: `${(habitual / chartMax) * 100}%` }} />}</span>
                       <small>{frenchMonth(point.unitKey, true).split(" ")[0]}</small>
                     </button>;
                   })}</div>
-                  {selectedMonth && <Link className={atomic.monthLink} href={`/mois-a-venir/composer?month=${encodeURIComponent(selectedMonth)}`}>Cartes de {frenchMonth(selectedMonth)} <ChevronRight size={13} aria-hidden /></Link>}
+                  <div className={atomic.chartReadout} aria-live="polite">
+                    {chartReadoutMonth ? <><span>{capitalize(frenchMonth(chartReadoutMonth))}</span><strong>{formatMoney(chartReadout)}</strong>
+                      {chartReadout !== undefined && chartReadoutReference !== undefined && <span>{formatMoney(chartReadout - chartReadoutReference, { signed: true })} vs habituel</span>}</>
+                      : <span>Survole ou sélectionne un mois pour lire son montant.</span>}
+                  </div>
+                  {selectedMonth && <Link className={atomic.monthLink} href={isArchivedRealizedMonth(selectedMonth) ? composerBalanceHref(selectedMonth) : `/mois-a-venir/composer?month=${encodeURIComponent(selectedMonth)}`}>
+                    {isArchivedRealizedMonth(selectedMonth) ? "Bilan" : "Cartes"} · {frenchMonth(selectedMonth)} <ChevronRight size={13} aria-hidden /></Link>}
+                  {selectedMonth === certifiedThrough.slice(0, 7) && latestDrivers.length > 0 && <ul className={atomic.monthDrivers} aria-label="Postes les plus éloignés de l’habitude" data-budget-reveal>
+                    {latestDrivers.map(row => {
+                      const label = humanLabel(row.labelKey).replace(/^(?:Hausse|Baisse|Stable) · /u, "");
+                      const target = row.entityRef && entityOverlayTarget("CATEGORIES_NEEDS", row.entityRef, label, "BREAKDOWN");
+                      const content = <><span>{label}</span><strong>{formatMoney(m2TypedNumber(row), { signed: true })}</strong></>;
+                      return <li key={row.rowId}>{target ? <button type="button" onClick={() => open({ kind: "query", slot: "categories", target })}>{content}</button> : content}</li>;
+                    })}
+                  </ul>}
                 </section>}
           </Atom>
           {evolution && <Atom name="trend" priority={75} minimum={isFocusing ? 0 : 1}><SpendingSignals model={evolution} /></Atom>}

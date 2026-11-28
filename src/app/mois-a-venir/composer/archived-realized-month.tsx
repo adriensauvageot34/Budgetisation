@@ -28,7 +28,7 @@ export function ArchivedRealizedMonth({ board, initialCardId, savingsTarget }: {
           : !july && <Link className={styles.reconstructionLink} href={composerBalanceHref(board.month)}>Bilan du mois</Link>}
       </nav>
     </AppToolbarContent>
-    <RealizedComposerMonth key={initialCardId ?? savingsTarget?.id} {...realizedBoardOverview(board, initialCardId)}
+    <RealizedComposerMonth key={`${board.month}:${initialCardId ?? savingsTarget?.id ?? ""}`} {...realizedBoardOverview(board, initialCardId)}
       initialCardId={initialCardId} savingsTarget={savingsTarget} />
   </div>;
 }

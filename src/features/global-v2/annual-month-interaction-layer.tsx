@@ -3,6 +3,7 @@
 import type { KeyboardEvent, MutableRefObject } from "react";
 import { nextRovingMonthIndex, shortMonthLabel, type AnnualMonthFocusState } from "./annual-month-focus";
 import styles from "./background-rhythms.module.css";
+const fullMonth = new Intl.DateTimeFormat("fr-FR", { month: "long", timeZone: "UTC" });
 
 export function AnnualMonthInteractionLayer({
   domain,
@@ -61,6 +62,6 @@ export function AnnualMonthInteractionLayer({
       onBlur={() => onPreview(undefined)}
       onClick={() => onSelect(month, index)}
       onKeyDown={(event) => handleKeyDown(event, month, index)}
-    ><span>{shortMonthLabel(month)}</span></button>)}
+    ><span>{shortMonthLabel(month)}</span><span data-full-month>{fullMonth.format(new Date(`${month}-01T00:00:00Z`))}</span></button>)}
   </div>;
 }

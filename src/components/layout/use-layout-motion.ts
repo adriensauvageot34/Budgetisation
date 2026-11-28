@@ -28,8 +28,18 @@ export function useLayoutMotion(type: string) {
       return;
     }
 
-    // Let the current transition reach its destination before starting a new one.
+    // Keep an update that is still being captured. Once the new view is visible,
+    // interrupt its animation so another action never waits on the animation.
     if (!active.current) start();
+    else if (pending.current.length === 1) {
+      const current = active.current;
+      void current.updateCallbackDone.then(() => {
+        if (active.current !== current || !pending.current.length) return;
+        current.skipTransition();
+        active.current = null;
+        start();
+      }, () => undefined);
+    }
 
     function applyUpdates() {
       for (const apply of pending.current.splice(0)) apply();

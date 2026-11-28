@@ -371,7 +371,11 @@
 }
 .dialog::backdrop { background: #20162f59; }
 .panel { display: flex; flex-direction: column; height: 100%; }
-.savingsFooter { flex: none; border-top: 1px solid var(--line); background: #fdf8ff; }
+.savingsFooter { flex: none; border-bottom: 1px solid var(--line); background: #fdf8ff; }
+.savingsImpact { padding: 3px 14px; color: var(--budget-accent); font-size: .76rem; font-variant-numeric: tabular-nums; }
+.realizedDetail { display: grid; gap: 16px; }
+.detailPlaceholder { display: grid; gap: 8px; }
+.detailPlaceholder i { display: block; min-height: 54px; border-radius: 9px; background: var(--budget-tint); }
 .savingsActions { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 8px 14px; }
 .savingsLinks { display: flex; flex-wrap: wrap; gap: 5px; }
 .savingsLinks a { display: inline-flex; align-items: center; gap: 4px; padding: 4px 7px; border-radius: 7px; background: #f1e5f9; color: #54397b; font-size: .75rem; }
@@ -388,6 +392,13 @@
 .panelHeader h2 { margin: 0; font-size: 1.25rem; line-height: 1.2; font-weight: 750; overflow-wrap: anywhere; }
 .panelHeader p { margin: 3px 0; font-size: .8rem; color: var(--muted); }
 .panelHeader strong { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] { animation: composer-card-opening var(--budget-reveal) var(--budget-ease) both; }
+  @keyframes composer-card-opening {
+    from { opacity: .68; transform: translateX(14px); }
+    to { opacity: 1; transform: none; }
+  }
+}
 .close { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 9px; background: #fffa; color: #624681; }
 .panelBody { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 16px; padding: 15px; overflow-wrap: anywhere; }
 .panelBody h3 { margin: 0 0 7px; font-size: .93rem; font-weight: 720; }

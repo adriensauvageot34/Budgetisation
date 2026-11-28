@@ -38,24 +38,27 @@ export function SpendingComparison({ actual, typical, range }: {
   </figure>;
 }
 
-export function DailySpendingTrend({ series, reference, activeDate, onInspect }: {
+export function DailySpendingTrend({ series, reference, activeDate, onInspect, onPreview }: {
   readonly series: Promise<BalanceDailySeries | null>;
   readonly reference: BalanceDailySeries["publicationMeta"];
   readonly activeDate?: LocalDate;
   readonly onInspect: (date: LocalDate, label: string) => void;
+  readonly onPreview: (date?: LocalDate) => void;
 }) {
   const data = use(series);
   if (!data || !publicationMetasAreCoherent([reference, data.publicationMeta])) return null;
-  return <DailyAmounts days={data.days} activeDate={activeDate} onInspect={onInspect} />;
+  return <DailyAmounts days={data.days} activeDate={activeDate} onInspect={onInspect} onPreview={onPreview} />;
 }
 
-function DailyAmounts({ days, activeDate, onInspect }: {
+function DailyAmounts({ days, activeDate, onInspect, onPreview }: {
   readonly days: BalanceDailySeries["days"];
   readonly activeDate?: LocalDate;
   readonly onInspect: (date: LocalDate, label: string) => void;
+  readonly onPreview: (date?: LocalDate) => void;
 }) {
   const [view, setView] = useState<"total" | "withoutFixed">("withoutFixed");
   const [focusedIndex, setFocusedIndex] = useState<number>();
+  const [hoveredIndex, setHoveredIndex] = useState<number>();
   const hasFixedBreakdown = days.some(day => metricValue(day.withoutFixed) !== undefined);
   const hasTotals = days.some(day => metricValue(day.total) !== undefined);
   if (!hasTotals && !hasFixedBreakdown) return null;
@@ -68,7 +71,8 @@ function DailyAmounts({ days, activeDate, onInspect }: {
   const zero = -min / scale * 100;
   const peak = values.findIndex(value => value !== undefined && Number(value) === max);
   const selected = focusedIndex ?? Math.max(0, peak);
-  const display = days.find(day => day.date === activeDate) ?? days[selected];
+  const displayIndex = hoveredIndex ?? (focusedIndex ?? days.findIndex(day => day.date === activeDate));
+  const display = days[displayIndex < 0 ? selected : displayIndex];
   return <section className={styles.dailyTrend} aria-label="Dépenses par jour">
     <header className={styles.dailyHeader}>
       <h3>Dépenses par jour</h3>
@@ -77,14 +81,17 @@ function DailyAmounts({ days, activeDate, onInspect }: {
         <button type="button" aria-pressed={mode === "total"} onClick={() => setView("total")}>Toutes</button>
       </div>}
     </header>
-    <div className={styles.dailyPlot} style={{ "--daily-zero": `${zero}%` } as CSSProperties} role="group" aria-label="Sélectionner un jour">
+    <div className={styles.dailyPlot} style={{ "--daily-zero": `${zero}%` } as CSSProperties} role="group"
+      aria-label="Sélectionner un jour · montants sur une échelle commune"
+      onPointerLeave={() => { setHoveredIndex(undefined); onPreview(); }} onBlur={() => onPreview()}>
       {days.map((day, index) => {
         const value = values[index];
         const amount = Number(value ?? 0);
-        return <button type="button" key={day.date} aria-expanded={day.date === activeDate} data-highlighted={index === selected} tabIndex={index === selected ? 0 : -1} data-index={index}
+        return <button type="button" key={day.date} aria-expanded={day.date === activeDate} data-highlighted={day === display} tabIndex={index === selected ? 0 : -1} data-index={index}
           data-missing={value === undefined} data-negative={amount < 0}
           aria-label={`${formatFrenchDate(day.date, false)} · ${value === undefined ? "montant indisponible" : formatMoney(value)}`}
-          onFocus={() => setFocusedIndex(index)} onClick={() => {
+          onPointerEnter={event => { if (event.pointerType === "mouse") { setHoveredIndex(index); onPreview(day.date); } }}
+          onFocus={() => { setFocusedIndex(index); onPreview(day.date); }} onClick={() => {
             setFocusedIndex(index);
             onInspect(day.date, formatFrenchDate(day.date, false));
           }}
@@ -105,6 +112,7 @@ function DailyAmounts({ days, activeDate, onInspect }: {
       {display[mode] && metricValue(display[mode]) !== undefined
         ? <MoneyMetric metric={display[mode]!} />
         : <strong>Montant indisponible</strong>}
+      {display === days[peak] && <small>Jour le plus dépensier · {mode === "total" ? "toutes dépenses" : "hors charges fixes"}</small>}
     </p>}
   </section>;
 }

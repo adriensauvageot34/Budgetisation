@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, ExternalLink, MapPin, Pencil, PiggyBank, Search, Utensils, X } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { replaceViewSearch } from "@/components/layout/view-search";
+import { startDetailTiming } from "@/components/layout/detail-timing";
+import { savingsMoney } from "@/domain/phase2/savings-goals";
 import { ARCHIVED_REALIZED_MONTHS, isArchivedRealizedMonth, isImportedRealizedMonth, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { julyPilotLabels, julyPilotStatuses, type JulyPilotStatus } from "@/domain/phase2/planner/july-pilot";
 import type { RealizedCard, RealizedPayment } from "@/server/phase2/planner/realized-month";
@@ -32,6 +35,9 @@ const flowFilters = [
   ["", "Tout"], ["expense", "Dépenses"], ["income", "Revenus"], ["refund", "Remboursements"], ["transfer", "Transferts"],
 ] as const;
 type FlowFilter = typeof flowFilters[number][0];
+type RailMemory = { sort: SortOrder; flow: FlowFilter; status: JulyPilotStatus | ""; query: string; position: number };
+const railMemory = new Map<string, RailMemory>();
+const emptyDetails: ReadonlyMap<string, RealizedCard> = new Map();
 const distance = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
 const carArtwork = "option:activity:transport:car";
 
@@ -112,9 +118,10 @@ function WorkDayFooter({ work }: { work: NonNullable<RealizedCardSummary["work"]
   </span>;
 }
 
-const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open, date, position, portrait }: {
+const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open, prepare, detailKey, date, position, portrait }: {
   card: RealizedCardSummary; category?: RealizedBoardOverview["groups"][number]; open: (cardId: string) => void; date?: string;
   position?: PackedCardPosition; portrait?: string;
+  detailKey: string; prepare: (key?: string, cardId?: string) => void;
 }) {
   const { badges, relatedCount, caption, trip, travel } = card;
   const visibleDate = card.date ?? date ?? (card.paymentIds.length === 1 ? card.sortDate : undefined);
@@ -144,7 +151,9 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open
     data-operation-count={card.paymentIds.length} data-card-amount={card.amount ?? undefined}
     data-realized-work={card.work?.mode}
     style={position ? { "--card-column": position.column, insetBlockStart: position.top, minHeight: position.height } as CSSProperties : undefined}
-    aria-haspopup="dialog" onClick={() => open(card.id)}>
+    aria-haspopup="dialog" onClick={() => open(card.id)}
+    onFocus={() => prepare(detailKey, card.id)} onBlur={() => prepare()}
+    onPointerEnter={event => { if (event.pointerType === "mouse") prepare(detailKey, card.id); }} onPointerLeave={() => prepare()}>
     <span className={styles.cardContent} data-realized-card-content>
       <span className={styles.cardVisuals}>
         <CardArtwork card={card} size={38} />
@@ -158,7 +167,7 @@ const RealizedMonthCard = memo(function RealizedMonthCard({ card, category, open
           {visibleDate ? <CardDate date={visibleDate} end={card.endDate} />
             : <span className={styles.cardDate}>{paymentCount > 1 ? "Plusieurs dates" : "Date à préciser"}</span>}
         </span>
-        {card.amount !== null ? <span className={styles.cardTotal} data-positive={Number(card.amount) > 0 || undefined}>
+        {card.amount !== null ? <span className={styles.cardTotal} data-budget-amount data-positive={Number(card.amount) > 0 || undefined}>
           {money(card.amount)}{isEstimated && <small>Estimé</small>}
         </span> : <span className={styles.cardUnknown}>{unpriced}</span>}
         {subtitle && <span className={styles.cardSubtitle} title={subtitle}>{subtitle}</span>}
@@ -317,9 +326,16 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
     () => initialCardId ? { cardId: initialCardId,
       paymentId: initialCardId.startsWith("payment-") ? initialCardId.slice("payment-".length) : undefined } : null,
   );
-  const [loaded, setLoaded] = useState<ReadonlyMap<string, RealizedCard>>(() => new Map());
+  const [cache, setCache] = useState<{ source: PackedRealizedOverview; cards: ReadonlyMap<string, RealizedCard> }>();
+  const loaded = cache?.source === packed ? cache.cards : emptyDetails;
   const [failedKey, setFailedKey] = useState<string>();
   const [retry, setRetry] = useState(0);
+  const memoKey = `${overview.month}:${pilot}`;
+  const pending = useRef(new Map<string, Promise<RealizedCard>>());
+  const abort = useRef<AbortController>(null);
+  const prepareTimer = useRef<ReturnType<typeof setTimeout>>(null);
+  const timing = useRef<ReturnType<typeof startDetailTiming>>(null);
+  const rememberedPosition = useRef<number>(undefined);
   const dialog = useRef<HTMLDialogElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -366,22 +382,79 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
   const groupedPacking = byCategory ? packing : undefined;
 
   useEffect(() => {
-    if (!detailKey || !detailId || detail) return;
+    const memory = railMemory.get(memoKey);
+    if (!memory) return;
+    setSortOrder(memory.sort);
+    setFlowFilter(memory.flow);
+    if (!initialStatus) setStatusFilter(memory.status);
+    setQuery(memory.query);
+    rememberedPosition.current = memory.position;
+  }, [initialStatus, memoKey]);
+
+  useLayoutEffect(() => {
+    if (!packing || rememberedPosition.current === undefined || !rail.current) return;
+    rail.current.scrollLeft = rememberedPosition.current;
+    rememberedPosition.current = undefined;
+  }, [packing]);
+
+  useEffect(() => {
+    const node = rail.current;
+    if (!node) return;
+    const remember = () => railMemory.set(memoKey, { sort: sortOrder, flow: flowFilter, status: statusFilter, query, position: node.scrollLeft });
+    node.addEventListener("scroll", remember, { passive: true });
+    return () => {
+      node.removeEventListener("scroll", remember);
+      remember();
+    };
+  }, [memoKey, sortOrder, flowFilter, statusFilter, query]);
+
+  useEffect(() => {
     const controller = new AbortController();
-    const view = detailKey.startsWith("category:") ? "category" : "flat";
-    const params = new URLSearchParams({ month: overview.month, card: detailId, mode: pilot ? "pilot" : "realized", view });
-    fetch(`/api/composer/realized-card?${params}`, { signal: controller.signal, cache: "no-store" })
+    abort.current = controller;
+    return () => {
+      controller.abort();
+      pending.current.clear();
+      if (prepareTimer.current !== null) clearTimeout(prepareTimer.current);
+      timing.current?.cancel();
+    };
+  }, [packed]);
+
+  const readDetail = useCallback((key: string, id: string) => {
+    const existing = pending.current.get(key);
+    if (existing) return existing;
+    const signal = abort.current?.signal;
+    const view = key.startsWith("category:") ? "category" : "flat";
+    const params = new URLSearchParams({ month: overview.month, card: id, mode: pilot ? "pilot" : "realized", view });
+    const request = fetch(`/api/composer/realized-card?${params}`, { signal, cache: "no-store" })
       .then(async response => {
         if (!response.ok) throw new Error("CARD_DETAIL_UNAVAILABLE");
         const card = await response.json() as RealizedCard;
-        if (card.id !== detailId) throw new Error("CARD_DETAIL_MISMATCH");
-        if (!controller.signal.aborted) setLoaded(previous => new Map(previous).set(detailKey, card));
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setFailedKey(detailKey);
+        if (card.id !== id) throw new Error("CARD_DETAIL_MISMATCH");
+        if (!signal?.aborted) setCache(previous => ({
+          source: packed, cards: new Map(previous?.source === packed ? previous.cards : undefined).set(key, card),
+        }));
+        return card;
+      }).finally(() => {
+        if (pending.current.get(key) === request) pending.current.delete(key);
       });
-    return () => controller.abort();
-  }, [detail, detailId, detailKey, overview.month, pilot, retry]);
+    pending.current.set(key, request);
+    return request;
+  }, [overview.month, packed, pilot]);
+
+  const prepareDetail = useCallback((key?: string, id?: string) => {
+    if (prepareTimer.current !== null) clearTimeout(prepareTimer.current);
+    if (!key || !id || loaded.has(key) || initialDetail?.key === key) return;
+    prepareTimer.current = setTimeout(() => {
+      if (pending.current.size < 2) void readDetail(key, id).catch(() => undefined);
+    }, 180);
+  }, [initialDetail?.key, loaded, readDetail]);
+
+  useEffect(() => {
+    if (!detailKey || !detailId || detail) return;
+    let active = true;
+    void readDetail(detailKey, detailId).catch(() => { if (active) setFailedKey(detailKey); });
+    return () => { active = false; };
+  }, [detail, detailId, detailKey, readDetail, retry]);
 
   function scrollRail(direction: number) {
     const node = rail.current;
@@ -403,7 +476,11 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
     if (!panel.open) panel.showModal();
     if (body.current) body.current.scrollTop = 0;
     closeButton.current?.focus();
+    timing.current?.visible("structure");
+    replaceViewSearch({ carte: selection.paymentId ? realizedOperationCardId(selection.paymentId) : selected.id });
   }, [selection, selected]);
+
+  useLayoutEffect(() => { if (detail) timing.current?.visible("content"); }, [detail]);
 
   useEffect(() => {
     const panel = dialog.current;
@@ -419,6 +496,8 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
   }, [selection, detail]);
 
   const open = useCallback((cardId: string, paymentId?: string, componentId?: string) => {
+    timing.current?.cancel();
+    timing.current = startDetailTiming("cartes");
     setFailedKey(undefined);
     setSelection({ cardId, paymentId, componentId });
   }, []);
@@ -426,10 +505,10 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
     const flatPacking = !byCategory && packing;
     return <div className={styles.grid} data-realized-grid={key} data-packed={Boolean(flatPacking)}
       style={flatPacking ? { "--packed-columns": flatPacking.columns, height: flatPacking.height } as CSSProperties : undefined}>
-      {entries.map(({ card, category }) => {
+      {entries.map(({ key: detailKey, card, category }) => {
         const position = packing?.positions[card.id];
         if (!isMounted(card.id, position)) return null;
-        return <RealizedMonthCard key={card.id} card={card} category={category} position={position}
+        return <RealizedMonthCard key={card.id} card={card} category={category} position={position} detailKey={detailKey} prepare={prepareDetail}
           date={sortOrder === "date" ? card.sortDate : undefined}
           portrait={card.work ? overview.participantPortraits[card.work.participant.personId]
             : card.participant && overview.julyPortraits[card.participant]} open={open} />;
@@ -500,7 +579,11 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
       </div>}
     </div>
     <dialog ref={dialog} className={styles.dialog} aria-labelledby="realized-dialog-title"
-      onClose={() => setSelection(null)} onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
+      onClose={() => {
+        timing.current?.cancel();
+        replaceViewSearch({ carte: undefined });
+        setSelection(null);
+      }} onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
       {selected && selectedView && <div className={styles.panel}>
         <header className={styles.panelHeader}>
           <CardArtwork card={selected} size={56} />
@@ -508,24 +591,24 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
             <h2 id="realized-dialog-title">{selected.displayTitle ?? selected.label}</h2>
             <p>{[selected.displayTitle && selected.caption, selected.dialogCaption, selected.eventStatus].filter(Boolean).join(" · ")}</p>
             {selected.pilotStatus && <JulyPilotChip status={selected.pilotStatus} />}
-            {selected.amount !== null && <strong>{money(selected.amount)}{selected.pilotStatus && selected.pilotStatus !== "confirmed" ? " estimés" : ""}</strong>}
+            {selected.amount !== null && <strong data-budget-amount="comparison">{money(selected.amount)}{selected.pilotStatus && selected.pilotStatus !== "confirmed" ? " estimés" : ""}</strong>}
           </div>
           <button ref={closeButton} type="button" className={styles.close} aria-label="Fermer la carte" onClick={() => dialog.current?.close()}>
             <X size={20} aria-hidden="true" />
           </button>
         </header>
+        {detail && <SavingsFooter key={detail.id} card={detail} goalId={savingsTarget?.id} />}
         <div ref={body} className={styles.panelBody} aria-busy={!detail && failedKey !== detailKey}>
           {editableSourceIds?.includes(selected.pilotSourceId ?? selected.sourceId) && <JulyEditLink
             cardId={selected.pilotSourceId ?? selected.sourceId} className={styles.editCard}>
             <Pencil size={15} aria-hidden="true" /> Modifier dans le brouillon
           </JulyEditLink>}
-          {detail ? <RealizedDetail card={detail} month={overview.month} terms={terms} open={open} />
+          {detail ? <div className={styles.realizedDetail} data-budget-reveal><RealizedDetail card={detail} month={overview.month} terms={terms} open={open} /></div>
             : failedKey && failedKey === detailKey ? <div>
               <p role="alert">Les détails de cette carte sont indisponibles.</p>
               <button type="button" className={styles.editCard} onClick={() => { setFailedKey(undefined); setRetry(value => value + 1); }}>Réessayer</button>
-            </div> : <p role="status">Chargement des détails…</p>}
+            </div> : <div className={styles.detailPlaceholder} role="status"><span className="sr-only">Chargement des détails…</span><i /><i /><i /></div>}
         </div>
-        {detail && <SavingsFooter key={detail.id} card={detail} goalId={savingsTarget?.id} />}
       </div>}
     </dialog>
   </div>;
@@ -535,6 +618,7 @@ function SavingsFooter({ card, goalId }: { card: RealizedCard; goalId?: string }
   const [expanded, setExpanded] = useState(Boolean(goalId));
   const [links, setLinks] = useState<Awaited<ReturnType<typeof readCardSavingsLinks>>>([]);
   const [revision, setRevision] = useState(0);
+  const [impact, setImpact] = useState<{ linked: number; refunded: number }>();
   const trigger = useRef<HTMLButtonElement>(null);
   const payments = useMemo(() => savingsPayments(card), [card]);
   useEffect(() => {
@@ -546,7 +630,7 @@ function SavingsFooter({ card, goalId }: { card: RealizedCard; goalId?: string }
     return () => { mounted = false; };
   }, [payments, revision]);
   if (!payments.length) return null;
-  return <footer className={styles.savingsFooter}>
+  return <div className={styles.savingsFooter}>
     {!expanded && <div className={styles.savingsActions}>
       <button ref={trigger} className={styles.editCard} type="button" aria-expanded={expanded}
         onClick={() => setExpanded(true)}><PiggyBank size={16} aria-hidden /> Ventiler l’achat</button>
@@ -554,9 +638,13 @@ function SavingsFooter({ card, goalId }: { card: RealizedCard; goalId?: string }
         {links.map(goal => <Link key={goal.id} href={savingsGoalHref(goal.id)} prefetch={false}>{goal.label} <ExternalLink size={12} aria-hidden /></Link>)}
       </div>}
     </div>}
-    {expanded && <SavingsDock cardLabel={card.label} payments={payments} goalId={goalId} onSaved={() => setRevision(value => value + 1)} close={() => {
+    {impact && <p className={styles.savingsImpact} role="status">
+      Paiement actualisé · {savingsMoney(impact.linked)} affectés avant remboursement
+      {impact.refunded > 0 && ` · ${savingsMoney(impact.refunded)} remboursés`}
+    </p>}
+    {expanded && <SavingsDock cardLabel={card.label} payments={payments} goalId={goalId} onSaved={next => { setImpact(next); setRevision(value => value + 1); }} close={() => {
       setExpanded(false);
       requestAnimationFrame(() => trigger.current?.focus());
     }} />}
-  </footer>;
+  </div>;
 }

@@ -53,17 +53,24 @@ assert.deepEqual(beauty?.items.map(({ title }) => title), ["Mascara repère"]);
 const fixture = createGlobalV2FixtureBundle("contract");
 const fixtureTransport = createGlobalV2FixtureTransport(fixture, "contract");
 globalThis.window = {
-  location: { href: "https://fixture.test/analyse-globale", hash: "" },
-  history: { pushState(_state, _title, hash) { window.location.hash = hash; } },
+  location: new URL("https://fixture.test/analyse-globale"),
+  history: {
+    pushState(_state, _title, hash) { window.location.hash = hash; },
+    replaceState(_state, _title, url) { window.location = new URL(url, window.location.href); },
+  },
   addEventListener() {}, removeEventListener() {},
   matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
 };
 globalThis.document = { activeElement: null };
 globalThis.HTMLElement = class HTMLElement {};
+globalThis.MutationObserver = class MutationObserver { observe() {} disconnect() {} };
+globalThis.requestAnimationFrame = callback => setTimeout(callback, 0);
+globalThis.cancelAnimationFrame = clearTimeout;
 const requestKey = ({ resource, params }) => params.sectionKey ?? resource;
 let root, pending;
 
 async function mount(hash) {
+  window.location.search = "";
   window.location.hash = hash;
   pending = [];
   const transport = request => new Promise((resolve, reject) => pending.push({ request, resolve, reject }));

@@ -85,7 +85,7 @@
 }
 .dayButton:hover { background: #eddbfd70; box-shadow: inset 0 0 0 1px #bd9bd6; }
 .dayButton:active { box-shadow: inset 0 2px 6px #7954a323; }
-.dayButton:focus-visible, .ribbons button:focus-visible, .undated summary:focus-visible, .dialog :is(button, a):focus-visible, .undated a:focus-visible {
+.dayButton:focus-visible, .ribbons button:focus-visible, .undated summary:focus-visible, .dayDetail :is(button, a):focus-visible, .undated a:focus-visible {
   outline: 2px solid #7445ae;
   outline-offset: -2px;
 }
@@ -175,7 +175,7 @@
   font-weight: 800;
   line-height: 1;
 }
-.entry[data-calendar-status="confirmed"] { --entry-tint: #e4f1e9; --entry-accent: #23654d; }
+.entry:is([data-calendar-status="confirmed"], [data-calendar-status="observed"]) { --entry-tint: #e4f1e9; --entry-accent: #23654d; }
 .entry[data-calendar-status="pending"] { --entry-tint: #fae8d5; --entry-accent: #80501f; }
 .ribbons { row-gap: 3px; }
 .ribbons button {
@@ -203,7 +203,7 @@
 .ribbons button span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .more { display: block; padding: 0 6px 3px; color: #645074; font-size: .68rem; line-height: 1.25; }
 
-.preview, .dialog, .undated {
+.preview, .dayDetail, .undated {
   border: 1px solid #e3d1f0;
   border-radius: 16px;
   background: linear-gradient(145deg, #fffbfd, #f5eafc);
@@ -219,20 +219,20 @@
   box-shadow: inset 0 1px #fff, 0 8px 24px #50307327;
   font-size: .8rem;
 }
-.preview header, .dialog header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.preview li, .dialog li, .undated li { padding-block: 5px; border-top: 1px solid #e8d8f2; }
-.preview ul, .dialog ul, .undated ul { margin-top: 6px; }
-.dialog {
-  width: min(470px, calc(100vw - 24px));
-  max-height: 75dvh;
-  margin: auto;
-  padding: 0;
-  border-radius: 22px;
+.preview header, .dayDetail header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.preview li, .undated li { padding-block: 5px; border-top: 1px solid #e8d8f2; }
+.preview ul, .undated ul { margin-top: 6px; }
+.dayDetail { padding: 7px 10px; margin-top: 1px; min-width: 0; }
+.dayDetail h2 { font-size: 1rem; font-weight: 800; overflow-wrap: anywhere; }
+.dayDetail header > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.dayDetail :is(header button, ul) { flex: none; }
+.dayDetail > ul {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 5px 10px; margin-top: 5px; max-block-size: min(22dvh, 220px);
+  overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin;
 }
-.dialog::backdrop { background: #34214753; }
-.dialog section { padding: 16px; }
-.dialog h2 { font-size: 1.12rem; font-weight: 800; overflow-wrap: anywhere; }
-.dialog header button {
+.dayDetail li { padding-block: 4px; border-top: 1px solid var(--budget-edge); min-width: 0; }
+.dayDetail header button {
   border: 1px solid #e0cdee;
   border-radius: 9px;
   padding: 5px;
@@ -240,6 +240,12 @@
   color: #5c3889;
   cursor: pointer;
 }
+.dayButton[aria-expanded="true"] { background: var(--budget-tint); box-shadow: inset 0 0 0 1px #a880cd; }
+.dayCount { display: none; padding: 0 6px 3px; font-size: .68rem; color: var(--budget-muted); }
+.calendar[data-day-open] .calendarWeek:not([data-active-week]) .day { min-height: 37px; }
+.calendar[data-day-open] .calendarWeek:not([data-active-week]) :is(.dayEntries, .participants, .more) { display: none; }
+.calendar[data-day-open] .calendarWeek:not([data-active-week]) .dayCount { display: block; }
+:global(html:active-view-transition-type(calendar-layout)) .calendarWeek { view-transition-name: var(--calendar-week-transition); }
 .detail > a, .detail > small { display: block; margin: 4px 0 0 39px; font-size: .75rem; }
 .detail > a { color: #57367b; text-decoration: underline; text-underline-offset: 2px; }
 .undated { padding: 7px 13px; font-size: .8rem; }

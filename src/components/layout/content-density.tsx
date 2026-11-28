@@ -66,11 +66,13 @@ export function useContentDensity(detailViewportSelector?: string, layoutRevisio
         : container!.clientHeight;
       const available = innerHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
       if (detailViewportSelector || !animateAtoms) container!.style.setProperty("--region-available-height", `${Math.max(0, available)}px`);
+      const previous = new Map<HTMLElement, number>();
       for (const node of atoms) {
         if (!observed.has(node)) {
           resize.observe(node);
           observed.add(node);
         }
+        previous.set(node, Number(node.dataset.density));
         node.dataset.density = node.dataset.minimum ?? "0";
       }
 
@@ -78,21 +80,24 @@ export function useContentDensity(detailViewportSelector?: string, layoutRevisio
       if (detailViewport) {
         delete detailViewport.dataset.detailOverflow;
         detailViewport.removeAttribute("tabindex");
+      }
+
+      for (let target = 1; target <= 4; target++) {
+        for (const node of atoms) {
+          const density = Number(node.dataset.density);
+          if (density !== target - 1) continue;
+          const growReserve = previous.get(node)! < target && target > 1 ? 6 : 0;
+          node.dataset.density = String(target);
+          if (content!.offsetHeight > available - growReserve) node.dataset.density = String(density);
+        }
+      }
+      if (detailViewport) {
         const deficit = content!.offsetHeight - available;
         if (deficit > 0 && detailViewport.clientHeight > deficit) {
           detailViewport.style.setProperty("--balanced-detail-height", `${Math.floor(detailViewport.clientHeight - deficit)}px`);
           detailViewport.style.setProperty("--balanced-detail-width", `${detailViewport.clientWidth}px`);
           detailViewport.dataset.detailOverflow = "";
           detailViewport.tabIndex = 0;
-        }
-      }
-
-      for (let target = 1; target <= 4; target++) {
-        for (const node of atoms) {
-          const previous = Number(node.dataset.density);
-          if (previous !== target - 1) continue;
-          node.dataset.density = String(target);
-          if (content!.offsetHeight > available) node.dataset.density = String(previous);
         }
       }
 

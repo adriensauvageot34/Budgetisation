@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Circle, X } from "lucide-react";
+import Link from "next/link";
+import { useLayoutMotion } from "@/components/layout/use-layout-motion";
+import { replaceViewSearch } from "@/components/layout/view-search";
+import { startDetailTiming } from "@/components/layout/detail-timing";
 import { CalendarEventIcon } from "../../month-calendar";
 import { calendarBudgetLabel, calendarDate, calendarPopoverPosition, calendarStateLabel } from "../../calendar-presentation";
 import type { CalendarItem } from "../../planned-expenses-projection";
@@ -34,14 +38,25 @@ function ClayEntryIcon({ item, size }: { item: CalendarItem; size: number }) {
   return <CalendarEventIcon item={src ? { ...item, artwork: { src, kind: "clay" } } : item} size={size} />;
 }
 
-export function ComposerCalendar({ calendar, month, today }: { calendar: Model; month: string; today: string }) {
+export function ComposerCalendar({ calendar, month, today, initialDay }: { calendar: Model; month: string; today: string; initialDay?: string }) {
   const [preview, setPreview] = useState<{ day: Day; left: number; top: number } | null>(null);
-  const [selected, setSelected] = useState<{ title: string; items: readonly CalendarItem[] } | null>(null);
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    if (!selected || dialog.current?.open) return;
-    dialog.current?.showModal();
-  }, [selected]);
+  const [selected, setSelected] = useState<{ day: Day; item?: CalendarItem } | null>(() => {
+    const day = calendar.weeks.flatMap(week => week.days).find(day => day.date === initialDay && day.date.startsWith(month) && day.items.length);
+    return day ? { day } : null;
+  });
+  const opener = useRef<HTMLElement>(null);
+  const detailHeading = useRef<HTMLHeadingElement>(null);
+  const timing = useRef<ReturnType<typeof startDetailTiming>>(null);
+  const { changeLayout } = useLayoutMotion("calendar-layout");
+  const date = selected?.day.date;
+  useLayoutEffect(() => {
+    replaceViewSearch({ jour: date });
+    if (!date) return;
+    detailHeading.current?.focus({ preventScroll: true });
+    timing.current?.visible("structure");
+    timing.current?.visible("content");
+  }, [date, selected]);
+  useEffect(() => () => timing.current?.cancel(), []);
   useEffect(() => {
     if (!preview) return;
     const dismiss = () => setPreview(null);
@@ -55,22 +70,50 @@ export function ComposerCalendar({ calendar, month, today }: { calendar: Model; 
     };
   }, [preview]);
 
-  function openDay(day: Day) {
+  function closeDay() {
+    timing.current?.cancel();
+    changeLayout(() => {
+      setSelected(null);
+      opener.current?.focus({ preventScroll: true });
+    });
+  }
+
+  function openDay(day: Day, source: HTMLElement, item?: CalendarItem) {
     setPreview(null);
-    setSelected({ title: calendarDate(day.date), items: day.items });
+    if (date === day.date && selected?.item?.key === item?.key) return closeDay();
+    opener.current = source;
+    timing.current?.cancel();
+    timing.current = startDetailTiming("calendrier");
+    changeLayout(() => setSelected({ day, item }));
+  }
+
+  function previewDay(day: Day, source: HTMLElement) {
+    if (selected || !day.items.length) return;
+    const anchor = source.getBoundingClientRect();
+    const position = calendarPopoverPosition(anchor, { width: window.innerWidth, height: window.innerHeight },
+      { width: 320, height: Math.min(252, 64 + day.items.length * 39) });
+    setPreview({ day, ...position });
   }
 
   return <>
-    <div className={styles.calendar} aria-label="Calendrier de Composer">
+    <div className={styles.calendar} aria-label="Calendrier de Composer" data-day-open={Boolean(date) || undefined}
+      onKeyDown={event => { if (event.key === "Escape" && selected) { event.preventDefault(); closeDay(); } }}>
       <div className={styles.weekdays} aria-hidden="true">
         {["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"].map(name =>
           <span key={name}><span>{name}</span><abbr title={name}>{name.slice(0, 3)}</abbr></span>)}
       </div>
-      {calendar.weeks.map(week => <div className={styles.calendarWeek} key={week.days[0]!.date}>
+      {calendar.weeks.map(week => {
+        const activeWeek = selected && week.days.some(day => day.date === date);
+        return <div className={styles.calendarWeek} key={week.days[0]!.date} data-active-week={activeWeek || undefined}
+          style={{ "--calendar-week-transition": `calendar-week-${week.days[0]!.date}` } as React.CSSProperties}>
         {week.ribbons.length > 0 && <div className={styles.ribbons} aria-label="Événements sur plusieurs jours">
           {week.ribbons.map(({ item, lane, startColumn, endColumn }, index) => <button key={`${item.key}:${index}`} type="button"
-            aria-haspopup="dialog" data-calendar-status={item.composerStatus} style={{ gridColumn: `${startColumn} / ${endColumn + 1}`, gridRow: lane }}
-            onClick={() => { setPreview(null); setSelected({ title: item.label, items: [item] }); }}>
+            aria-expanded={activeWeek ? Boolean(selected?.item?.key === item.key) : false} data-calendar-status={item.composerStatus}
+            style={{ gridColumn: `${startColumn} / ${endColumn + 1}`, gridRow: lane }}
+            onClick={event => {
+              const day = week.days.slice(startColumn - 1, endColumn).find(day => day.date.startsWith(month)) ?? week.days[startColumn - 1];
+              if (day) openDay(day, event.currentTarget, item);
+            }}>
             <ClayEntryIcon item={item} size={20} /><span>{item.label}</span>
           </button>)}
         </div>}
@@ -87,13 +130,11 @@ export function ComposerCalendar({ calendar, month, today }: { calendar: Model; 
             return <article key={day.date} className={styles.day} data-outside={!inMonth || undefined}
               data-filled={day.items.length > 0 || undefined} data-today={currentDay || undefined} data-composer-day={day.date}
               onPointerEnter={event => {
-                if (event.pointerType !== "mouse" || selected || !day.items.length) return;
-                const anchor = event.currentTarget.getBoundingClientRect();
-                const position = calendarPopoverPosition(anchor, { width: window.innerWidth, height: window.innerHeight },
-                  { width: 320, height: Math.min(252, 64 + day.items.length * 39) });
-                setPreview({ day, ...position });
+                if (event.pointerType === "mouse" && inMonth) previewDay(day, event.currentTarget);
               }} onPointerLeave={() => setPreview(null)}>
-              {inMonth && day.items.length ? <button type="button" className={styles.dayButton} aria-haspopup="dialog" onClick={() => openDay(day)}
+              {inMonth && day.items.length ? <button type="button" className={styles.dayButton} aria-expanded={date === day.date && !selected?.item}
+                onFocus={event => previewDay(day, event.currentTarget)} onBlur={() => setPreview(null)}
+                onClick={event => openDay(day, event.currentTarget)}
                 aria-label={`${label} · ${day.items.length} ${day.items.length === 1 ? "élément" : "éléments"}${total ? ` · ${total}` : ""}`}
                 aria-current={currentDay ? "date" : undefined}>
                 <span className={styles.dayHeading}><span>{Number(day.date.slice(8))}</span>{total && <strong>{total}</strong>}</span>
@@ -102,11 +143,23 @@ export function ComposerCalendar({ calendar, month, today }: { calendar: Model; 
                 </span>}
                 {visible.length > 0 && <span className={styles.dayEntries}>{visible.map(item => <EntryRow key={item.key} item={item} compact />)}</span>}
                 {hidden > 0 && <span className={styles.more}>+{hidden} {hidden === 1 ? "autre" : "autres"}</span>}
+                <span className={styles.dayCount}>{day.items.length} {day.items.length === 1 ? "élément" : "éléments"}</span>
               </button> : <div className={styles.dayHeading} aria-current={currentDay ? "date" : undefined}><span>{Number(day.date.slice(8))}</span></div>}
             </article>;
           })}
         </div>
-      </div>)}
+        {activeWeek && selected && <section className={styles.dayDetail} aria-labelledby="composer-calendar-day" data-budget-reveal>
+          <header>
+            <div><h2 tabIndex={-1} ref={detailHeading} id="composer-calendar-day">{selected.item?.label ?? calendarDate(selected.day.date)}</h2>
+              {!selected.item && selected.day.total && <strong data-budget-amount="comparison">{calendarBudgetLabel({ amount: selected.day.total })}</strong>}
+            </div>
+            <button type="button" aria-label="Fermer les détails du jour" onClick={closeDay}><X size={18} aria-hidden /></button>
+          </header>
+          <ul aria-label="Éléments du jour">{(selected.item ? [selected.item] : selected.day.items).map(item =>
+            <li key={item.key}><EntryDetail item={item} /></li>)}</ul>
+        </section>}
+      </div>;
+      })}
     </div>
     {calendar.undated.length > 0 && <details className={styles.undated}>
       <summary>Sans date précise · {calendar.undated.length}</summary>
@@ -118,14 +171,6 @@ export function ComposerCalendar({ calendar, month, today }: { calendar: Model; 
       <ul>{preview.day.items.slice(0, 4).map(item => <li key={item.key}><EntryRow item={item} /></li>)}</ul>
       {preview.day.items.length > 4 && <small>+{preview.day.items.length - 4} · Clique sur le jour pour tout voir</small>}
     </aside>, document.body)}
-    <dialog ref={dialog} className={styles.dialog} onClose={() => setSelected(null)} aria-labelledby="composer-calendar-day"
-      onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
-      {selected && <section>
-        <header><h2 id="composer-calendar-day">{selected.title}</h2><button type="button" aria-label="Fermer les détails du jour"
-          onClick={() => dialog.current?.close()}><X size={20} /></button></header>
-        <ul>{selected.items.map(item => <li key={item.key}><EntryDetail item={item} /></li>)}</ul>
-      </section>}
-    </dialog>
   </>;
 }
 
@@ -133,7 +178,7 @@ function EntryDetail({ item }: { item: CalendarItem }) {
   return <div className={styles.detail}>
     <EntryRow item={item} />
     {item.dateCertainty === "HISTORICAL_ESTIMATE" && <small>Jour de prélèvement estimé</small>}
-    {item.composerHref && <a href={item.composerHref}>Ouvrir la carte</a>}
+    {item.composerHref && <Link prefetch={false} href={item.composerHref}>Ouvrir la carte</Link>}
   </div>;
 }
 
@@ -142,8 +187,8 @@ function EntryRow({ item, compact = false }: { item: CalendarItem; compact?: boo
     title={compact ? `${item.label} · ${calendarStateLabel(item)}` : undefined}>
     <span className={styles.icon}>
       <ClayEntryIcon item={item} size={compact ? 24 : 32} />
-      {item.composerStatus && item.composerStatus !== "observed" && <span aria-hidden="true" className={styles.marker}>
-        {item.composerStatus === "confirmed" ? <Check size={9} strokeWidth={3} /> : item.composerStatus === "pending" ? "!" : <Circle size={5} fill="currentColor" />}
+      {item.composerStatus && <span aria-hidden="true" className={styles.marker}>
+        {item.composerStatus === "confirmed" || item.composerStatus === "observed" ? <Check size={9} strokeWidth={3} /> : item.composerStatus === "pending" ? "!" : <Circle size={5} fill="currentColor" />}
       </span>}
     </span>
     <span className={styles.entryText}><b>{compact ? item.calendarLabel ?? item.label : item.label}</b>

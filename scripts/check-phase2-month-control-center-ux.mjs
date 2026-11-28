@@ -43,10 +43,31 @@ const withTarget = (amount, forecastAmount, realized = "0.00") => {
     forecast: { ...live, predictionEvidence: { ...evidence, currentEconomicEntries: observed } } });
 };
 const h = planningHarness(), originalFrom = h.client.from.bind(h.client);
+const savingsReads = ["phase2_savings_goal_month_entries", "phase2_savings_purchase_lines"];
+const prospectiveReads = ["phase2_month_inputs", "phase2_planned_expenses", "persons", "phase2_month_plans", ...savingsReads];
 h.facts.inputs["2026-10"] = structuredClone(current);
 h.client.from = table => {
   touched.push(table);
-  assert(["phase2_month_inputs", "phase2_planned_expenses", "persons", "phase2_month_plans"].includes(table), `Historical authority reached: ${table}`);
+  assert(prospectiveReads.includes(table), `Historical authority reached: ${table}`);
+  if (savingsReads.includes(table)) {
+    const filters = {};
+    return {
+      select() { return this; }, eq(key, value) { filters[key] = value; return this; },
+      gte(key, value) { filters.start = value; return this; }, lt(key, value) { filters.end = value; return this; },
+      not() { return this; }, order() { return this; }, range() { return this; },
+      then(resolve, reject) {
+        return Promise.resolve().then(() => {
+          assert.equal(filters.household_id, h.householdId);
+          if (table === "phase2_savings_goal_month_entries") assert.equal(filters.target_month, "2026-10");
+          else {
+            assert.equal(filters.start, "2026-10-01");
+            assert.equal(filters.end, "2026-11-01");
+          }
+          return { data: [], error: null };
+        }).then(resolve, reject);
+      },
+    };
+  }
   if (table !== "phase2_month_inputs") return originalFrom(table);
   const filters = {};
   return { select() { return this; }, eq(key, value) { filters[key] = value; return this; },
@@ -86,7 +107,12 @@ const restaurant100 = choice("household-restaurants", "REDUCE_PERCENT", "100").o
 const expense = (status = "PLANNED") => ({ id: randomUUID(), targetMonth: "2026-10", status, familyKey: "food", subtypeKey: "restaurant", title: "Repas synthétique",
   plannedDate: status === "PLANNED" ? "2026-10-22" : "2026-10-10", context: {}, costItems: [{ ...item("60.00", "restaurant:main", ["restaurant"]), baselineKey: "household-restaurants" }] });
 const first = wb(base, purpose, [restaurant100]), second = wb(base, purpose, [restaurant100, tobacco20]);
-await test("UX-001", () => { const story = src("app/mois-a-venir/month-story.tsx"); for (const text of ["Préciser le disponible bancaire", "Gérer les charges du mois", "Comprendre la fiabilité"]) assert(!story.includes(text)); assert.match(story, /ScenarioMilestone title="Projection de fin de mois"[^]*?\/>(?:\s*)<\/div>;/u); }, "STATIC");
+await test("UX-001", () => {
+  const story = src("app/mois-a-venir/month-story.tsx");
+  for (const text of ["Préciser le disponible bancaire", "Gérer les charges du mois", "Comprendre la fiabilité"]) assert(!story.includes(text));
+  assert.match(story, /ForecastGroup label="Scénarios de fin de mois"[^]*?ScenarioMilestone title="Projection de fin de mois"[^]*?id="final-projection"/u);
+  assert.match(src("app/mois-a-venir/month-forecast-view.tsx"), /<ForecastOverview[^]*?<MonthStory/u);
+}, "STATIC");
 await test("UX-002", () => { assert(nav.includes("data-month-actions")); assert(nav.includes("ml-auto flex shrink-0 items-center gap-2.5")); const actions = nav.slice(nav.indexOf("data-month-actions")); assert(actions.indexOf("<MonthControlLink") < actions.indexOf("+ Ajouter une dépense")); assert(!actions.includes("tabsViewport")); }, "STATIC");
 await test("UX-003", () => { const markup = html(MonthControlLink, { section: "overview", actionableCount: 3 }); assert(!markup.includes("notificationBadge")); assert(!markup.includes("3 éléments à vérifier")); assert(markup.includes("Centre de contrôle")); });
 await test("UX-004", () => { assert(!html(MonthControlLink, { section: "overview", actionableCount: 0 }).includes("notificationBadge")); assert(css.includes("position: absolute; top: -6px; right: -6px")); });
@@ -130,7 +156,7 @@ await test("UX-039", () => { const rendered = html(MonthReliabilityPanel, { mode
 await test("UX-040", async () => { const before = countWrites(), snapshot = JSON.stringify(h.facts.inputs); await actions.previewMonthControlCenter("2026-10", purpose, [restaurant100, tobacco20]); assert.equal(countWrites(), before); assert.equal(JSON.stringify(h.facts.inputs), snapshot); });
 await test("UX-041", async () => { const preview = await actions.previewMonthControlCenter("2026-10", purpose, [restaurant100, tobacco20]), before = countWrites(); assert((await actions.applyMonthChoice("2026-10", { operations: [restaurant100, tobacco20] }, preview.baseDigest)).ok); assert.equal(countWrites() - before, 1); const reload = await realRead(h.client, h.householdId, "2026-10"); assert.deepEqual(run({ ...base, inputs: reload.inputs }).narrative.final, preview.preview.after); h.facts.inputs["2026-10"] = structuredClone(current); });
 await test("UX-042", async () => { const preview = await actions.previewMonthControlCenter("2026-10", purpose, [restaurant100]), before = countWrites(); h.facts.inputs["2026-10"].openingBalance = { amount: "200", asOfDate: "2026-10-18" }; const result = await actions.applyMonthChoice("2026-10", { operations: [restaurant100] }, preview.baseDigest); assert.equal(result.code, "STALE_PREVIEW"); assert.equal(countWrites(), before); h.facts.inputs["2026-10"] = structuredClone(current); });
-await test("UX-043", () => { assert.equal(h.client.writes.length, 0); assert(touched.every(table => ["phase2_month_inputs", "phase2_planned_expenses", "persons", "phase2_month_plans"].includes(table))); assert(writes.every(row => row.table === "phase2_month_inputs")); });
+await test("UX-043", () => { assert.equal(h.client.writes.length, 0); assert(touched.every(table => prospectiveReads.includes(table))); assert(writes.every(row => row.table === "phase2_month_inputs")); });
 await test("UX-044", () => { assert.equal(m.reliability.mode, "FULL_MONTH_SAFE"); assert.deepEqual(wb({ ...base, asOf: "2026-10-01" }, purpose, [restaurant100]).preview.after, wb({ ...base, asOf: "2026-10-28" }, purpose, [restaurant100]).preview.after); });
 await test("UX-045", () => { process.env.PHASE2_FORECAST_TEMPORAL_MODE = "AS_OF_TEMPORAL"; try { assert.deepEqual(wb(base, purpose, [restaurant100]).preview, simulate(base, { operations: [restaurant100] }).view); } finally { delete process.env.PHASE2_FORECAST_TEMPORAL_MODE; } });
 await test("UX-046", () => { for (const source of [ui, simulator, src("app/mois-a-venir/month-control-choices.tsx")]) { assert(!source.includes("new Big")); assert(!source.includes("deriveMonthScenario(")); assert(!source.includes("simulateMonthChoice(")); } assert(src("server/phase2/month-control-center.ts").includes("simulateMonthChoice(scenarioCtx")); }, "STATIC");
