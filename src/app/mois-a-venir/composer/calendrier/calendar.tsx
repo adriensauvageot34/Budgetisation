@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Check, Circle, X } from "lucide-react";
+import { Check, ChevronDown, Circle, X } from "lucide-react";
 import Link from "next/link";
+import { DensityAtom, useAdaptiveColumn } from "@/components/layout/content-density";
 import { useLayoutMotion } from "@/components/layout/use-layout-motion";
 import { replaceViewSearch } from "@/components/layout/view-search";
 import { startDetailTiming } from "@/components/layout/detail-timing";
@@ -38,24 +39,57 @@ function ClayEntryIcon({ item, size }: { item: CalendarItem; size: number }) {
   return <CalendarEventIcon item={src ? { ...item, artwork: { src, kind: "clay" } } : item} size={size} />;
 }
 
+
+type Selection = { day: Day | null; item?: CalendarItem };
+const desktopCalendar = "(min-width: 768px)";
+
+function CalendarAtom({ name, priority, minimum = 0, className, children }: {
+  name: string;
+  priority: number;
+  minimum?: 0 | 1;
+  className?: string;
+  children: ReactNode;
+}) {
+  const atomClass = className ? styles.atom + " " + className : styles.atom;
+  return <DensityAtom name={name} priority={priority} minimum={minimum} className={atomClass} motionClassName={styles.atomBody}>
+    {children}
+  </DensityAtom>;
+}
+
 export function ComposerCalendar({ calendar, month, today, initialDay }: { calendar: Model; month: string; today: string; initialDay?: string }) {
   const [preview, setPreview] = useState<{ day: Day; left: number; top: number } | null>(null);
-  const [selected, setSelected] = useState<{ day: Day; item?: CalendarItem } | null>(() => {
+  const [selected, setSelected] = useState<Selection | null>(() => {
     const day = calendar.weeks.flatMap(week => week.days).find(day => day.date === initialDay && day.date.startsWith(month) && day.items.length);
     return day ? { day } : null;
   });
+  const { changeLayout, revision } = useLayoutMotion("calendar-layout");
+  const grid = useAdaptiveColumn(revision, "[data-calendar-detail-body]", "calendar-layout", desktopCalendar);
+  const detailId = useId();
   const opener = useRef<HTMLElement>(null);
+  const returnFocus = useRef<{ source: HTMLElement | null; date?: string }>(null);
   const detailHeading = useRef<HTMLHeadingElement>(null);
+  const focusDetail = useRef(Boolean(initialDay));
   const timing = useRef<ReturnType<typeof startDetailTiming>>(null);
-  const { changeLayout } = useLayoutMotion("calendar-layout");
-  const date = selected?.day.date;
+  const date = selected?.day?.date;
+  const undatedOpen = selected?.day === null;
+
+  useLayoutEffect(() => { replaceViewSearch({ jour: date }); }, [date]);
   useLayoutEffect(() => {
-    replaceViewSearch({ jour: date });
-    if (!date) return;
-    detailHeading.current?.focus({ preventScroll: true });
-    timing.current?.visible("structure");
-    timing.current?.visible("content");
-  }, [date, selected]);
+    if (returnFocus.current && !selected) {
+      const { source, date: day } = returnFocus.current;
+      returnFocus.current = null;
+      const fallback = day ? grid.current?.querySelector<HTMLButtonElement>(`[data-composer-day="${day}"] button`) : null;
+      (source?.getClientRects().length ? source : fallback)?.focus({ preventScroll: true });
+      setPreview(null);
+    }
+    if (focusDetail.current && selected) {
+      focusDetail.current = false;
+      const itemTrigger = selected.item && grid.current?.querySelector<HTMLButtonElement>("[data-calendar-entry-trigger][aria-expanded=true]");
+      (itemTrigger || detailHeading.current)?.focus({ preventScroll: true });
+      timing.current?.visible("structure");
+      timing.current?.visible("content");
+    }
+  }, [grid, selected]);
   useEffect(() => () => timing.current?.cancel(), []);
   useEffect(() => {
     if (!preview) return;
@@ -70,21 +104,34 @@ export function ComposerCalendar({ calendar, month, today, initialDay }: { calen
     };
   }, [preview]);
 
-  function closeDay() {
+  function close() {
     timing.current?.cancel();
     changeLayout(() => {
+      focusDetail.current = false;
+      returnFocus.current = { source: opener.current, date };
       setSelected(null);
-      opener.current?.focus({ preventScroll: true });
     });
   }
 
-  function openDay(day: Day, source: HTMLElement, item?: CalendarItem) {
+  function open(day: Day | null, source: HTMLElement, item?: CalendarItem) {
     setPreview(null);
-    if (date === day.date && selected?.item?.key === item?.key) return closeDay();
-    opener.current = source;
+    if (selected && date === day?.date && (!item || selected.item?.key === item.key)) {
+      close();
+      return;
+    }
     timing.current?.cancel();
     timing.current = startDetailTiming("calendrier");
-    changeLayout(() => setSelected({ day, item }));
+    changeLayout(() => {
+      opener.current = source;
+      focusDetail.current = true;
+      setSelected({ day, item });
+    });
+  }
+
+  function toggleItem(item: CalendarItem) {
+    changeLayout(() => setSelected(current => current && {
+      day: current.day, item: current.item?.key === item.key ? undefined : item,
+    }));
   }
 
   function previewDay(day: Day, source: HTMLElement) {
@@ -95,94 +142,152 @@ export function ComposerCalendar({ calendar, month, today, initialDay }: { calen
     setPreview({ day, ...position });
   }
 
-  return <>
-    <div className={styles.calendar} aria-label="Calendrier de Composer" data-day-open={Boolean(date) || undefined}
-      onKeyDown={event => { if (event.key === "Escape" && selected) { event.preventDefault(); closeDay(); } }}>
-      <div className={styles.weekdays} aria-hidden="true">
-        {["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"].map(name =>
-          <span key={name}><span>{name}</span><abbr title={name}>{name.slice(0, 3)}</abbr></span>)}
-      </div>
-      {calendar.weeks.map(week => {
-        const activeWeek = selected && week.days.some(day => day.date === date);
-        return <div className={styles.calendarWeek} key={week.days[0]!.date} data-active-week={activeWeek || undefined}
-          style={{ "--calendar-week-transition": `calendar-week-${week.days[0]!.date}` } as React.CSSProperties}>
-        {week.ribbons.length > 0 && <div className={styles.ribbons} aria-label="Événements sur plusieurs jours">
-          {week.ribbons.map(({ item, lane, startColumn, endColumn }, index) => <button key={`${item.key}:${index}`} type="button"
-            aria-expanded={activeWeek ? Boolean(selected?.item?.key === item.key) : false} data-calendar-status={item.composerStatus}
-            style={{ gridColumn: `${startColumn} / ${endColumn + 1}`, gridRow: lane }}
-            onClick={event => {
-              const day = week.days.slice(startColumn - 1, endColumn).find(day => day.date.startsWith(month)) ?? week.days[startColumn - 1];
-              if (day) openDay(day, event.currentTarget, item);
-            }}>
-            <ClayEntryIcon item={item} size={20} /><span>{item.label}</span>
-          </button>)}
-        </div>}
-        <div className={styles.week}>
-          {week.days.map(day => {
-            const inMonth = day.date.startsWith(month);
-            const currentDay = inMonth && day.date === today;
-            const dailyItems = day.items.filter(item => !item.endDate || item.endDate <= (item.date ?? ""));
-            const visible = dailyItems.slice(0, 3);
-            const hidden = dailyItems.length - visible.length;
-            const participants = [...new Set(day.items.flatMap(item => item.participants ?? []))];
-            const label = calendarDate(day.date);
-            const total = day.total ? calendarBudgetLabel({ amount: day.total }) : undefined;
-            return <article key={day.date} className={styles.day} data-outside={!inMonth || undefined}
-              data-filled={day.items.length > 0 || undefined} data-today={currentDay || undefined} data-composer-day={day.date}
-              onPointerEnter={event => {
-                if (event.pointerType === "mouse" && inMonth) previewDay(day, event.currentTarget);
-              }} onPointerLeave={() => setPreview(null)}>
-              {inMonth && day.items.length ? <button type="button" className={styles.dayButton} aria-expanded={date === day.date && !selected?.item}
-                onFocus={event => previewDay(day, event.currentTarget)} onBlur={() => setPreview(null)}
-                onClick={event => openDay(day, event.currentTarget)}
-                aria-label={`${label} · ${day.items.length} ${day.items.length === 1 ? "élément" : "éléments"}${total ? ` · ${total}` : ""}`}
-                aria-current={currentDay ? "date" : undefined}>
-                <span className={styles.dayHeading}><span>{Number(day.date.slice(8))}</span>{total && <strong>{total}</strong>}</span>
-                {participants.length > 0 && <span className={styles.participants} aria-label={participants.join(", ")}>
-                  {participants.slice(0, 3).map(person => <span key={person} title={person}>{person === "Couple" ? "A+M" : person.split(" ").map(word => word[0]).join("").slice(0, 2)}</span>)}
-                </span>}
-                {visible.length > 0 && <span className={styles.dayEntries}>{visible.map(item => <EntryRow key={item.key} item={item} compact />)}</span>}
-                {([[hidden, "full"], [dailyItems.length - 2, "medium"], [dailyItems.length - 1, "small"]] as const).map(([remaining, level]) =>
-                  remaining > 0 && <span className={styles.more} data-count-level={level} key={level}>
-                    +{remaining} {remaining === 1 ? "autre" : "autres"}
-                  </span>)}
-                <span className={styles.dayCount}>{day.items.length} {day.items.length === 1 ? "élément" : "éléments"}</span>
-              </button> : <div className={styles.dayHeading} aria-current={currentDay ? "date" : undefined}><span>{Number(day.date.slice(8))}</span></div>}
-            </article>;
-          })}
-        </div>
-        {activeWeek && selected && <section className={styles.dayDetail} aria-labelledby="composer-calendar-day" data-budget-reveal>
-          <header>
-            <div><h2 tabIndex={-1} ref={detailHeading} id="composer-calendar-day">{selected.item?.label ?? calendarDate(selected.day.date)}</h2>
-              {!selected.item && selected.day.total && <strong data-budget-amount="comparison">{calendarBudgetLabel({ amount: selected.day.total })}</strong>}
-            </div>
-            <button type="button" aria-label="Fermer les détails du jour" onClick={closeDay}><X size={18} aria-hidden /></button>
-          </header>
-          <ul aria-label="Éléments du jour">{(selected.item ? [selected.item] : selected.day.items).map(item =>
-            <li key={item.key}><EntryDetail item={item} /></li>)}</ul>
-        </section>}
-      </div>;
-      })}
+  function dayDetail(day: Day) {
+    const selectedItem = selected?.item;
+    const items = selectedItem && !day.items.some(item => item.key === selectedItem.key) ? [selectedItem, ...day.items] : day.items;
+    return <CalendarAtom name="detail" priority={230} minimum={1}>
+      <section className={styles.dayDetail} id={detailId} aria-labelledby={detailId + "-title"} data-budget-reveal>
+        <header>
+          <div>
+            <h2 tabIndex={-1} ref={detailHeading} id={detailId + "-title"}>{calendarDate(day.date)}</h2>
+            {day.total && <strong data-budget-amount="comparison">{calendarBudgetLabel({ amount: day.total })}</strong>}
+          </div>
+          <button type="button" aria-label="Fermer les détails du jour" onClick={close}><X size={18} aria-hidden /></button>
+        </header>
+        <CalendarDetailList items={items} selected={selectedItem} onSelect={toggleItem} label="Éléments du jour" />
+      </section>
+    </CalendarAtom>;
+  }
+
+  function calendarDay(day: Day) {
+    const inMonth = day.date.startsWith(month);
+    const currentDay = inMonth && day.date === today;
+    const dailyItems = day.items.filter(item => !item.endDate || item.endDate <= (item.date ?? ""));
+    const participants = [...new Set(day.items.flatMap(item => item.participants ?? []))];
+    const label = calendarDate(day.date);
+    const total = day.total ? calendarBudgetLabel({ amount: day.total }) : undefined;
+    const active = date === day.date;
+    const itemCount = day.items.length;
+    return <article key={day.date} className={styles.day} data-outside={!inMonth || undefined}
+      data-filled={itemCount > 0 || undefined} data-today={currentDay || undefined} data-composer-day={day.date}
+      data-active-day={active || undefined} data-ribbon-day={itemCount > 0 && dailyItems.length === 0 || undefined}
+      onPointerEnter={event => {
+        if (event.pointerType === "mouse" && inMonth) previewDay(day, event.currentTarget);
+      }} onPointerLeave={() => setPreview(null)}>
+      {inMonth && itemCount ? <>
+        <button type="button" className={styles.dayButton} aria-expanded={active} aria-controls={active ? detailId : undefined}
+          onFocus={event => previewDay(day, event.currentTarget)} onBlur={() => setPreview(null)}
+          onClick={event => open(day, event.currentTarget)}
+          aria-label={`${label} · ${itemCount} ${itemCount === 1 ? "élément" : "éléments"}${total ? ` · ${total}` : ""}`}
+          aria-current={currentDay ? "date" : undefined}>
+          <span className={styles.dayHeading}><span>{Number(day.date.slice(8))}</span>{total && <strong>{total}</strong>}</span>
+          {participants.length > 0 && <span className={styles.participants} aria-label={participants.join(", ")}>
+            {participants.slice(0, 3).map(person => <span key={person} title={person}>{person === "Couple" ? "A+M" : person.split(" ").map(word => word[0]).join("").slice(0, 2)}</span>)}
+          </span>}
+        </button>
+        {dailyItems.length > 0 && <div className={styles.dayEntries}>{dailyItems.slice(0, 3).map(item =>
+          <button key={item.key} type="button" aria-label={`${item.label} · ${label}`}
+            aria-pressed={active && selected?.item?.key === item.key}
+            onClick={event => open(day, event.currentTarget, item)}><EntryRow item={item} compact /></button>)}</div>}
+        {[1, 2, 3].map(visible => dailyItems.length > visible && <span className={styles.more} data-count-level={visible} key={visible}>
+          +{dailyItems.length - visible} {dailyItems.length - visible === 1 ? "autre" : "autres"}
+        </span>)}
+        <span className={styles.dayCount}>{itemCount} {itemCount === 1 ? "élément" : "éléments"}</span>
+      </> : <div className={styles.dayHeading} aria-current={currentDay ? "date" : undefined}><span>{Number(day.date.slice(8))}</span></div>}
+    </article>;
+  }
+
+  return <div className={styles.calendar} aria-label="Calendrier de Composer"
+    onKeyDown={event => {
+      if (event.key !== "Escape" || !selected) return;
+      event.preventDefault();
+      if (selected.item) {
+        grid.current?.querySelector<HTMLButtonElement>("[data-calendar-entry-trigger][aria-expanded=true]")?.focus({ preventScroll: true });
+        toggleItem(selected.item);
+      } else close();
+    }}>
+    <div className={styles.weekdays} aria-hidden="true">
+      {["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"].map(name =>
+        <span key={name}><span>{name}</span><abbr title={name}>{name.slice(0, 3)}</abbr></span>)}
     </div>
-    {calendar.undated.length > 0 && <details className={styles.undated}>
-      <summary>Sans date précise · {calendar.undated.length}</summary>
-      <ul>{calendar.undated.map(item => <li key={item.key}><EntryDetail item={item} /></li>)}</ul>
-    </details>}
-    {preview && !selected && createPortal(<aside role="tooltip" className={styles.preview}
+    <div ref={grid} className={styles.calendarGrid} data-adaptive-fill>
+      {calendar.weeks.map(week => {
+        const activeWeek = Boolean(date && week.days.some(day => day.date === date));
+        return <section className={styles.calendarWeek} key={week.days[0]!.date} data-active-week={activeWeek || undefined}
+          data-adaptive-region data-adaptive-active={activeWeek || undefined}
+          style={{ "--calendar-week-transition": `calendar-week-${week.days[0]!.date}` } as CSSProperties}>
+          <div className={styles.weekFlow} data-adaptive-flow>
+            {week.ribbons.length > 0 && <CalendarAtom name="ribbons" priority={105} className={styles.ribbonAtom}>
+              <div className={styles.ribbons} aria-label="Événements sur plusieurs jours">
+                {week.ribbons.map(({ item, lane, startColumn, endColumn }, index) => {
+                  const day = week.days.slice(startColumn - 1, endColumn).find(day => day.date.startsWith(month));
+                  return day && <button key={`${item.key}:${index}`} type="button"
+                    aria-expanded={activeWeek && selected?.item?.key === item.key} data-calendar-status={item.composerStatus}
+                    style={{ gridColumn: `${startColumn} / ${endColumn + 1}`, gridRow: lane }}
+                    onClick={event => open(day, event.currentTarget, item)}>
+                    <ClayEntryIcon item={item} size={20} /><span>{item.label}</span>
+                  </button>;
+                })}
+              </div>
+            </CalendarAtom>}
+            <CalendarAtom name="days" priority={75} minimum={1} className={styles.weekAtom}>
+              <div className={styles.week}>{week.days.map(calendarDay)}</div>
+            </CalendarAtom>
+            {activeWeek && selected?.day && dayDetail(selected.day)}
+          </div>
+        </section>;
+      })}
+      {calendar.undated.length > 0 && <section className={styles.undated} data-adaptive-region data-adaptive-active={undatedOpen || undefined}>
+        <div className={styles.undatedFlow} data-adaptive-flow>
+          <CalendarAtom name="undated-heading" priority={105} minimum={1}>
+            <button className={styles.undatedTrigger} type="button" aria-expanded={undatedOpen}
+              aria-controls={undatedOpen ? detailId : undefined} onClick={event => open(null, event.currentTarget)}>
+              <span>Sans date précise · {calendar.undated.length}</span><ChevronDown size={17} aria-hidden />
+            </button>
+          </CalendarAtom>
+          {undatedOpen && <CalendarAtom name="detail" priority={230} minimum={1}>
+            <section className={styles.undatedDetail} id={detailId} aria-labelledby={detailId + "-title"} data-budget-reveal>
+              <h2 className="sr-only" id={detailId + "-title"} ref={detailHeading} tabIndex={-1}>Éléments sans date précise</h2>
+              <CalendarDetailList items={calendar.undated} selected={selected?.item} onSelect={toggleItem} label="Éléments sans date précise" />
+            </section>
+          </CalendarAtom>}
+        </div>
+      </section>}
+    </div>
+    {preview && !selected && createPortal(<aside role="tooltip" className={styles.preview} data-budget-reveal
       style={{ left: preview.left, top: preview.top }}>
       <header><strong>{calendarDate(preview.day.date)}</strong>{preview.day.total && <strong>{calendarBudgetLabel({ amount: preview.day.total })}</strong>}</header>
       <ul>{preview.day.items.slice(0, 4).map(item => <li key={item.key}><EntryRow item={item} /></li>)}</ul>
       {preview.day.items.length > 4 && <small>+{preview.day.items.length - 4} · Clique sur le jour pour tout voir</small>}
     </aside>, document.body)}
-  </>;
+  </div>;
 }
 
-function EntryDetail({ item }: { item: CalendarItem }) {
-  return <div className={styles.detail}>
-    <EntryRow item={item} />
-    {item.dateCertainty === "HISTORICAL_ESTIMATE" && <small>Jour de prélèvement estimé</small>}
-    {item.composerHref && <Link prefetch={false} href={item.composerHref}>Ouvrir la carte</Link>}
-  </div>;
+function CalendarDetailList({ items, selected, onSelect, label }: {
+  items: readonly CalendarItem[];
+  selected?: CalendarItem;
+  onSelect: (item: CalendarItem) => void;
+  label: string;
+}) {
+  const id = useId();
+  return <ul className={styles.detailList} aria-label={label} data-calendar-detail-body>
+    {items.map((item, index) => {
+      const expanded = selected?.key === item.key;
+      const canExpand = Boolean(item.date || item.group || item.composerHref);
+      const itemId = `${id}-${index}`;
+      return <li key={item.key} className={styles.detailItem} data-selected-entry={expanded || undefined}>
+        {canExpand ? <button type="button" className={styles.detailTrigger} data-calendar-entry-trigger aria-expanded={expanded}
+          aria-controls={expanded ? itemId : undefined} onClick={() => onSelect(item)}>
+          <EntryRow item={item} /><ChevronDown size={15} aria-hidden />
+        </button> : <EntryRow item={item} />}
+        {expanded && canExpand && <div id={itemId} className={styles.entryDetail} data-budget-reveal>
+          {item.date && <span>{calendarDate(item.date)}{item.endDate && item.endDate !== item.date ? " → " + calendarDate(item.endDate) : ""}{item.dateCertainty === "HISTORICAL_ESTIMATE" ? " · Jour de prélèvement estimé" : ""}</span>}
+          {item.group && <span>{item.group}</span>}
+          {item.composerHref && <Link prefetch={false} href={item.composerHref}>Ouvrir la carte</Link>}
+        </div>}
+      </li>;
+    })}
+  </ul>;
 }
 
 function EntryRow({ item, compact = false }: { item: CalendarItem; compact?: boolean }) {
