@@ -5,5 +5,6 @@ export function replaceViewSearch(values: Readonly<Record<string, string | undef
     if (value === undefined) url.searchParams.delete(key);
     else url.searchParams.set(key, value);
   }
-  if (url.href !== window.location.href) window.history.replaceState(window.history.state, "", url);
+  // Let the Next router update its canonical URL and preserve its own history state.
+  if (url.href !== window.location.href) window.history.replaceState(null, "", url);
 }

@@ -202,6 +202,7 @@
 }
 .ribbons button span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .more { display: block; padding: 0 6px 3px; color: #645074; font-size: .68rem; line-height: 1.25; }
+.more:not([data-count-level="full"]) { display: none; }
 
 .preview, .dayDetail, .undated {
   border: 1px solid #e3d1f0;
@@ -250,6 +251,38 @@
 .detail > a { color: #57367b; text-decoration: underline; text-underline-offset: 2px; }
 .undated { padding: 7px 13px; font-size: .8rem; }
 .undated summary { cursor: pointer; font-weight: 720; }
+
+@media (min-width: 768px) {
+  .workspace, .calendar, .calendarWeek, .week { min-height: 0; }
+  .calendar { flex: 1 1 0; }
+  .calendarWeek { flex: 1 1 0; }
+  .calendarWeek[data-active-week] { flex-grow: 2.7; }
+  .week { flex: 1 1 0; }
+  .day, .calendar[data-day-open] .calendarWeek:not([data-active-week]) .day {
+    min-height: 0;
+    container: calendar-day / size;
+    overflow: hidden;
+  }
+  .ribbons { flex: none; max-height: 65px; overflow: hidden auto; scrollbar-width: thin; }
+  .dayDetail { flex: none; }
+  .dayDetail > ul, .undated > ul { max-height: min(17dvh, 132px); overflow: hidden auto; scrollbar-width: thin; }
+}
+@container calendar-day (max-height: 127px) {
+  .dayEntries > :nth-child(n+3), .more[data-count-level="full"] { display: none; }
+  .more[data-count-level="medium"] { display: block; }
+}
+@container calendar-day (max-height: 96px) {
+  .dayEntries > :nth-child(n+2), .more[data-count-level="medium"] { display: none; }
+  .more[data-count-level="small"] { display: block; }
+}
+@container calendar-day (max-height: 66px) {
+  .participants { display: none; }
+}
+@container calendar-day (max-height: 48px) {
+  .dayEntries, .more[data-count-level="small"] { display: none; }
+  .dayCount { display: block; }
+}
+.calendar[data-day-open] .calendarWeek:not([data-active-week]) .more { display: none; }
 
 @media (max-width: 1050px) {
   .entry[data-compact] .amount { display: none; }

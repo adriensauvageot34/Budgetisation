@@ -142,7 +142,10 @@ export function ComposerCalendar({ calendar, month, today, initialDay }: { calen
                   {participants.slice(0, 3).map(person => <span key={person} title={person}>{person === "Couple" ? "A+M" : person.split(" ").map(word => word[0]).join("").slice(0, 2)}</span>)}
                 </span>}
                 {visible.length > 0 && <span className={styles.dayEntries}>{visible.map(item => <EntryRow key={item.key} item={item} compact />)}</span>}
-                {hidden > 0 && <span className={styles.more}>+{hidden} {hidden === 1 ? "autre" : "autres"}</span>}
+                {([[hidden, "full"], [dailyItems.length - 2, "medium"], [dailyItems.length - 1, "small"]] as const).map(([remaining, level]) =>
+                  remaining > 0 && <span className={styles.more} data-count-level={level} key={level}>
+                    +{remaining} {remaining === 1 ? "autre" : "autres"}
+                  </span>)}
                 <span className={styles.dayCount}>{day.items.length} {day.items.length === 1 ? "élément" : "éléments"}</span>
               </button> : <div className={styles.dayHeading} aria-current={currentDay ? "date" : undefined}><span>{Number(day.date.slice(8))}</span></div>}
             </article>;
