@@ -3,6 +3,7 @@
 import { createContext, useContext, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import { BalanceLayout } from "./balance-density";
+import { ClayIcon, type ClayIconName } from "@/components/layout/clay-icon";
 import type { DisplayNode, MetricValue } from "@/core/history-v2";
 import type { Money } from "@/core/money";
 import type { UiTransportState } from "@/ui";
@@ -61,16 +62,44 @@ export function AmountBars({ rows, maximum = chartMaximum(rows) }: { readonly ro
   return <ul className={styles.plot}>{rows.map((row) => <li key={row.id}><AmountBar row={row} maximum={maximum} /></li>)}</ul>;
 }
 
-export function DetailGroup({ title, note, children }: {
+export function DetailGroup({ title, note, tone, wide, children }: {
   readonly title: string;
   readonly note?: ReactNode;
+  readonly tone?: "linked" | "context";
+  readonly wide?: boolean;
   readonly children: ReactNode;
 }) {
-  return <section className={styles.detailGroup} aria-label={title}>
-    <h3>{title}</h3>
+  return <section className={styles.detailGroup} data-tone={tone} data-wide={wide || undefined} aria-label={title}>
+    <h4>{title}</h4>
     {note && <p className={styles.note}>{note}</p>}
     {children}
   </section>;
+}
+
+export function DetailHero({ icon, context, children, note }: {
+  readonly icon: ClayIconName;
+  readonly context?: ReactNode;
+  readonly children?: ReactNode;
+  readonly note?: ReactNode;
+}) {
+  return <div className={styles.detailHero}>
+    <ClayIcon name={icon} size={44} className={styles.detailHeroIcon} />
+    <div className={styles.detailHeroBody}>
+      {context && <div className={styles.detailContext}>{context}</div>}
+      {children && <div className={styles.detailSignals}>{children}</div>}
+    </div>
+    {note && <p className={styles.detailHeroNote}>{note}</p>}
+  </div>;
+}
+
+export function DetailMetric({ label, children, secondary = false }: {
+  readonly label: string;
+  readonly children: ReactNode;
+  readonly secondary?: boolean;
+}) {
+  return <div className={styles.detailMetric} data-secondary={secondary || undefined}>
+    <span>{label}</span><strong>{children}</strong>
+  </div>;
 }
 
 export const BalanceCollections = createContext<{

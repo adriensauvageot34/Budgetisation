@@ -327,6 +327,7 @@ function CategoryCard({ model, spending, failed }: {
   const placement = mode === "categories" ? undefined : "distribution";
   const expanded = rows.some(row => isActive(row.target, placement));
   const maximum = chartMaximum(rows);
+  const previewMaximum = chartMaximum(segmentPreviews.flatMap(preview => preview.rows));
   const deviations = categories.flatMap(row => {
     const delta = metricValue(row.delta);
     return delta === undefined || Number(delta) === 0 ? [] : [{ id: row.categoryId, label: row.label, delta }];
@@ -373,12 +374,13 @@ function CategoryCard({ model, spending, failed }: {
       </div>
     </BalanceAtom>}
     {mode !== "categories" && !expanded && segmentPreviews.length > 0 && <BalanceAtom name="contributors" priority={75}>
-      <div className={styles.distributionPreview}>
-        {segmentPreviews.map(group => <section key={group.key}>
-          <h3>{group.label} · principaux postes</h3>
-          <AmountBars rows={group.rows} />
-        </section>)}
-      </div>
+      <section className={styles.distributionPreview}>
+        <h3>Principaux postes</h3>
+        <div>{segmentPreviews.map(group => <section key={group.key}>
+          <h4>{group.label}</h4>
+          <AmountBars rows={group.rows} maximum={previewMaximum} />
+        </section>)}</div>
+      </section>
     </BalanceAtom>}
     {mode === "categories" && !expanded && deviations.length > 0 && <BalanceAtom name="deviations" priority={36}>
       <div className={styles.deviationPreview}>
@@ -434,6 +436,7 @@ function MarginCard({ model }: { readonly model: MonthSpendingNatureReadModel })
     { params: medium, label: "Ajustable à moyen terme", metric: matrix?.mediumMargin },
   ];
   const matrixActive = root?.target.kind === "segment" && !("axis" in root.target.params) && !optionActive && !root.placement;
+  const matrixMaximum = Math.max(1, ...(matrix?.cells ?? []).map(cell => Math.abs(Number(cell.amount))));
 
   return <>
     <BalanceAtom name="margins" priority={100} minimum={1}>
@@ -471,35 +474,39 @@ function MarginCard({ model }: { readonly model: MonthSpendingNatureReadModel })
       </BalanceAtom>;
     })}
     {matrix && matrix.cells.length > 0 && <BalanceAtom name="matrix" priority={68} minimum={matrixActive ? 1 : 0}>
-      <table className={styles.matrix}>
-        <caption>Nécessité × type de dépense</caption>
-        <thead><tr><td /><th scope="col">Fixe</th><th scope="col">Variable</th></tr></thead>
-        <tbody>{necessityRows.map(({ key, label }) => <MatrixRow key={key} rowKey={key} label={label}
-          cells={matrix.cells} rowActive={matrixActive && behaviors.some(behavior => isActive({ kind: "segment", params: { necessity: key, behavior } }))} />)}</tbody>
-      </table>
+      <section className={styles.matrix} aria-label="Dépenses fixes et variables par nécessité">
+        <header><h3>Nécessité × type de dépense</h3>
+          <span data-behavior="FIXED">Fixe</span><span data-behavior="VARIABLE">Variable</span>
+        </header>
+        <ul>{necessityRows.map(({ key, label }) => <MatrixRow key={key} rowKey={key} label={label}
+          cells={matrix.cells} maximum={matrixMaximum}
+          rowActive={matrixActive && behaviors.some(behavior => isActive({ kind: "segment", params: { necessity: key, behavior } }))} />)}</ul>
+      </section>
     </BalanceAtom>}
   </>;
 }
 
-function MatrixRow({ rowKey, label, cells, rowActive }: {
+function MatrixRow({ rowKey, label, cells, maximum, rowActive }: {
   readonly rowKey: (typeof necessityRows)[number]["key"];
   readonly label: string;
   readonly cells: readonly { readonly key: string; readonly amount: Money }[];
+  readonly maximum: number;
   readonly rowActive: boolean;
 }) {
   const { onOpen, isActive } = useContext(BalanceInteraction);
-  return <>
-    <tr><th scope="row">{label}</th>{behaviors.map(behavior => {
+  return <li>
+    <div className={styles.matrixRow}><strong>{label}</strong>{behaviors.map(behavior => {
       const key = rowKey + "__" + behavior;
       const cell = cells.find(value => value.key === key);
       const target = { kind: "segment", params: { necessity: rowKey, behavior } } as const;
-      return <td key={key}>{cell ? <button type="button" aria-expanded={rowActive && isActive(target)}
+      return cell ? <button key={key} type="button" aria-expanded={rowActive && isActive(target)} data-behavior={behavior}
         aria-label={spendingPresentationLabel(key) + " · " + formatMoney(cell.amount)}
+        style={{ "--bar-share": String(Math.abs(Number(cell.amount)) / maximum * 100) + "%" } as CSSProperties}
         onClick={() => onOpen({ target, label: spendingPresentationLabel(key), anchor: "matrix" })}>{formatMoney(cell.amount)}</button>
-        : <span aria-label="Montant indisponible">—</span>}</td>;
-    })}</tr>
-    {rowActive && <tr className={styles.matrixDetail}><td colSpan={3}><DetailSlot kind="segment" /></td></tr>}
-  </>;
+        : <span key={key} aria-label="Montant indisponible">—</span>;
+    })}</div>
+    {rowActive && <DetailSlot kind="segment" />}
+  </li>;
 }
 
 function MarginAmount({ metric }: { readonly metric?: MetricValue<Money> }) {
