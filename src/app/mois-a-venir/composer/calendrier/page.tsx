@@ -20,7 +20,7 @@ const months = [...ARCHIVED_REALIZED_MONTHS, JULY_COMPOSER_MONTH, ...forecastWin
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Calendrier de Composer" };
 
-export default async function ComposerCalendarPage({ searchParams }: { searchParams: Promise<{ month?: string | string[] }> }) {
+export default async function ComposerCalendarPage({ searchParams }: { searchParams: Promise<{ month?: string | string[]; jour?: string | string[] }> }) {
   const [session, params] = await Promise.all([withProductAuthentication(getAuthenticatedBootstrapClient), searchParams]);
   const household = await getBootstrapHousehold(session);
   if (!household) notFound();
@@ -62,6 +62,7 @@ export default async function ComposerCalendarPage({ searchParams }: { searchPar
         {(mode !== "realized" || imported) && <Link className={button} href={mode === "pilot" ? JULY_V2_HREF : monthPlanningHref(month, imported ? "previsions" : undefined)}>Prévisions</Link>}
       </nav>
     </AppToolbarContent>
-    <ComposerCalendar key={month} calendar={calendar} month={month} today={mode === "pilot" ? JULY_PILOT_DATE : now} />
+    <ComposerCalendar key={month} calendar={calendar} month={month} today={mode === "pilot" ? JULY_PILOT_DATE : now}
+      initialDay={typeof params.jour === "string" ? params.jour : undefined} />
   </div>;
 }

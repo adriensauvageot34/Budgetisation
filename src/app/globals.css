@@ -239,21 +239,48 @@ a {
   }
 }
 
-html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout))::view-transition {
+:root {
+  --budget-ink: #302043;
+  --budget-muted: #65536f;
+  --budget-accent: #7142a3;
+  --budget-surface: #fcf8ff;
+  --budget-tint: #f0e5f8;
+  --budget-edge: #e3d3ef;
+  --budget-fast: 145ms;
+  --budget-reveal: 230ms;
+  --budget-layout: 300ms;
+  --budget-ease: cubic-bezier(.22, .72, .28, 1);
+  --budget-amount: clamp(1.65rem, 2.7vw, 2.7rem);
+  --budget-comparison: clamp(1.05rem, 1.45vw, 1.45rem);
+}
+
+[data-budget-amount] { font-variant-numeric: tabular-nums; }
+[data-budget-amount="lead"] { font-size: var(--budget-amount); font-weight: 820; line-height: 1.08; }
+[data-budget-amount="comparison"] { font-size: var(--budget-comparison); font-weight: 770; line-height: 1.15; }
+[data-budget-reveal] { animation: budget-reveal var(--budget-reveal) var(--budget-ease) both; }
+@keyframes budget-reveal {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-budget-reveal] { animation: none; }
+}
+
+html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout))::view-transition {
   pointer-events: none;
 }
 
-html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout))::view-transition-group(*) {
-  animation-duration: 240ms;
-  animation-timing-function: cubic-bezier(.25, .60, .25, 1);
+html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout))::view-transition-group(*) {
+  animation-duration: var(--budget-layout);
+  animation-timing-function: var(--budget-ease);
 }
 
-html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout))::view-transition-old(root),
-html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout))::view-transition-new(root) {
+html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout))::view-transition-old(root),
+html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout))::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
 }
 
-html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout))::view-transition-old(root) {
+html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout))::view-transition-old(root) {
   opacity: 0;
 }

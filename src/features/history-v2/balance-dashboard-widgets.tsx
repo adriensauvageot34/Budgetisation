@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import { BalanceLayout } from "./balance-density";
 import { ClayIcon, type ClayIconName } from "@/components/layout/clay-icon";
@@ -30,6 +31,7 @@ export type AmountRow = {
   readonly share?: number;
   readonly attribution?: string;
   readonly tone?: "accent" | "secondary" | "neutral";
+  readonly href?: string;
 };
 
 export function moneyAmount(value: Money): MetricValue<Money> {
@@ -64,8 +66,10 @@ export function AmountBars({ rows, maximum = chartMaximum(rows) }: { readonly ro
 
 export function DetailAmounts({ rows }: { readonly rows: readonly AmountRow[] }) {
   return <ul className={styles.detailAmounts}>
-    {rows.map(row => <li key={row.id}>
-      <span className={styles.detailAmountLabel} title={row.label}>{row.label}</span>
+    {rows.map(row => <li key={row.id} data-source-link={row.href ? true : undefined}>
+      {row.href ? <Link href={row.href} prefetch={false} className={styles.detailAmountLabel}
+        aria-label={`${row.label} · ouvrir la carte`}>{row.label} <ChevronRight size={12} aria-hidden /></Link>
+        : <span className={styles.detailAmountLabel} title={row.label}>{row.label}</span>}
       <strong><MoneyMetric metric={row.amount} /></strong>
       {row.attribution && <small>{row.attribution}</small>}
     </li>)}

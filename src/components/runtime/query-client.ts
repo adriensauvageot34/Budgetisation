@@ -17,7 +17,7 @@ import {
 } from "@/query-api";
 import type { UiTransportState } from "@/ui";
 import { getQueryResourceContract } from "@/query-api";
-import { useHistoryQuery } from "./use-history-query";
+import { historyGenerationCache, useHistoryQuery } from "./use-history-query";
 
 type ClientQueryResult<Name extends QueryResourceName> =
   | { readonly ok: true; readonly response: ApiResponse<QueryDataByResource[Name]> }
@@ -128,6 +128,15 @@ export function executeCachedClientQuery<Name extends QueryResourceName>(
   entry.inFlight = inFlight;
   clientQueryCache.set(key, entry);
   return inFlight as Promise<ClientQueryResult<Name>>;
+}
+
+export async function prepareHistoryDetail<Name extends QueryResourceName>(request: QueryRequest<Name>) {
+  if (request.scope.time.kind !== "month" || getQueryResourceContract(request.resource).family !== "history_v2") return;
+  await historyGenerationCache.read(request.scope.time.month, createClientQueryIdentity(request), async () => {
+    const result = await executeClientQuery(request);
+    if (!result.ok) throw new Error(result.error.message);
+    return result.response;
+  });
 }
 
 export function useQueryRuntime<Name extends QueryResourceName>(

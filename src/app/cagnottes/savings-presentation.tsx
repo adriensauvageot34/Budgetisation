@@ -44,7 +44,7 @@ function ProjectAmounts({ total }: { total: ReturnType<typeof summarizeSavingsGo
       <dd>{total.budget || !total.unpriced ? savingsMoney(total.budget) : "À chiffrer"}</dd></div>
     <div><dt>Déjà acheté</dt><dd>{savingsMoney(total.purchased)}</dd></div>
     <div><dt>Disponible sur le livret</dt><dd>{savingsMoney(total.saved)}</dd></div>
-    <div><dt>Reste à financer</dt><dd>{total.unpriced && !total.budget ? "À chiffrer" : savingsMoney(total.remaining)}</dd></div>
+    <div data-funding-remainder><dt>Reste à financer</dt><dd data-budget-amount="comparison">{total.unpriced && !total.budget ? "À chiffrer" : savingsMoney(total.remaining)}</dd></div>
   </dl>;
 }
 

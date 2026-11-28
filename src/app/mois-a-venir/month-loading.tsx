@@ -14,7 +14,7 @@ export function MonthLoading({ view, pilot }: { view: MonthLoadingView; pilot?: 
   return <div className={styles.root} data-month-loading={view}>
     <Suspense fallback={null}><MonthLoadingNavigation view={view} pilot={pilot} /></Suspense>
     <p className={styles.status} role="status">{messages[view]}</p>
-    {view === "calendar" ? <CalendarPreview /> : view === "cards" ? <CardsPreview /> : <FinancePreview />}
+    {view === "calendar" ? <CalendarPreview /> : view === "cards" ? <CardsPreview /> : view === "balance" ? <BalancePreview /> : <FinancePreview />}
   </div>;
 }
 
@@ -52,5 +52,16 @@ function FinancePreview() {
       <span className={styles.title} />
       {[0, 1, 2].map(row => <span className={styles.forecastRow} key={row} />)}
     </div>
+  </div>;
+}
+
+function BalancePreview() {
+  return <div className={styles.balance} aria-hidden="true">
+    {[[3, 4], [5, 3]].map((column, index) => <div key={index}>
+      {column.map((rows, panel) => <section className={styles.balancePanel} key={panel}>
+        <span className={styles.title} />
+        {Array.from({ length: rows }, (_, row) => <span className={styles.forecastRow} key={row} />)}
+      </section>)}
+    </div>)}
   </div>;
 }

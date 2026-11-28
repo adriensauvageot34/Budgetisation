@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { useState, useTransition, type FormEvent } from "react";
 import { parseSavingsCents, savingsEuros, savingsMoney } from "@/domain/phase2/savings-goals";
 import { spreadSavings, type SavingsScheduleRequest } from "@/domain/phase2/savings-schedule";
@@ -57,15 +58,16 @@ function ScheduleResult({ schedule }: { schedule: ReturnType<typeof useSchedule>
           <span>{labelMonth(move.from)} → {labelMonth(move.to)}{move.date && ` · à financer d’ici le ${labelDate(move.date)}`}</span>
         </li>)}
       </ul>}
-      {preview.impact.length > 0 && <table className={styles.scheduleTable}>
-        <caption>Effet sur la marge prévisionnelle</caption>
-        <thead><tr><th>Mois</th><th>Réservations</th><th>Avant</th><th>Après</th></tr></thead>
-        <tbody>{preview.impact.map(item => <tr key={item.month}>
-          <th scope="row">{labelMonth(item.month)}{item.limits.length > 0 && <small>{item.limits.join(" · ")}</small>}</th>
-          <td>{item.delta < 0 ? "+" : "−"}{savingsMoney(Math.abs(item.delta))}</td>
-          <td>{margin(item.before)}</td><td className={item.after !== null && item.after < 0 ? styles.warning : undefined}>{margin(item.after)}</td>
-        </tr>)}</tbody>
-      </table>}
+      {preview.impact.length > 0 && <section aria-label="Effet sur la marge prévisionnelle" data-budget-reveal>
+        <h3>Effet sur la marge prévisionnelle</h3>
+        <ul className={styles.impactMonths}>{preview.impact.map(item => <li key={item.month}>
+          <header><strong>{labelMonth(item.month)}</strong>
+            <span>{item.delta < 0 ? "+" : item.delta > 0 ? "−" : ""}{savingsMoney(Math.abs(item.delta))} sur la marge</span></header>
+          <dl><div><dt>Avant</dt><dd>{margin(item.before)}</dd></div><ArrowRight size={14} aria-hidden />
+            <div><dt>Après</dt><dd className={item.after !== null && item.after < 0 ? styles.warning : undefined}>{margin(item.after)}</dd></div></dl>
+          {item.limits.length > 0 && <small>{item.limits.join(" · ")}</small>}
+        </li>)}</ul>
+      </section>}
       {preview.remaining > 0 && <p className={styles.warning}>{savingsMoney(preview.remaining)} de déficit restent à couvrir. Les autres mois ont une marge insuffisante ou à confirmer.</p>}
       {preview.blocked.map(goal => <p key={goal.goalId} className={styles.warning}>
         Aucun report compatible trouvé pour <Link href={`?goal=${goal.goalId}#cagnotte-${goal.goalId}`}>{goal.label}</Link>

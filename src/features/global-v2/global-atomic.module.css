@@ -1,8 +1,8 @@
 .dashboard {
-  --atomic-ink: #302244;
-  --atomic-muted: #6d5c80;
-  --atomic-primary: #71449a;
-  --atomic-line: #e1d3ed;
+  --atomic-ink: var(--budget-ink);
+  --atomic-muted: var(--budget-muted);
+  --atomic-primary: var(--budget-accent);
+  --atomic-line: var(--budget-edge);
   display: flex;
   flex-direction: column;
   gap: clamp(7px, 1.4dvh, 15px);
@@ -82,13 +82,32 @@
 .historyTitle span { display: inline-flex; align-items: center; gap: 4px; }
 .historyTitle i { width: 9px; height: 2px; background: #b96d9f; }
 .ruler { display: grid; grid-auto-columns: minmax(0,1fr); grid-auto-flow: column; gap: 2px; }
-.ruler button { display: grid; gap: 1px; min-width: 0; padding: 1px 2px; border: 0; border-radius: 5px; background: transparent; color: var(--atomic-muted); cursor: pointer; }
+.ruler button { display: grid; gap: 1px; min-width: 0; padding: 1px 2px; border: 0; border-radius: 5px; background: transparent; color: var(--atomic-muted); cursor: pointer; transition: background var(--budget-fast), box-shadow var(--budget-fast); }
 .ruler button small { overflow: hidden; font-size: .65rem; text-overflow: ellipsis; }
 .barWell { position: relative; display: grid; align-items: end; height: var(--spark); border-bottom: 1px solid #d4c2e5; background: linear-gradient(180deg,transparent 49%,#e4d8ee 50%,transparent 51%); }
 .barWell i { display: block; width: 77%; margin-inline: auto; border-radius: 4px 4px 0 0; background: linear-gradient(#b18acf,#8150ad); }
 .barWell b { position: absolute; height: 2px; inset-inline: 8%; border-radius: 2px; background: #b96d9f; }
-.ruler button[aria-pressed="true"] .barWell i, .ruler button:hover .barWell i { background: #603288; }
-.ruler button[aria-pressed="true"], .ruler button:hover { background: #f0e5fb; color: var(--atomic-primary); }
+.ruler button:is([aria-pressed="true"], :hover, :focus-visible) .barWell i { background: #603288; }
+.ruler button:is([aria-pressed="true"], :hover, :focus-visible) { background: var(--budget-tint); color: var(--atomic-primary); }
+.ruler button:active { box-shadow: inset 0 2px 5px #4d286c35; }
+.ruler button[data-missing] .barWell::after {
+  content: ""; position: absolute; inset-inline: 16%; inset-block-end: 0; border-bottom: 2px dashed #a28ab7;
+}
+.chartReadout { display: flex; min-height: 1.45em; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; color: var(--atomic-muted); font-size: .73rem; }
+.chartReadout strong, .monthDrivers strong { color: var(--atomic-ink); font-variant-numeric: tabular-nums; }
+.monthDrivers { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.monthDrivers li, .monthDrivers li button {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 7px; font-size: .72rem;
+}
+.monthDrivers li { background: var(--budget-tint); border-radius: 5px; padding: 2px 5px; }
+.monthDrivers button { text-align: start; }
+.monthDrivers button:hover { color: var(--budget-accent); text-decoration: underline; }
+.detailHeader button.profileCompare { width: auto; padding-inline: 6px; font-size: .72rem; white-space: nowrap; }
+.section:is([data-global-section="food"], [data-global-section="car"]) { container: rhythm-panel / inline-size; }
+@container rhythm-panel (max-width: 595px) {
+  .section[data-global-section="car"] [data-car-annual-layout] { grid-template-columns: minmax(0, 1fr); }
+  .section[data-global-section="car"] [data-workspace-rhythm] [class*="fuelPaidRail"] { display: none; }
+}
 .actions { display: flex; flex-wrap: wrap; gap: 4px 7px; }
 .focusLink {
   display: inline-flex; align-items: center; gap: 4px; min-width: 0; border: 1px solid #e5d7ed; border-radius: 8px;

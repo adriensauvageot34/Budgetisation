@@ -3,6 +3,11 @@
 import { createContext, Suspense, useContext, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowDownRight, ArrowLeft, ArrowUpRight, ChevronDown, Landmark, X } from "lucide-react";
 import { useLayoutMotion } from "@/components/layout/use-layout-motion";
+import { replaceViewSearch } from "@/components/layout/view-search";
+import { startDetailTiming } from "@/components/layout/detail-timing";
+import { prepareHistoryDetail } from "@/components/runtime/query-client";
+import { parseLocalDate } from "@/core/time";
+import { queryResourceKeys } from "@/query-api";
 import { ClayIcon, type ClayIconName } from "@/components/layout/clay-icon";
 import type { YearMonth } from "@/core/time";
 import type { MetricValue } from "@/core/history-v2";
@@ -15,7 +20,7 @@ import { formatCount, formatFrenchDateRange, formatHistoricalRank, spendingPrese
 import { BalanceAtom, BalanceLayout, useBalanceDensity } from "./balance-density";
 import { publicationMetasAreCoherent } from "./publication-coherence";
 import { MoneyMetric, formatMoney } from "./renderers";
-import { overlayTargetKey } from "./route-state";
+import { historyV2Href, overlayTargetKey } from "./route-state";
 import type { BalanceDailySeries, HistoryOverlayTarget, HistoryV2InitialState } from "./types";
 import { useHistoryPageState } from "./use-history-page-state";
 import styles from "./balance-dashboard.module.css";
@@ -56,9 +61,10 @@ const BalanceInteraction = createContext<{
   readonly isActive: (target: BalanceTarget, placement?: Placement) => boolean;
   readonly onOpen: OpenDetail;
   readonly onLayout: (update: () => void) => void;
+  readonly prepare: (target?: BalanceTarget) => void;
   readonly reset: () => void;
   readonly detail: ReactNode;
-}>({ revision: 0, isActive: () => false, onOpen: () => {}, onLayout: update => update(), reset: () => {}, detail: null });
+}>({ revision: 0, isActive: () => false, onOpen: () => {}, onLayout: update => update(), prepare: () => {}, reset: () => {}, detail: null });
 
 function DetailSlot({ kind, target, placement }: {
   readonly kind?: BalanceTarget["kind"];
@@ -85,12 +91,26 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
   const opener = useRef<HTMLElement | null>(null);
   const restoreFocus = useRef<PanelKind | undefined>(undefined);
   const detailTitle = useRef<HTMLHeadingElement>(null);
+  const timing = useRef<ReturnType<typeof startDetailTiming>>(null);
+  const previewTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const root = stack[0];
   const current = stack.at(-1);
   const origin = panelFor(root);
 
+  useLayoutEffect(() => () => {
+    if (previewTimer.current !== null) clearTimeout(previewTimer.current);
+    timing.current?.cancel();
+  }, []);
+
   useLayoutEffect(() => {
+    const url = new URL(historyV2Href({
+      month, view: "balance", surface: "composer",
+      overlay: current?.target.kind === "minimal" ? undefined : current?.target,
+    }), window.location.origin);
+    replaceViewSearch(Object.fromEntries(["journal", "entity", "entityId", "axis", "bucket", "necessity", "behavior"]
+      .map(key => [key, url.searchParams.get(key) ?? undefined])));
     if (current) {
+      timing.current?.visible("structure");
       const heading = detailTitle.current;
       const row = heading?.closest<HTMLElement>("[data-ranking-row]");
       const ranking = row?.parentElement;
@@ -112,7 +132,7 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
       target?.focus({ preventScroll: true });
       restoreFocus.current = undefined;
     }
-  }, [current, id]);
+  }, [current, id, month]);
 
   if (state.kind !== "balance") return null;
 
@@ -127,6 +147,7 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
   }
 
   function reset() {
+    timing.current?.cancel();
     restoreFocus.current = origin;
     setStack([]);
   }
@@ -150,7 +171,21 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
       return;
     }
     if (document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
+    timing.current?.cancel();
+    timing.current = startDetailTiming("bilan");
     changeLayout(() => setStack([selection]));
+  }
+
+  function prepare(target?: BalanceTarget) {
+    if (previewTimer.current !== null) clearTimeout(previewTimer.current);
+    if (target?.kind !== "journal" && target?.kind !== "category") return;
+    const scope = { subject: { kind: "household" as const }, time: { kind: "month" as const, month } };
+    previewTimer.current = setTimeout(() => {
+      const request = target.kind === "journal"
+        ? prepareHistoryDetail({ resource: queryResourceKeys.historyDayJournal, scope, params: { date: target.date } })
+        : prepareHistoryDetail({ resource: queryResourceKeys.historyCategoryDetail, scope, params: { categoryId: target.categoryId } });
+      void request.catch(() => undefined);
+    }, 180);
   }
 
   const detailId = id + "-detail";
@@ -161,12 +196,16 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
       <h3 id={detailId + "-title"} ref={detailTitle} tabIndex={-1}>{current.label}</h3>
       <button type="button" aria-label="Fermer le détail" className={styles.close} onClick={closeDetail}><X aria-hidden size={17} /></button>
     </div>
-    <BalanceDetail selection={current} month={month} subcategoryLabels={subcategoryLabels}
-      onOpen={selection => changeLayout(() => setStack(items => [...items, selection]))} />
+    <BalanceDetail selection={current} month={month} subcategoryLabels={subcategoryLabels} onReady={() => timing.current?.visible("content")}
+      onOpen={selection => {
+        timing.current?.cancel();
+        timing.current = startDetailTiming("bilan");
+        changeLayout(() => setStack(items => [...items, selection]));
+      }} />
   </section>;
   const size = root?.target.kind === "journal" || root?.target.kind === "place" || root?.target.kind === "segment" ? "compact" : "large";
 
-  return <BalanceLayout.Provider value={changeLayout}><BalanceInteraction.Provider value={{ root, revision, isActive, onOpen: showDetail, onLayout: changeLayout, reset, detail }}>
+  return <BalanceLayout.Provider value={changeLayout}><BalanceInteraction.Provider value={{ root, revision, isActive, onOpen: showDetail, onLayout: changeLayout, prepare, reset, detail }}>
     <div className={styles.dashboard} data-month-balance data-focus={origin} data-detail-size={origin ? size : undefined}
       onKeyDown={event => {
         if (event.key !== "Escape" || !current) return;
@@ -176,7 +215,8 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
       <div className={styles.panelGrid}>
         <div className={styles.column} data-side="left">
           <BalanceRegion kind="summary" headingId={id + "-summary-heading"} title="Dépenses du mois" icon="expenses">
-            {summary ? <SummaryCard model={summary} dailySeries={dailySeries} overview={overview} onOpen={showDetail} />
+            {summary ? <SummaryCard model={summary} dailySeries={dailySeries} overview={overview} onOpen={showDetail}
+              onPreview={date => prepare(date ? { kind: "journal", date: parseLocalDate(date) } : undefined)} />
               : <DataStatus failed={state.summary.status === "error"} />}
           </BalanceRegion>
           <BalanceRegion kind="spending" headingId={id + "-spending-heading"} title="Marges du mois" icon="overview">
@@ -222,11 +262,12 @@ function DataStatus({ failed }: { readonly failed: boolean }) {
     <p role="status" className={styles.note}>{failed ? "Données indisponibles pour ce mois." : "Chargement…"}</p>
   </BalanceAtom>;
 }
-function SummaryCard({ model, onOpen, dailySeries, overview }: {
+function SummaryCard({ model, onOpen, dailySeries, overview, onPreview }: {
   readonly model: MonthBalanceSummaryReadModel;
   readonly onOpen: OpenDetail;
   readonly dailySeries: Promise<BalanceDailySeries | null>;
   readonly overview?: MonthQuickOverviewReadModel;
+  readonly onPreview: (date?: string) => void;
 }) {
   const { root, isActive } = useContext(BalanceInteraction);
   const actual = visibleValue(model.actualValue);
@@ -254,8 +295,8 @@ function SummaryCard({ model, onOpen, dailySeries, overview }: {
       <SpendingComparison actual={metricValue(actual)} typical={metricValue(typical)} range={zone} />
     </BalanceAtom>}
     <BalanceAtom name="days" priority={89} minimum={root?.target.kind === "journal" ? 1 : 0}>
-      <Suspense fallback={<p className={styles.note} role="status">Chargement des dépenses par jour…</p>}>
-        <DailySpendingTrend series={dailySeries} reference={model.publicationMeta} activeDate={root?.target.kind === "journal" ? root.target.date : undefined} onInspect={(date, label) =>
+      <Suspense fallback={<div className={styles.dailyPlaceholder} role="status"><h3>Dépenses par jour</h3><span className="sr-only">Chargement du graphique…</span></div>}>
+        <DailySpendingTrend series={dailySeries} reference={model.publicationMeta} activeDate={root?.target.kind === "journal" ? root.target.date : undefined} onPreview={onPreview} onInspect={(date, label) =>
           onOpen({ target: { kind: "journal", date }, label })} />
       </Suspense>
       <DetailSlot kind="journal" />
@@ -299,7 +340,7 @@ function CategoryCard({ model, spending, failed }: {
   readonly spending?: MonthSpendingNatureReadModel;
   readonly failed: boolean;
 }) {
-  const { root, isActive, onOpen, onLayout, reset } = useContext(BalanceInteraction);
+  const { root, isActive, onOpen, onLayout, prepare, reset } = useContext(BalanceInteraction);
   const [mode, setMode] = useState<DistributionMode>("categories");
   const collection = visibleValue(model?.categories);
   const categories = collection?.status === "KNOWN" || collection?.status === "PARTIAL" ? collection.items : [];
@@ -354,11 +395,13 @@ function CategoryCard({ model, spending, failed }: {
     {rows.length === 0 ? (mode === "categories" && !model ? <DataStatus failed={failed} />
       : <BalanceAtom name="status" priority={95}><p className={styles.note}>Aucun montant détaillé pour cette répartition.</p></BalanceAtom>) :
       <BalanceAtom name="categories" priority={100} minimum={1}>
-        <ul className={styles.categoryPlot} data-expanded={expanded || undefined} aria-label={distributionModes[mode]}>
+        <ul className={styles.categoryPlot} data-expanded={expanded || undefined} aria-label={`${distributionModes[mode]} · parts des dépenses du mois`}>
           {rows.map((row, index) => {
             const active = isActive(row.target, placement);
             return <li key={row.id} data-ranking-row data-expanded={active || undefined}>
               <button type="button" style={{ "--category-color": categoryColors[index % categoryColors.length] } as CSSProperties}
+                onFocus={() => prepare(row.target)} onBlur={() => prepare()}
+                onPointerEnter={event => { if (event.pointerType === "mouse") prepare(row.target); }} onPointerLeave={() => prepare()}
                 onClick={() => onOpen({ target: row.target, label: row.label, placement })} aria-expanded={active}>
                 <i aria-hidden /><AmountBar row={row} maximum={maximum} /><ChevronDown size={14} aria-hidden />
               </button>

@@ -11,6 +11,7 @@ import styles from "./savings-dock.module.css";
 
 type Workspace = NonNullable<Awaited<ReturnType<typeof loadSavingsChoices>>>;
 type Choice = Workspace["choices"][number];
+type SavingsImpact = Pick<ReturnType<typeof savingsPurchaseTotals>, "linked" | "refunded">;
 type DraftItem = Omit<SavingsPurchaseItem, "grossCents" | "refundedCents" | "livretCents" | "recipient"> & {
   recipient: string; gross: string; refunded: string; livret: string;
 };
@@ -53,7 +54,7 @@ export function savingsGoalHref(id: string) {
 }
 
 export function SavingsDock({ cardLabel, payments, close, onSaved, goalId }: {
-  cardLabel: string; payments: readonly RealizedPayment[]; close: () => void; onSaved?: () => void; goalId?: string;
+  cardLabel: string; payments: readonly RealizedPayment[]; close: () => void; onSaved?: (impact: SavingsImpact) => void; goalId?: string;
 }) {
   const [paymentId, setPaymentId] = useState(payments.length === 1 ? payments[0].id : "");
   const payment = payments.find(item => item.id === paymentId);
@@ -72,7 +73,7 @@ export function SavingsDock({ cardLabel, payments, close, onSaved, goalId }: {
   </section>;
 }
 
-function PurchaseItems({ payment, cardLabel, onSaved, goalId }: { payment: RealizedPayment; cardLabel: string; onSaved?: () => void; goalId?: string }) {
+function PurchaseItems({ payment, cardLabel, onSaved, goalId }: { payment: RealizedPayment; cardLabel: string; onSaved?: (impact: SavingsImpact) => void; goalId?: string }) {
   const cents = paymentAmount(payment);
   const [workspace, setWorkspace] = useState<Workspace | null>();
   const [rows, setRows] = useState<DraftItem[]>([]);
@@ -152,7 +153,7 @@ function PurchaseItems({ payment, cardLabel, onSaved, goalId }: { payment: Reali
             - parsed.filter(row => row.goalId === choice.id).reduce((sum, row) => sum + savingsLivretUsed(row), 0),
         })) });
         setMessage("Ventilation enregistrée.");
-        onSaved?.();
+        onSaved?.({ linked: totals.linked, refunded: totals.refunded });
       } else if (result === "stale") {
         setStale(true);
         setMessage("Cette ventilation a changé depuis son ouverture.");

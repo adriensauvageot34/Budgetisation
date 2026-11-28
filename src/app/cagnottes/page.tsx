@@ -11,7 +11,7 @@ import { readSavingsGoalSummaries, readSavingsProjectPurchases } from "@/server/
 import type { BootstrapSession } from "@/server/bootstrap/auth";
 import type { BootstrapHousehold, BootstrapHouseholdRevision, BootstrapPerson } from "@/server/bootstrap/types";
 import { readSavingsMargin } from "@/server/phase2/savings-margin";
-import { effectiveSavingsAllocations, savingsBudgetKinds, savingsEuros, savingsGoalProgress, savingsLivretUsed, savingsMoney, savingsPriorities, savingsProgressPercent, savingsProjects, savingsReconciledReservations, savingsStatuses, savingsTemplates,
+import { effectiveSavingsAllocations, savingsBudgetKinds, savingsEuros, savingsGoalProgress, savingsLivretUsed, savingsMoney, savingsPriorities, savingsProgressPercent, savingsProjects, savingsReconciledReservations, savingsStatuses, savingsTemplates, summarizeSavingsGoals,
   type SavingsGoal, type SavingsGoalAllocation, type SavingsStatus } from "@/domain/phase2/savings-goals";
 import { savingsDeadlineGap, savingsFundingDate, savingsFundingMonths } from "@/domain/phase2/savings-schedule";
 import { ARCHIVED_REALIZED_MONTHS, IMPORTED_REALIZED_MONTHS, JULY_COMPOSER_MONTH, JULY_PILOT_DATE, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
@@ -81,12 +81,14 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
   nextMonth.setUTCDate(nextMonth.getUTCDate() + 30);
   const horizon = nextMonth.toISOString().slice(0, 10);
   const openGoals = displayed.filter(goal => !goal.abandoned && !goal.purchasedComplete);
-  const near = openGoals.flatMap(goal => {
+  const deadlines = openGoals.flatMap(goal => {
     const date = savingsFundingDate(goal);
-    return date && date <= horizon ? [{ goal, date }] : [];
+    return date ? [{ goal, date }] : [];
   }).sort((a, b) => Number(a.date < today) - Number(b.date < today)
     || (a.date < today ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date))
     || a.goal.label.localeCompare(b.goal.label, "fr"));
+  const near = deadlines.filter(({ date }) => date <= horizon);
+  const outstanding = summarizeSavingsGoals(openGoals);
   const matches = {
     all: displayed.filter(goal => !goal.abandoned),
     unpriced: openGoals.filter(goal => goal.targetCents == null),
@@ -154,20 +156,24 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
     <SavingsDashboard key={JSON.stringify([month, view, requestedSeason])} listHref={viewHref(view)}
       initial={initialProject ? { project: initialProject, anchor: reportId ? `reservation-${reportId}`
         : selectedGoal ? `cagnotte-${selectedGoal.goalId}` : undefined } : undefined}
-      projects={projects} deadlines={near.slice(0, 3).map(({ goal, date }) => ({
+      projects={projects} deadlines={deadlines.slice(0, 3).map(({ goal, date }) => ({
         project: goal.project, id: goal.goalId, label: goal.label, date,
         when: date < today ? `${shortDate.format(new Date(date))} · En retard` : shortDate.format(new Date(date)),
         late: date < today,
         href: viewHref(view, requestedSeason, goal.project, goal.goalId),
       }))}
       overview={<section className={styles.monthPanel} aria-labelledby="savings-margin">
+        <div className={styles.fundingLead}>
+          <div><h2>Reste à financer</h2><strong data-budget-amount="lead">{outstanding.unpriced && !outstanding.budget ? "À chiffrer" : savingsMoney(outstanding.remaining)}</strong></div>
+          {outstanding.unpriced > 0 && <span>{outstanding.unpriced} {outstanding.unpriced === 1 ? "poste à chiffrer" : "postes à chiffrer"}</span>}
+        </div>
         <div className={styles.marginHeading}>
           <h2 id="savings-margin">Marge du mois</h2>
           {month && <form className={styles.monthSelector} action="/cagnottes">
             <input type="hidden" name="view" value={view} />
             {requestedSeason && <input type="hidden" name="season" value={requestedSeason} />}
             <MonthSelect months={months} selected={month} />
-            <button className={styles.quiet}>Voir</button>
+            <button className={styles.quiet}>Afficher la marge</button>
           </form>}
         </div>
         {month ? <Suspense key={month} fallback={<p className={styles.muted}>Calcul de la marge du mois…</p>}>
@@ -293,7 +299,9 @@ function GoalCard({ goal, months, month, today, selected, reportId, destinations
     {late > 0 && <p className={styles.warning}>{savingsMoney(late)} prévus après la date de financement.
       {gap !== null && gap > 0 && ` Il manque ${savingsMoney(gap)} avant cette date.`}</p>}
     <details open={selected || undefined} className={styles.details}>
-      <summary><span className={styles.primary}>{action}</span> <ChevronDown size={15} aria-hidden /></summary>
+      <summary><span className={styles.primary}>{action}</span>
+        {hasPurchases && <span className={styles.footnote}>{goal.purchases!.length} {goal.purchases!.length === 1 ? "ligne d’achat" : "lignes d’achat"}</span>}
+        <ChevronDown size={15} aria-hidden /></summary>
       {action === "Chiffrer" && <GoalForm goal={goal} month={month} year={Number(today.slice(0, 4))} />}
       {hasPurchases && <Suspense fallback={<PurchaseList goal={goal} portraits={recipients} />}>
         <PurchaseListWithBadges goal={goal} portraits={recipients} badges={paymentBadges} />

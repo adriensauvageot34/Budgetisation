@@ -659,6 +659,10 @@
 .inlineDetail .amountText > span:first-child { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .inlineDetail .amountText > span:last-child { justify-content: flex-end; flex-wrap: wrap; white-space: normal; text-align: end; }
 .detailLoading { min-height: 52px; display: grid; align-content: center; }
+.dailyPlaceholder { min-height: calc(var(--plot-height, 40px) + 65px); font-size: .82rem; }
+.dailyPlaceholder::after { content: ""; display: block; height: var(--plot-height, 40px); margin-top: 5px; border-radius: 7px; background: var(--budget-tint); }
+.dailySelection small { margin-inline-start: auto; color: var(--budget-muted); }
+.bigAmount, .detailMetric strong { font-variant-numeric: tabular-nums; }
 .detailColumns > .detailGroup:is([data-wide], :has([data-collection-open])) { grid-column: 1 / -1; }
 .atom[data-density="1"] .detailColumns:has([data-collection-open]) > .detailGroup:not(:has([data-collection-open])) { display: none; }
 .collection { display: grid; gap: 3px; min-width: 0; }
@@ -740,6 +744,8 @@
   overflow-wrap: anywhere;
 }
 .detailAmountLabel { grid-area: 2 / 1; }
+.detailAmounts a.detailAmountLabel { color: var(--budget-accent); text-decoration: underline; text-underline-offset: 2px; }
+.detailAmounts a.detailAmountLabel svg { display: inline; vertical-align: middle; }
 .detailAmounts > li > small { color: var(--muted-label); font-size: .67rem; }
 @container balance-detail (min-width: 455px) {
   .detailCanvas[data-side] {

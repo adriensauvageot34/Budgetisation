@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { createContext, useContext, useLayoutEffect, useState, type ReactNode } from "react";
 import type { UiTransportState } from "@/ui";
 import { BalanceMonthRhythm } from "./balance-month-rhythm";
 import { ArrowRight, ChevronRight } from "lucide-react";
@@ -8,6 +8,7 @@ import { useQueryRuntime } from "@/components/runtime/query-client";
 import type { Money } from "@/core/money";
 import type { ClayIconName } from "@/components/layout/clay-icon";
 import { yearMonthOf, type YearMonth } from "@/core/time";
+import { isArchivedRealizedMonth, isImportedRealizedMonth, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import {
   queryResourceKeys,
   type EconomicExpenseSummary,
@@ -40,7 +41,13 @@ function monthTitle(month: YearMonth) {
   return monthFormatter.format(new Date(`${month}-01T00:00:00Z`));
 }
 
-export function BalanceDetail({ selection, month, subcategoryLabels, onOpen }: {
+const DetailReady = createContext(() => {});
+
+export function BalanceDetail({ onReady, ...props }: Parameters<typeof BalanceDetailContent>[0] & { readonly onReady: () => void }) {
+  return <DetailReady.Provider value={onReady}><BalanceDetailContent {...props} /></DetailReady.Provider>;
+}
+
+function BalanceDetailContent({ selection, month, subcategoryLabels, onOpen }: {
   readonly selection: DetailSelection;
   readonly month: YearMonth;
 
@@ -62,7 +69,7 @@ export function BalanceDetail({ selection, month, subcategoryLabels, onOpen }: {
     case "activity": return <ActivityDetail scope={scope} id={target.activityTypeKey} onOpen={onOpen} />;
     case "moment": return <MomentDetail scope={scope} id={target.momentId} />;
     case "place": return <PlaceDetail scope={scope} id={target.placeId} />;
-    case "journal": return <JournalDetail date={target.date} />;
+    case "journal": return <JournalDetail date={target.date} onOpen={onOpen} />;
   }
 }
 
@@ -73,8 +80,10 @@ function DetailState<T>({ state, children }: { readonly state: UiTransportState<
 
 function DetailCanvas({ lead, side = false, children }: { readonly lead: ReactNode; readonly side?: boolean; readonly children: ReactNode }) {
   const [open, setOpen] = useState<string>();
+  const ready = useContext(DetailReady);
+  useLayoutEffect(ready, [ready]);
   return <BalanceCollections.Provider value={{ open, setOpen }}>
-    <div className={styles.detailCanvas} data-side={side || undefined}>
+    <div className={styles.detailCanvas} data-side={side || undefined} data-budget-reveal>
       {lead}
       <div className={styles.detailColumns}>{children}</div>
     </div>
@@ -238,6 +247,19 @@ function SegmentDetail({ scope, params }: { readonly scope: HistoryScope; readon
   }</DetailState>;
 }
 
+function expenseSourceHref(expense: EconomicExpenseSummary) {
+  const month = yearMonthOf(expense.economicDate);
+  if (!isArchivedRealizedMonth(month) && !isImportedRealizedMonth(month)) return undefined;
+  const operationPattern = /^(?:operation:)?([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})$/iu;
+  const ids = new Set(expense.sourceRefs.flatMap(ref => {
+    if (ref.kind !== "operation" && (ref.kind !== "economic_component" || !ref.id.startsWith("operation:"))) return [];
+    const match = operationPattern.exec(ref.id);
+    return match ? [match[1]!] : [];
+  }));
+  const [id] = ids;
+  return ids.size === 1 ? realizedComposerHref(month, `payment-${id}`) : undefined;
+}
+
 function ExpenseGroup({ label, node, participants = [], exclude, tone = "linked", sharedPartial = false }: {
   readonly label: string;
   readonly node: import("@/core/history-v2").DisplayNode<import("@/core/history-v2").CollectionValue<EconomicExpenseSummary>>;
@@ -253,6 +275,7 @@ function ExpenseGroup({ label, node, participants = [], exclude, tone = "linked"
       const amounts = items.filter(row => !exclude?.has(row.expenseEventId)).map(row => ({
         id: row.expenseEventId,
         label: expenseDisplayTitle(row),
+        href: expenseSourceHref(row),
         attribution: participants.find(person => person.participantId === row.narrativeOwnerId)?.label,
         amount: moneyAmount(row.amount),
       }));
@@ -296,13 +319,14 @@ function PeopleChips({ people }: { readonly people: readonly ParticipantSummary[
   </div>;
 }
 
-function JournalEvents({ items, label }: { readonly items: readonly JournalTimelineItem[]; readonly label: string }) {
+function JournalEvents({ items, label, onOpen }: { readonly items: readonly JournalTimelineItem[]; readonly label: string; readonly onOpen: OpenDetail }) {
   if (!items.length) return null;
   return <DetailGroup title={label}>
     <DetailRows label={label} items={items}>{rows => <ol className={styles.dayTimeline}>{rows.map(row => <li key={row.calendarItemId}>
-      <DetailRow label={row.title}>
-        {row.moment ? <DisplayState node={row.moment.causalCost}>{value => <MoneyMetric metric={value} />}</DisplayState> : row.startTime}
-      </DetailRow>
+      {row.moment ? <DetailLink label={row.title}
+        end={<DisplayState node={row.moment.causalCost}>{value => <MoneyMetric metric={value} />}</DisplayState>}
+        onClick={() => onOpen({ target: { kind: "moment", momentId: row.moment!.momentId }, label: row.title })} />
+        : <DetailRow label={row.title}>{row.startTime}</DetailRow>}
       <PeopleChips people={row.participants} />
     </li>)}</ol>}</DetailRows>
   </DetailGroup>;
@@ -317,6 +341,7 @@ function JournalEventExpenses({ items }: { readonly items: readonly JournalTimel
   const expenses = groups.flatMap(({ event, expenses }) => expenses.map(row => ({
     id: event.calendarItemId + ":" + row.expenseEventId,
     label: expenseDisplayTitle(row) + " · " + event.title,
+    href: expenseSourceHref(row),
     attribution: event.participants.find(person => person.participantId === row.narrativeOwnerId)?.label,
     amount: moneyAmount(row.amount),
   })));
@@ -337,14 +362,14 @@ function MomentParticipants({ date, momentId }: { readonly date: Extract<History
   return <PeopleChips people={[...new Map(people.map(person => [person.participantId, person])).values()]} />;
 }
 
-function JournalDetail({ date }: { readonly date: Extract<HistoryOverlayTarget, { kind: "journal" }>["date"] }) {
+function JournalDetail({ date, onOpen }: { readonly date: Extract<HistoryOverlayTarget, { kind: "journal" }>["date"]; readonly onOpen: OpenDetail }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyDayJournal, scope: monthScope(yearMonthOf(date)), params: { date } });
   return <DetailState state={state}>{model =>
     <DetailCanvas side lead={<DetailHero icon="events" context={<PeopleChips people={journalItems(model.dayParticipants)} />}>
       <DisplayState node={model.economicAmount}>{amount => <DetailMetric label="Total des dépenses du jour"><MoneyMetric metric={amount} /></DetailMetric>}</DisplayState>
     </DetailHero>}>
       <ExpenseGroup label="Autres dépenses du jour" node={model.otherMovements.otherExpenses} tone="context" participants={journalItems(model.dayParticipants)} />
-      <JournalEvents label="Événements du jour" items={[...journalItems(model.timedTimeline), ...journalItems(model.untimedEvents)]} />
+      <JournalEvents label="Événements du jour" onOpen={onOpen} items={[...journalItems(model.timedTimeline), ...journalItems(model.untimedEvents)]} />
       <JournalEventExpenses items={[...journalItems(model.timedTimeline), ...journalItems(model.untimedEvents)]} />
     </DetailCanvas>
   }</DetailState>;

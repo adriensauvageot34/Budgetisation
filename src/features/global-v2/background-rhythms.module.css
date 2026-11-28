@@ -56,6 +56,11 @@
 .monthAnchor:hover::after, .monthAnchor[data-preview="true"]::after { border-color: rgb(255 255 255 / .72); background: rgb(255 255 255 / .09); }
 .monthAnchor[data-selected="true"]::after { border-color: var(--color-primary-deep); box-shadow: 0 0 0 2px rgb(255 255 255 / .84); }
 .monthAnchor > span { position: absolute; right: 0; bottom: 4px; left: 0; overflow: hidden; font-size: 10px; font-weight: 760; text-align: center; text-overflow: clip; text-transform: capitalize; white-space: nowrap; }
+.monthAnchor > span[data-full-month] { display: none; }
+@container rhythm-panel (min-width: 810px) {
+  .monthAnchor > span:not([data-full-month]) { display: none; }
+  .monthAnchor > span[data-full-month] { display: block; }
+}
 .monthAnchor:focus-visible { z-index: 2; outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .selectedMonthGuide { position: absolute; z-index: 3; top: 76px; width: 1px; height: calc(100% - 34px); background: linear-gradient(to bottom, var(--color-primary-deep), rgb(112 69 153 / .18)); pointer-events: none; }
 .chartTooltip { position: absolute; z-index: 7; top: 0; display: grid; width: 205px; gap: 3px; border: 1px solid rgb(83 49 111 / .1); border-radius: 12px; padding: 12px 14px; background: rgb(255 255 255 / .96); box-shadow: 0 12px 32px rgb(83 49 111 / .13); color: var(--color-muted); font-size: 11px; line-height: 1.35; pointer-events: none; transform: translateX(-50%); }

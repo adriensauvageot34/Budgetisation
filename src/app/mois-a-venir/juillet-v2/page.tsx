@@ -15,6 +15,7 @@ import { composerCalendarHref } from "../month-entry";
 import { CalendarEventIcon } from "../month-calendar";
 import { JulyEditLink } from "../composer/july-edit-link";
 import { composerCalendarArtwork } from "../calendar-artwork";
+import { ForecastGroup, ForecastOverview } from "../forecast-overview";
 import material from "../month-material.module.css";
 import pilotStyles from "../composer/realized-month.module.css";
 import composerStyles from "../composer/composer.module.css";
@@ -34,8 +35,10 @@ export default async function JulyV2Page() {
   const displayed = board?.cards.flatMap(detailedRealizedCards).map(({ card }) => card) ?? [];
   const pendingCount = displayed.filter(card => card.pilotStatus === "pending").length;
   const unpricedCards = !budget?.hasSavedDraft ? displayed.filter(card => card.pilotStatus === "planned" && card.amount === null).length : 0;
+  const deadline = budget?.fixedCalendar.filter(item => item.status === "planned" && item.date && item.date > JULY_PILOT_DATE)
+    .toSorted((a, b) => a.date!.localeCompare(b.date!))[0];
 
-  return <div className={`${material.page} mx-auto max-w-6xl space-y-5`}>
+  return <div className={`${material.page} mx-auto max-w-6xl space-y-2`}>
     <h1 className="sr-only">Prévisions · Juillet 2026</h1>
     <AppToolbarContent className={composerStyles.compactToolbar}>
       <span className="text-xs font-semibold">Simulation au <time dateTime={JULY_PILOT_DATE}>15 juillet</time></span>
@@ -47,6 +50,13 @@ export default async function JulyV2Page() {
       </nav>
     </AppToolbarContent>
     {budget && board && pilot ? <>
+      <ForecastOverview amount={budget.final.central}
+        basis="Simulation au 15 juillet · marge sur les recettes hors transferts"
+        deadline={deadline ? { ...deadline, date: deadline.date! } : undefined}
+        calendarHref={composerCalendarHref(JULY_COMPOSER_MONTH)}
+        decisions={pendingCount || unpricedCards ? [pendingCount ? `${pendingCount} à valider` : "", unpricedCards ? `${unpricedCards} à chiffrer` : ""].filter(Boolean).join(" · ") : "Aucun arbitrage signalé"}
+        decisionAction={composerEnabled && (pendingCount > 0 || unpricedCards > 0) && <Link href={`${JULY_COMPOSER_HREF}&statut=${pendingCount ? "pending" : "planned"}`}>Ouvrir les cartes concernées</Link>} />
+      <ForecastGroup label="Entrées d’argent" summary={money(budget.confirmedIncome)}>
       <section className={`${material.glassPremium} p-5 sm:p-6`} aria-labelledby="july-income">
         <h2 id="july-income" className="text-xl font-black">Entrées d’argent</h2>
         <Metrics values={[
@@ -61,6 +71,8 @@ export default async function JulyV2Page() {
           </div>)}
         </div>
       </section>
+      </ForecastGroup>
+      <ForecastGroup label="Charges fixes et échéances" summary={money(budget.fixedTotal)}>
       <section className={`${material.glassSecondary} p-5 sm:p-6`} aria-labelledby="july-fixed">
         <h2 id="july-fixed" className="text-xl font-black">Charges fixes et échéances</h2>
         <Metrics values={[
@@ -68,6 +80,8 @@ export default async function JulyV2Page() {
         ]} />
         <BudgetDeadlines items={budget.fixedCalendar} />
       </section>
+      </ForecastGroup>
+      <ForecastGroup label="Variables du quotidien">
       <section className={`${material.glassSoft} p-5 sm:p-6`} aria-labelledby="july-essentials">
         <h2 id="july-essentials" className="text-xl font-black">Variables du quotidien</h2>
         <p className="mt-1 text-sm text-slate-600">Fourchettes pour le mois entier, estimées à partir de l’historique jusqu’en {monthLabel(budget.trainingThrough)}. Les cartes prévues couvrent d’abord ce que l’enveloppe prévoit déjà.</p>
@@ -76,6 +90,8 @@ export default async function JulyV2Page() {
         </div>
         {budget.mobilityUsage && <p className="mt-3 text-xs text-slate-600">Trajets travail de Manon · usage d’essence estimé entre {money(budget.mobilityUsage.low)} et {money(budget.mobilityUsage.high)} sur le mois. Les achats à la pompe figurent dans l’enveloppe Carburant.</p>}
       </section>
+      </ForecastGroup>
+      <ForecastGroup label="Minimum du mois" summary={money(budget.strictMinimum)}>
       <section className={`${material.glassPremium} ${material.glassQuiet} p-5 sm:p-6`} aria-labelledby="july-minimum">
         <h2 id="july-minimum" className="text-xl font-black">Minimum du mois</h2>
         <p className="mt-1 text-sm text-slate-600">Ce qui est déjà débité, les échéances à venir et le bas des fourchettes du quotidien. Les sorties et achats optionnels encore à venir sont détaillés ensuite.</p>
@@ -84,6 +100,8 @@ export default async function JulyV2Page() {
           ["Marge sur les recettes après le minimum", budget.afterMinimum],
         ]} />
       </section>
+      </ForecastGroup>
+      <ForecastGroup label="Dépenses variables et extras">
       <section className={`${material.glassSoft} p-5 sm:p-6`} aria-labelledby="july-extras">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="july-extras" className="text-xl font-black">Dépenses variables et extras</h2>
@@ -104,13 +122,15 @@ export default async function JulyV2Page() {
           </ul>
         </details>}
       </section>
-      {pendingCount > 0 && <section className={`${material.glassSecondary} p-5 sm:p-6`} aria-labelledby="july-pending">
+      </ForecastGroup>
+      {pendingCount > 0 && <ForecastGroup label="Paiements à vérifier" summary={String(pendingCount)}><section className={`${material.glassSecondary} p-5 sm:p-6`} aria-labelledby="july-pending">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 id="july-pending" className="text-xl font-black">À vérifier au 15 juillet</h2>
           {composerEnabled && <Link href={`${JULY_COMPOSER_HREF}&statut=pending`} prefetch={false} className={button}>Voir les cartes à valider</Link>}
         </div>
         <p className="mt-1 text-sm text-slate-600">{pendingCount} cartes passées à valider. {Number(pilot.pendingExpenses) !== 0 && `${money(pilot.pendingExpenses.replace(/^-/, ""))} de paiements identifiés restent à confirmer.`}</p>
-      </section>}
+      </section></ForecastGroup>}
+      <ForecastGroup label="Scénarios de fin de mois">
       <section className={`${material.glassPremium} p-5 sm:p-6`} aria-labelledby="july-end">
         <h2 id="july-end" className="text-xl font-black">Projection de fin de mois</h2>
         <p className="mt-1 text-sm text-slate-600">Budget sur les montants connus et les habitudes estimées. La marge se calcule sur les recettes de juillet, hors transferts et paiements passés à vérifier.</p>
@@ -119,6 +139,7 @@ export default async function JulyV2Page() {
           <div className={`${material.centralScenario} p-3`}><h3 className="text-sm font-bold">Marge sur les recettes de juillet</h3><Range amounts={budget.final} /></div>
         </div>
       </section>
+      </ForecastGroup>
     </> : <p className={`${material.glassSecondary} p-5`}>Les données de juillet ne sont pas disponibles pour cette simulation.</p>}
   </div>;
 }

@@ -3,6 +3,7 @@ import type { MonthEconomicPlan } from "@/server/phase2/month-scenario";
 import { updateMonthInputs } from "./actions";
 import { MonthControlLink } from "./month-control-center";
 import { AnimatedMoney } from "./animated-money";
+import { SavingsReportSuggestions } from "@/app/cagnottes/schedule-controls";
 import material from "./month-material.module.css";
 
 const money = (amount: string | null) => amount === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(amount));
@@ -29,6 +30,10 @@ export function MonthSavingsSection({ savings, targetMonth, controls = true, rea
           <button className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-white/60" aria-label={`Supprimer la cagnotte ${item.label}`}>Supprimer</button>
         </form> : <MonthControlLink section="choices" focus={`savings:${item.id}`} className="text-xs font-bold underline">Gérer</MonthControlLink>)}
       </li>)}</ul>}
+    {!readOnly && savings.items.some(item => item.adjustability === "ADJUSTABLE") && <details className={`${material.disclosure} mt-4`}>
+      <summary className="cursor-pointer text-sm font-bold">Voir l’effet d’un report de cagnotte</summary>
+      <SavingsReportSuggestions key={targetMonth} month={targetMonth} />
+    </details>}
     {!readOnly && (controls ? <details className={`${material.disclosure} mt-4`}>
       <summary className="cursor-pointer text-sm font-bold">Ajouter une cagnotte</summary>
       <form action={updateMonthInputs} className="mt-4 grid grid-cols-4 items-end gap-3">
