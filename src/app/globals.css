@@ -266,21 +266,21 @@ a {
   [data-budget-reveal] { animation: none; }
 }
 
-html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout))::view-transition {
+html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout), :active-view-transition-type(forecast-layout))::view-transition {
   pointer-events: none;
 }
 
-html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout))::view-transition-group(*) {
+html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout), :active-view-transition-type(forecast-layout))::view-transition-group(*) {
   animation-duration: var(--budget-layout);
   animation-timing-function: var(--budget-ease);
 }
 
-html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout))::view-transition-old(root),
-html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout))::view-transition-new(root) {
+html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout), :active-view-transition-type(forecast-layout))::view-transition-old(root),
+html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout), :active-view-transition-type(forecast-layout))::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
 }
 
-html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout))::view-transition-old(root) {
+html:is(:active-view-transition-type(global-layout), :active-view-transition-type(balance-layout), :active-view-transition-type(calendar-layout), :active-view-transition-type(forecast-layout))::view-transition-old(root) {
   opacity: 0;
 }

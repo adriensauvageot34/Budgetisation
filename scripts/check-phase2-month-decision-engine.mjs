@@ -189,7 +189,7 @@ assert.doesNotMatch(html,/Après nos charges et nos projets|À regarder ensemble
 assert.doesNotMatch(html,/Tester une dépense|Pourquoi \?|Notre hypothèse ce mois|Référence du quotidien nécessaire|Référence des dépenses facultatives/);
 assert.match(html,/data-month-story="true"/); assert.match(html,/Projection de fin de mois/);
 const currentHtml=render(React.createElement(MonthStory,{...props,scenario:deriveMonthScenario({...live,predictionEvidence:currentEvidence},inputs,null,"2026-10-15"),today:"2026-10-15"}));
-assert.match(currentHtml,/Déjà observé/);assert.doesNotMatch(currentHtml,/Total central du mois|imports partiels/);
+assert.match(currentHtml,/Reste estimé/);assert.doesNotMatch(currentHtml,/Total central du mois|imports partiels/);
 const pastHtml=render(React.createElement(PastMonthView,{targetMonth:"2026-04",review}));
 assert.match(pastHtml,/Prévu \/ réalisé \/ écart/);assert.doesNotMatch(pastHtml,/Ce qui pourrait encore|Tester une dépense/);
 const migration=fs.readFileSync("supabase/migrations/20260930183040_phase2_forecast_checkpoints.sql","utf8");

@@ -15,14 +15,15 @@ import { composerCalendarHref } from "../month-entry";
 import { CalendarEventIcon } from "../month-calendar";
 import { JulyEditLink } from "../composer/july-edit-link";
 import { composerCalendarArtwork } from "../calendar-artwork";
-import { ForecastGroup, ForecastOverview } from "../forecast-overview";
+import { ForecastOverview } from "../forecast-overview";
+import { ForecastDashboard, ForecastLines, type ForecastModule } from "../forecast-dashboard";
+import styles from "../forecast-dashboard.module.css";
 import material from "../month-material.module.css";
 import pilotStyles from "../composer/realized-month.module.css";
 import composerStyles from "../composer/composer.module.css";
 
 export const metadata = { title: "Prévisions de juillet 2026" };
 export const dynamic = "force-dynamic";
-const button = `${material.clayButton} inline-flex items-center px-4 py-2 text-sm font-bold`;
 
 export default async function JulyV2Page() {
   const { context, session } = await withProductAuthentication(getBootstrapSession);
@@ -38,7 +39,7 @@ export default async function JulyV2Page() {
   const deadline = budget?.fixedCalendar.filter(item => item.status === "planned" && item.date && item.date > JULY_PILOT_DATE)
     .toSorted((a, b) => a.date!.localeCompare(b.date!))[0];
 
-  return <div className={`${material.page} mx-auto max-w-6xl space-y-2`}>
+  return <div className={`${material.page} ${styles.workspace}`}>
     <h1 className="sr-only">Prévisions · Juillet 2026</h1>
     <AppToolbarContent className={composerStyles.compactToolbar}>
       <span className="text-xs font-semibold">Simulation au <time dateTime={JULY_PILOT_DATE}>15 juillet</time></span>
@@ -49,102 +50,77 @@ export default async function JulyV2Page() {
         <span className={composerStyles.reconstructionLink} aria-current="page">Prévisions</span>
       </nav>
     </AppToolbarContent>
-    {budget && board && pilot ? <>
-      <ForecastOverview amount={budget.final.central}
+    {budget && board && pilot ? <ForecastDashboard columns={julyModules(budget, pilot.cashAtCutoff, pilot.pendingExpenses, pendingCount, composerEnabled)} header={<ForecastOverview amount={budget.final.central}
         basis="Simulation au 15 juillet · marge sur les recettes hors transferts"
         deadline={deadline ? { ...deadline, date: deadline.date! } : undefined}
         calendarHref={composerCalendarHref(JULY_COMPOSER_MONTH)}
         decisions={pendingCount || unpricedCards ? [pendingCount ? `${pendingCount} à valider` : "", unpricedCards ? `${unpricedCards} à chiffrer` : ""].filter(Boolean).join(" · ") : "Aucun arbitrage signalé"}
-        decisionAction={composerEnabled && (pendingCount > 0 || unpricedCards > 0) && <Link href={`${JULY_COMPOSER_HREF}&statut=${pendingCount ? "pending" : "planned"}`}>Ouvrir les cartes concernées</Link>} />
-      <ForecastGroup label="Entrées d’argent" summary={money(budget.confirmedIncome)}>
-      <section className={`${material.glassPremium} p-5 sm:p-6`} aria-labelledby="july-income">
-        <h2 id="july-income" className="text-xl font-black">Entrées d’argent</h2>
-        <Metrics values={[
-          ["Encaissé au 15 juillet", budget.confirmedIncome], ["Encore attendu", budget.plannedIncome],
-          ["Solde bancaire au 15 juillet", pilot.cashAtCutoff],
-        ]} />
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          {budget.receipts.map(item => <div key={item.id} className={`${material.resourceCard} flex flex-wrap items-center justify-between gap-2 p-3`}>
-            <div><strong className="text-sm">{item.label}</strong>
-              <p className="text-xs text-slate-600">{[item.category, plannedDayLabel(item.date)].filter(Boolean).join(" · ")}</p></div>
-            <div className="flex flex-wrap items-center gap-2"><StateBadge status={item.status} /><strong>{money(item.amount)}</strong></div>
-          </div>)}
-        </div>
-      </section>
-      </ForecastGroup>
-      <ForecastGroup label="Charges fixes et échéances" summary={money(budget.fixedTotal)}>
-      <section className={`${material.glassSecondary} p-5 sm:p-6`} aria-labelledby="july-fixed">
-        <h2 id="july-fixed" className="text-xl font-black">Charges fixes et échéances</h2>
-        <Metrics values={[
-          ["Déjà débité", budget.fixedConfirmed], ["À payer", budget.fixedPlanned], ["Total renseigné", budget.fixedTotal],
-        ]} />
-        <BudgetDeadlines items={budget.fixedCalendar} />
-      </section>
-      </ForecastGroup>
-      <ForecastGroup label="Variables du quotidien">
-      <section className={`${material.glassSoft} p-5 sm:p-6`} aria-labelledby="july-essentials">
-        <h2 id="july-essentials" className="text-xl font-black">Variables du quotidien</h2>
-        <p className="mt-1 text-sm text-slate-600">Fourchettes pour le mois entier, estimées à partir de l’historique jusqu’en {monthLabel(budget.trainingThrough)}. Les cartes prévues couvrent d’abord ce que l’enveloppe prévoit déjà.</p>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          {budget.rows.filter(row => row.essential).map(row => <VariableCard key={row.key} row={row} />)}
-        </div>
-        {budget.mobilityUsage && <p className="mt-3 text-xs text-slate-600">Trajets travail de Manon · usage d’essence estimé entre {money(budget.mobilityUsage.low)} et {money(budget.mobilityUsage.high)} sur le mois. Les achats à la pompe figurent dans l’enveloppe Carburant.</p>}
-      </section>
-      </ForecastGroup>
-      <ForecastGroup label="Minimum du mois" summary={money(budget.strictMinimum)}>
-      <section className={`${material.glassPremium} ${material.glassQuiet} p-5 sm:p-6`} aria-labelledby="july-minimum">
-        <h2 id="july-minimum" className="text-xl font-black">Minimum du mois</h2>
-        <p className="mt-1 text-sm text-slate-600">Ce qui est déjà débité, les échéances à venir et le bas des fourchettes du quotidien. Les sorties et achats optionnels encore à venir sont détaillés ensuite.</p>
-        <Metrics values={[
-          ["Déjà débité au 15 juillet", budget.recordedExpenses], ["Dépenses minimales estimées", budget.strictMinimum],
-          ["Marge sur les recettes après le minimum", budget.afterMinimum],
-        ]} />
-      </section>
-      </ForecastGroup>
-      <ForecastGroup label="Dépenses variables et extras">
-      <section className={`${material.glassSoft} p-5 sm:p-6`} aria-labelledby="july-extras">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="july-extras" className="text-xl font-black">Dépenses variables et extras</h2>
-          {composerEnabled && <Link href={JULY_COMPOSER_EDIT_HREF} prefetch={false} className={button}>Ajuster dans Composer</Link>}
-        </div>
-        <p className="mt-1 text-sm text-slate-600">{budget.hasSavedDraft ? "Montants synchronisés avec le brouillon enregistré." : "Montants proposés par les cartes reconstituées de juillet."}</p>
-        {composerEnabled && unpricedCards > 0 && <Link href={`${JULY_COMPOSER_HREF}&statut=planned`} prefetch={false} className="mt-1 inline-block text-sm underline">{unpricedCards} cartes prévues avec un montant à renseigner</Link>}
-        <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {budget.rows.filter(row => !row.essential).map(row => <VariableCard key={row.key} row={row} />)}
-        </div>
-        {budget.planned.length > 0 && <details className="mt-4 rounded-xl border border-slate-200 p-3">
-          <summary className="cursor-pointer text-sm font-bold">Détail des montants des cartes prévues</summary>
-          <ul className="mt-2 divide-y divide-slate-200 text-sm">
-            {budget.planned.map(line => <li key={line.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 py-2">
-              <div><strong>{line.label}</strong><p className="text-xs text-slate-600">{line.family} · {line.date ? plannedDayLabel(line.date) : "À dater"}</p></div>
-              <strong>{line.amount === null ? "À chiffrer" : money(line.amount)}</strong>
-            </li>)}
-          </ul>
-        </details>}
-      </section>
-      </ForecastGroup>
-      {pendingCount > 0 && <ForecastGroup label="Paiements à vérifier" summary={String(pendingCount)}><section className={`${material.glassSecondary} p-5 sm:p-6`} aria-labelledby="july-pending">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="july-pending" className="text-xl font-black">À vérifier au 15 juillet</h2>
-          {composerEnabled && <Link href={`${JULY_COMPOSER_HREF}&statut=pending`} prefetch={false} className={button}>Voir les cartes à valider</Link>}
-        </div>
-        <p className="mt-1 text-sm text-slate-600">{pendingCount} cartes passées à valider. {Number(pilot.pendingExpenses) !== 0 && `${money(pilot.pendingExpenses.replace(/^-/, ""))} de paiements identifiés restent à confirmer.`}</p>
-      </section></ForecastGroup>}
-      <ForecastGroup label="Scénarios de fin de mois">
-      <section className={`${material.glassPremium} p-5 sm:p-6`} aria-labelledby="july-end">
-        <h2 id="july-end" className="text-xl font-black">Projection de fin de mois</h2>
-        <p className="mt-1 text-sm text-slate-600">Budget sur les montants connus et les habitudes estimées. La marge se calcule sur les recettes de juillet, hors transferts et paiements passés à vérifier.</p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div className={`${material.centralScenario} p-3`}><h3 className="text-sm font-bold">Dépenses totales</h3><Range amounts={budget.totalExpenses} /></div>
-          <div className={`${material.centralScenario} p-3`}><h3 className="text-sm font-bold">Marge sur les recettes de juillet</h3><Range amounts={budget.final} /></div>
-        </div>
-      </section>
-      </ForecastGroup>
-    </> : <p className={`${material.glassSecondary} p-5`}>Les données de juillet ne sont pas disponibles pour cette simulation.</p>}
+        decisionAction={composerEnabled && (pendingCount > 0 || unpricedCards > 0) && <Link href={`${JULY_COMPOSER_HREF}&statut=${pendingCount ? "pending" : "planned"}`}>Ouvrir les cartes concernées</Link>} />} /> : <p className={`${material.glassSecondary} p-5`}>Les données de juillet ne sont pas disponibles pour cette simulation.</p>}
   </div>;
 }
 
 type JulyBudget = ReturnType<typeof readJulyBudget>;
+
+function julyModules(budget: JulyBudget, cashAtCutoff: string | null, pendingExpenseAmount: string, pendingCount: number, composerEnabled: boolean): [ForecastModule[], ForecastModule[]] {
+  const metric = (id: string, label: string, amount: string | null) => ({
+    id, label, value: amount === null ? "À renseigner" : money(amount),
+  });
+  const expenseRows = (essential: boolean) => budget.rows.filter(row => row.essential === essential).map(row => ({
+    ...metric(row.key, row.label, row.total.central),
+    amount: row.total.central,
+    note: row.balance ? "Estimation du mois entier" : "Montant renseigné",
+    detail: <><VariableCard row={row} />
+      {row.balance && <p>Fourchette fondée sur l’historique jusqu’en {monthLabel(budget.trainingThrough)}. Les cartes prévues couvrent d’abord une part de l’enveloppe.</p>}
+    </>,
+  }));
+  return [[
+    { id: "resources", title: "Entrées d’argent", icon: "overview", value: money(budget.confirmedIncome),
+      rows: [
+        { ...metric("received", "Encaissé au 15 juillet", budget.confirmedIncome),
+          detail: <ForecastLines rows={budget.receipts.map(item => ({ id: item.id, label: item.label, value: money(item.amount),
+            note: [julyPilotLabels[item.status], item.category, item.date && plannedDayLabel(item.date)].filter(Boolean).join(" · ") }))} /> },
+        metric("expected", "Encore attendu", budget.plannedIncome),
+        metric("bank", "Solde bancaire au 15 juillet", cashAtCutoff),
+      ] },
+    { id: "charges", title: "Charges fixes et échéances", icon: "expenses", value: money(budget.fixedTotal),
+      rows: [
+        metric("charged", "Déjà débité", budget.fixedConfirmed),
+        metric("due", "À payer", budget.fixedPlanned),
+        { id: "dates", label: "Échéances du mois", value: String(budget.fixedCalendar.length), detail: <BudgetDeadlines items={budget.fixedCalendar} /> },
+      ] },
+    { id: "minimum", title: "Minimum du mois", icon: "categories", value: money(budget.strictMinimum),
+      rows: [
+        metric("recorded", "Déjà débité au 15 juillet", budget.recordedExpenses),
+        { ...metric("minimum", "Marge sur les recettes après le minimum", budget.afterMinimum),
+          detail: <p>Le minimum réunit les débits observés, les échéances à venir et le bas des fourchettes du quotidien.</p> },
+      ] },
+  ], [
+    { id: "essentials", title: "Dépenses du quotidien", icon: "groceries",
+      rows: [...expenseRows(true), ...(budget.mobilityUsage ? [{
+        id: "commute", label: "Trajets travail · Manon", value: money(budget.mobilityUsage.low) + " à " + money(budget.mobilityUsage.high),
+        detail: <p>Estimation de l’essence consommée sur le mois. Les achats à la pompe figurent dans l’enveloppe Carburant.</p>,
+      }] : [])] },
+    { id: "extras", title: "Dépenses variables et extras", icon: "events",
+      rows: [...expenseRows(false), ...((budget.planned.length || composerEnabled) ? [{
+        id: "planned", label: "Cartes prévues", value: String(budget.planned.length),
+        detail: <>
+          <p>{budget.hasSavedDraft ? "Montants du brouillon enregistré." : "Montants issus des cartes reconstituées de juillet."}</p>
+          <ForecastLines rows={budget.planned.map(item => ({ id: item.id, label: item.label, value: item.amount === null ? "À chiffrer" : money(item.amount),
+            note: item.family + " · " + (item.date ? plannedDayLabel(item.date) : "À dater") }))} />
+          {composerEnabled && <Link href={JULY_COMPOSER_EDIT_HREF} prefetch={false}>Ajuster dans Composer</Link>}
+        </>,
+      }] : [])] },
+    { id: "projection", title: "Projection de fin de mois", icon: "overview", value: money(budget.final.central), note: "Marge sur les recettes hors transferts",
+      rows: [
+        { ...metric("total", "Dépenses totales", budget.totalExpenses.central), detail: <Range amounts={budget.totalExpenses} /> },
+        { id: "scenarios", label: "Scénarios de fin de mois", value: money(budget.final.low) + " à " + money(budget.final.high),
+          detail: <><Range amounts={budget.final} /><p>La marge se calcule sur les recettes du mois, hors transferts et paiements passés à vérifier.</p></> },
+        ...(pendingCount ? [{ id: "pending", label: "Paiements à vérifier", value: String(pendingCount),
+          detail: <><p>{pendingCount} cartes passées à valider. {Number(pendingExpenseAmount) !== 0 && `${money(pendingExpenseAmount.replace(/^-/, ""))} de paiements identifiés restent à confirmer.`}</p>
+            {composerEnabled && <Link href={JULY_COMPOSER_HREF + "&statut=pending"} prefetch={false}>Voir les cartes à valider</Link>}</> }] : []),
+      ] },
+  ]];
+}
 
 function BudgetDeadlines({ items }: { items: JulyBudget["fixedCalendar"] }) {
   const chargeEntries = items.map(item => ({
@@ -154,9 +130,7 @@ function BudgetDeadlines({ items }: { items: JulyBudget["fixedCalendar"] }) {
     dateCertainty: item.status === "confirmed" ? "DECLARED" as const : "HISTORICAL_ESTIMATE" as const,
     fixedState: item.status === "confirmed" ? "OBSERVED" as const : "UPCOMING" as const,
   }));
-  return <details className="mt-4 rounded-xl border border-slate-200 p-3">
-    <summary className="cursor-pointer text-sm font-bold">Toutes les échéances du mois</summary>
-    <ol className="mt-2 divide-y divide-slate-200">
+  return <ol className="divide-y divide-violet-100">
       {chargeEntries.map(item => <li key={item.key} className="grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-2 py-2.5 sm:grid-cols-[6rem_minmax(0,1fr)_7rem_7rem]">
         {item.date ? <time className="text-sm font-bold" dateTime={item.date}>{plannedDayLabel(item.date)}</time> : <span className="text-sm">À dater</span>}
         <div className="flex min-w-0 items-center gap-2 text-sm"><CalendarEventIcon item={item} size={30} />
@@ -165,13 +139,11 @@ function BudgetDeadlines({ items }: { items: JulyBudget["fixedCalendar"] }) {
         <StateBadge status={item.status} />
         <strong className="col-start-2 text-sm sm:col-start-auto sm:text-right">{item.amount === null ? "À chiffrer" : money(item.amount)}</strong>
       </li>)}
-    </ol>
-  </details>;
+    </ol>;
 }
 
 function VariableCard({ row }: { row: JulyBudget["rows"][number] }) {
-  return <article className={`${material.centralScenario} p-3`}>
-    <h3 className="font-bold">{row.label}</h3>
+  return <article className="min-w-0">
     {row.balance ? <Range amounts={row.total} /> : <p className="mt-1 text-base font-black">{money(row.total.central)} <span className="text-xs font-normal text-slate-600">renseignés</span></p>}
     <dl className="mt-2 space-y-1 border-t border-slate-200 pt-2 text-xs">
       <div className="flex justify-between gap-2"><dt>Débité au 15</dt><dd className="font-bold">{money(row.recorded)}</dd></div>
@@ -192,14 +164,5 @@ function Range({ amounts }: { amounts: CostRange }) {
   return <dl className="mt-2 grid grid-cols-3 gap-2">
     {values.map(([label, amount]) => <div key={label}><dt className="text-xs text-slate-600">{label}</dt>
       <dd className={`${material.money} text-sm font-black tabular-nums`}>{money(amount)}</dd></div>)}
-  </dl>;
-}
-
-function Metrics({ values }: { values: readonly (readonly [string, string | null])[] }) {
-  return <dl className="mt-3 grid gap-2 sm:grid-cols-3">
-    {values.map(([label, amount]) => <div key={label} className={`${material.centralScenario} px-3 py-2`}>
-      <dt className="text-xs font-bold">{label}</dt>
-      <dd className={`${material.money} mt-1 text-base font-black`}>{amount === null ? "À renseigner" : money(amount)}</dd>
-    </div>)}
   </dl>;
 }

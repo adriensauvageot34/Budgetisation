@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return <ComposerMonthNavigationContext.Provider value={monthNavigationGuard}>
     <div ref={compactWorkspace ? setBackgroundRoot : undefined} data-planned-shell={glass ? "" : undefined}
-      className={composer ? `${styles.clayShell} grid h-dvh grid-rows-[auto_minmax(0,1fr)]` : glass ? `${styles.clayShell} ${scene.shell}`
+      className={composer ? `${styles.clayShell} grid h-dvh grid-rows-[auto_minmax(0,1fr)]` : glass ? `${styles.clayShell} ${scene.shell} ${styles.forecastShell}`
         : globalAnalysis ? `${styles.clayShell} ${styles.globalShell}`
           : composerBalance ? `${styles.clayShell} ${styles.balanceShell}`
           : cagnottes ? styles.clayShell
@@ -127,7 +127,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           : globalAnalysis ? styles.globalMain : composerCalendar ? styles.calendarMain : composerBalance ? styles.balanceMain : historyV2
           ? "py-6"
           : pathname === "/mois-a-venir"
-            ? "mx-auto max-w-[1360px] px-[var(--space-page)] py-4 sm:py-6"
+            ? `mx-auto max-w-[1360px] px-[var(--space-page)] py-4 sm:py-6 ${styles.forecastMain}`
+            : julyV2 ? `mx-auto max-w-6xl px-[var(--space-page)] py-4 sm:py-6 ${styles.forecastMain}`
             : "mx-auto max-w-6xl px-[var(--space-page)] py-4 sm:py-6"}
       >
         <AppToolbarTarget.Provider value={toolbarTarget}>{children}</AppToolbarTarget.Provider>
