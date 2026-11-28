@@ -1,12 +1,12 @@
 "use client";
 
-import { createContext, Suspense, useContext, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createContext, Suspense, useCallback, useContext, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowDownRight, ArrowLeft, ArrowUpRight, ChevronDown, Landmark, X } from "lucide-react";
 import { useLayoutMotion } from "@/components/layout/use-layout-motion";
 import { replaceViewSearch } from "@/components/layout/view-search";
 import { startDetailTiming } from "@/components/layout/detail-timing";
 import { prepareHistoryDetail } from "@/components/runtime/query-client";
-import { parseLocalDate } from "@/core/time";
+import { parseLocalDate, type LocalDate } from "@/core/time";
 import { queryResourceKeys } from "@/query-api";
 import { ClayIcon, type ClayIconName } from "@/components/layout/clay-icon";
 import type { YearMonth } from "@/core/time";
@@ -14,7 +14,7 @@ import type { MetricValue } from "@/core/history-v2";
 import type { Money } from "@/core/money";
 import type { HistorySpendingSegmentDetailParams, MonthBalanceSummaryReadModel, MonthCategoriesReadModel, MonthLifeMoneyReadModel, MonthQuickOverviewReadModel, MonthSpendingNatureReadModel } from "@/query-api";
 import { BalanceDetail, type BalanceTarget, type DetailSelection, type OpenDetail } from "./balance-dashboard-details";
-import { AmountBar, AmountBars, BalanceCollections, DetailRows, chartMaximum, formatDelta, metricValue, moneyAmount, stateValue, visibleValue } from "./balance-dashboard-widgets";
+import { AmountBar, AmountBars, BalanceCollections, BalancePurchaseReturn, DetailRows, chartMaximum, formatDelta, metricValue, moneyAmount, stateValue, visibleValue } from "./balance-dashboard-widgets";
 import { DailySpendingTrend, MonthTimeline, SpendingComparison, categoryColors } from "./balance-dashboard-charts";
 import { formatCount, formatFrenchDateRange, formatHistoricalRank, spendingPresentationLabel } from "./presentation";
 import { BalanceAtom, BalanceLayout, useBalanceDensity } from "./balance-density";
@@ -27,6 +27,7 @@ import styles from "./balance-dashboard.module.css";
 
 type PanelKind = "summary" | "categories" | "spending" | "life";
 type Placement = "distribution";
+const emptyLinks: ReadonlySet<string> = new Set();
 
 const linkedDetailLabels: Record<HistoryOverlayTarget["kind"], string> = {
   bridge: "Écart avec mon compte",
@@ -64,7 +65,9 @@ const BalanceInteraction = createContext<{
   readonly prepare: (target?: BalanceTarget) => void;
   readonly reset: () => void;
   readonly detail: ReactNode;
-}>({ revision: 0, isActive: () => false, onOpen: () => {}, onLayout: update => update(), prepare: () => {}, reset: () => {}, detail: null });
+  readonly linkedMoments: ReadonlySet<string>;
+  readonly contributors: ReadonlySet<string>;
+}>({ revision: 0, isActive: () => false, onOpen: () => {}, onLayout: update => update(), prepare: () => {}, reset: () => {}, detail: null, linkedMoments: emptyLinks, contributors: emptyLinks });
 
 function DetailSlot({ kind, target, placement }: {
   readonly kind?: BalanceTarget["kind"];
@@ -76,12 +79,14 @@ function DetailSlot({ kind, target, placement }: {
   return (target ? isActive(target, placement) : root?.target.kind === kind) ? detail : null;
 }
 
-export function ComposerBalanceDashboard({ month, initialState, initialDetail, subcategoryLabels, dailySeries }: {
+export function ComposerBalanceDashboard({ month, initialState, initialDetail, subcategoryLabels, categoryBySubcategory, dailySeries, includeFixed }: {
   readonly month: YearMonth;
   readonly initialState: Extract<HistoryV2InitialState, { kind: "balance" }>;
   readonly initialDetail?: HistoryOverlayTarget;
   readonly subcategoryLabels: Readonly<Record<string, string>>;
+  readonly categoryBySubcategory: Readonly<Record<string, string>>;
   readonly dailySeries: Promise<BalanceDailySeries | null>;
+  readonly includeFixed?: boolean;
 }) {
   const state = useHistoryPageState(month, initialState);
   const { revision, changeLayout } = useLayoutMotion("balance-layout");
@@ -91,12 +96,36 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
   const opener = useRef<HTMLElement | null>(null);
   const restoreFocus = useRef<PanelKind | undefined>(undefined);
   const detailTitle = useRef<HTMLHeadingElement>(null);
+  const dashboard = useRef<HTMLDivElement>(null);
+  const returnPurchase = useRef<string>(undefined);
+  const returnNested = useRef<string>(undefined);
   const restored = useRef(false);
   const timing = useRef<ReturnType<typeof startDetailTiming>>(null);
   const previewTimer = useRef<ReturnType<typeof setTimeout>>(null);
+  const [journalLinks, setJournalLinks] = useState<{ date: LocalDate; momentIds: ReadonlySet<string> }>();
+  const [segmentLinks, setSegmentLinks] = useState<{ key: string; categoryIds: ReadonlySet<string> }>();
   const root = stack[0];
   const current = stack.at(-1);
   const origin = panelFor(root);
+  const linkedMoments = root?.target.kind === "journal" && root.target.date === journalLinks?.date ? journalLinks.momentIds : emptyLinks;
+  const contributors = root?.anchor === "margin" && segmentLinks?.key === detailKey(root.target) ? segmentLinks.categoryIds : emptyLinks;
+  const onJournalLinks = useCallback((date: LocalDate, momentIds: readonly string[]) => setJournalLinks({ date, momentIds: new Set(momentIds) }), []);
+  const onContributors = useCallback((key: string, categoryIds: readonly string[]) => setSegmentLinks({ key, categoryIds: new Set(categoryIds) }), []);
+  const onDetailReady = useCallback(() => {
+    timing.current?.visible("content");
+    requestAnimationFrame(() => {
+      const purchase = returnPurchase.current;
+      const nested = returnNested.current;
+      if (!purchase && !nested) return;
+      returnPurchase.current = undefined;
+      returnNested.current = undefined;
+      const selector = purchase ? "[data-balance-purchase]" : "[data-balance-trigger]";
+      const source = Array.from(dashboard.current?.querySelectorAll<HTMLElement>(selector) ?? [])
+        .find(element => purchase ? element.dataset.balancePurchase === purchase : element.dataset.balanceTrigger === nested);
+      (source ?? detailTitle.current)?.focus({ preventScroll: true });
+    });
+  }, []);
+  const rememberPurchase = useCallback((purchase: string) => replaceViewSearch({ achat: purchase }), []);
 
   useLayoutEffect(() => () => {
     if (previewTimer.current !== null) clearTimeout(previewTimer.current);
@@ -106,9 +135,12 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
   useLayoutEffect(() => {
     if (!restored.current) {
       restored.current = true;
-      const target = parseHistoryOverlaySearch(Object.fromEntries(new URLSearchParams(window.location.search)));
-      if (target && !current) {
-        setStack([{ target, label: linkedDetailLabels[target.kind] }]);
+      const search = Object.fromEntries(new URLSearchParams(window.location.search));
+      returnPurchase.current = search.achat;
+      const target = parseHistoryOverlaySearch(search);
+      const parent = search.origine ? parseHistoryOverlaySearch(Object.fromEntries(new URLSearchParams(search.origine))) : undefined;
+      if (target && (parent || !current || detailKey(target) !== detailKey(current.target))) {
+        setStack([...(parent ? [{ target: parent, label: linkedDetailLabels[parent.kind] }] : []), { target, label: linkedDetailLabels[target.kind] }]);
         return;
       }
     }
@@ -116,14 +148,16 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
       month, view: "balance", surface: "composer",
       overlay: current?.target.kind === "minimal" ? undefined : current?.target,
     }), window.location.origin);
-    replaceViewSearch(Object.fromEntries(["journal", "entity", "entityId", "axis", "bucket", "necessity", "behavior"]
-      .map(key => [key, url.searchParams.get(key) ?? undefined])));
+    const parent = stack.length > 1 && root && root.target.kind !== "minimal" ? new URL(historyV2Href({ month, view: "balance", surface: "composer", overlay: root.target }), window.location.origin).searchParams : undefined;
+    parent?.delete("month");
+    replaceViewSearch({ ...Object.fromEntries(["journal", "entity", "entityId", "axis", "bucket", "necessity", "behavior"]
+      .map(key => [key, url.searchParams.get(key) ?? undefined])), origine: parent?.toString() });
     if (current) {
       timing.current?.visible("structure");
       const heading = detailTitle.current;
       const row = heading?.closest<HTMLElement>("[data-ranking-row]");
       const ranking = row?.parentElement;
-      heading?.focus({ preventScroll: true });
+      if (!returnPurchase.current && !returnNested.current && !heading?.parentElement?.contains(document.activeElement)) heading?.focus({ preventScroll: true });
       if (!row || !ranking) return;
       const keepDetailVisible = () => {
         const bounds = ranking.getBoundingClientRect();
@@ -141,7 +175,7 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
       target?.focus({ preventScroll: true });
       restoreFocus.current = undefined;
     }
-  }, [current, id, month]);
+  }, [current, id, month, root, stack.length]);
 
   if (state.kind !== "balance") return null;
 
@@ -157,6 +191,9 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
 
   function reset() {
     timing.current?.cancel();
+    replaceViewSearch({ achat: undefined });
+    returnPurchase.current = undefined;
+    returnNested.current = undefined;
     restoreFocus.current = origin;
     setStack([]);
   }
@@ -167,7 +204,11 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
 
   function previousDetail() {
     if (stack.length <= 1) closeDetail();
-    else changeLayout(() => setStack(items => items.slice(0, -1)));
+    else changeLayout(() => {
+      returnNested.current = current && detailKey(current.target);
+      replaceViewSearch({ achat: undefined });
+      setStack(items => items.slice(0, -1));
+    });
   }
 
   function isActive(target: BalanceTarget, placement?: Placement) {
@@ -175,13 +216,16 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
   }
 
   function showDetail(selection: DetailSelection) {
-    if (isActive(selection.target, selection.placement) && root?.anchor === selection.anchor) {
+    if (isActive(selection.target, selection.placement) && (root?.anchor === selection.anchor || selection.target.kind === "moment")) {
       closeDetail();
       return;
     }
     if (document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
     timing.current?.cancel();
     timing.current = startDetailTiming("bilan");
+    replaceViewSearch({ achat: undefined });
+    returnPurchase.current = undefined;
+    returnNested.current = undefined;
     changeLayout(() => setStack([selection]));
   }
 
@@ -198,14 +242,15 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
   }
 
   const detailId = id + "-detail";
-  const detail = current && <section className={styles.inlineDetail} id={detailId} aria-labelledby={detailId + "-title"} key={detailKey(current.target)}>
+  const detail = current && <section className={styles.inlineDetail} id={detailId} data-detail-kind={current.target.kind} aria-labelledby={detailId + "-title"}>
     <div className={styles.detailHeader}>
       {stack.length > 1 && <button type="button" aria-label="Revenir au détail précédent"
         onClick={previousDetail}><ArrowLeft aria-hidden size={16} /></button>}
       <h3 id={detailId + "-title"} ref={detailTitle} tabIndex={-1}>{current.label}</h3>
       <button type="button" aria-label="Fermer le détail" className={styles.close} onClick={closeDetail}><X aria-hidden size={17} /></button>
     </div>
-    <BalanceDetail selection={current} month={month} subcategoryLabels={subcategoryLabels} onReady={() => timing.current?.visible("content")}
+    <BalanceDetail key={detailKey(current.target)} selection={current} month={month} subcategoryLabels={subcategoryLabels} categoryBySubcategory={categoryBySubcategory} onReady={onDetailReady}
+      onJournalLinks={onJournalLinks} onContributors={onContributors} contributorKey={detailKey(current.target)}
       onOpen={selection => {
         timing.current?.cancel();
         timing.current = startDetailTiming("bilan");
@@ -214,8 +259,9 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
   </section>;
   const size = root?.target.kind === "journal" || root?.target.kind === "place" || root?.target.kind === "segment" ? "compact" : "large";
 
-  return <BalanceLayout.Provider value={changeLayout}><BalanceInteraction.Provider value={{ root, revision, isActive, onOpen: showDetail, onLayout: changeLayout, prepare, reset, detail }}>
-    <div className={styles.dashboard} data-month-balance data-focus={origin} data-detail-size={origin ? size : undefined}
+  return <BalanceLayout.Provider value={changeLayout}><BalanceInteraction.Provider value={{ root, revision, isActive, onOpen: showDetail, onLayout: changeLayout, prepare, reset, detail, linkedMoments, contributors }}>
+    <BalancePurchaseReturn.Provider value={rememberPurchase}>
+    <div ref={dashboard} className={styles.dashboard} data-month-balance data-focus={origin} data-detail-size={origin ? size : undefined}
       onKeyDown={event => {
         if (event.key !== "Escape" || !current) return;
         event.preventDefault();
@@ -224,7 +270,7 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
       <div className={styles.panelGrid}>
         <div className={styles.column} data-side="left">
           <BalanceRegion kind="summary" headingId={id + "-summary-heading"} title="Dépenses du mois" icon="expenses">
-            {summary ? <SummaryCard model={summary} dailySeries={dailySeries} overview={overview} onOpen={showDetail}
+            {summary ? <SummaryCard model={summary} dailySeries={dailySeries} overview={overview} onOpen={showDetail} includeFixed={includeFixed}
               onPreview={date => prepare(date ? { kind: "journal", date: parseLocalDate(date) } : undefined)} />
               : <DataStatus failed={state.summary.status === "error"} />}
           </BalanceRegion>
@@ -242,7 +288,7 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
         </div>
       </div>
     </div>
-  </BalanceInteraction.Provider></BalanceLayout.Provider>;
+  </BalancePurchaseReturn.Provider></BalanceInteraction.Provider></BalanceLayout.Provider>;
 }
 
 function BalanceRegion({ kind, title, icon, headingId, children }: {
@@ -253,7 +299,7 @@ function BalanceRegion({ kind, title, icon, headingId, children }: {
   readonly children: ReactNode;
 }) {
   const { revision } = useContext(BalanceInteraction);
-  const { region, flow } = useBalanceDensity(undefined, revision, kind === "summary");
+  const { region, flow } = useBalanceDensity(".inline-balance-data", revision, kind === "summary");
   return <section ref={region} className={styles.panel} data-panel={kind} aria-labelledby={headingId}>
     <div ref={flow} className={styles.panelBody}>
       <BalanceAtom name="heading" priority={120} minimum={1}>
@@ -271,14 +317,15 @@ function DataStatus({ failed }: { readonly failed: boolean }) {
     <p role="status" className={styles.note}>{failed ? "Données indisponibles pour ce mois." : "Chargement…"}</p>
   </BalanceAtom>;
 }
-function SummaryCard({ model, onOpen, dailySeries, overview, onPreview }: {
+function SummaryCard({ model, onOpen, dailySeries, overview, onPreview, includeFixed }: {
   readonly model: MonthBalanceSummaryReadModel;
   readonly onOpen: OpenDetail;
   readonly dailySeries: Promise<BalanceDailySeries | null>;
+  readonly includeFixed?: boolean;
   readonly overview?: MonthQuickOverviewReadModel;
   readonly onPreview: (date?: string) => void;
 }) {
-  const { root, isActive } = useContext(BalanceInteraction);
+  const { root, isActive, linkedMoments } = useContext(BalanceInteraction);
   const actual = visibleValue(model.actualValue);
   const typical = visibleValue(model.typicalValue);
   const comparison = metricValue(visibleValue(model.actualVsTypical));
@@ -305,7 +352,7 @@ function SummaryCard({ model, onOpen, dailySeries, overview, onPreview }: {
     </BalanceAtom>}
     <BalanceAtom name="days" priority={89} minimum={root?.target.kind === "journal" ? 1 : 0}>
       <Suspense fallback={<div className={styles.dailyPlaceholder} role="status"><h3>Dépenses par jour</h3><span className="sr-only">Chargement du graphique…</span></div>}>
-        <DailySpendingTrend series={dailySeries} reference={model.publicationMeta} activeDate={root?.target.kind === "journal" ? root.target.date : undefined} onPreview={onPreview} onInspect={(date, label) =>
+        <DailySpendingTrend series={dailySeries} reference={model.publicationMeta} activeDate={root?.target.kind === "journal" ? root.target.date : undefined} linked={linkedMoments.size > 0} includeFixed={includeFixed} onPreview={onPreview} onInspect={(date, label) =>
           onOpen({ target: { kind: "journal", date }, label })} />
       </Suspense>
       <DetailSlot kind="journal" />
@@ -349,7 +396,7 @@ function CategoryCard({ model, spending, failed }: {
   readonly spending?: MonthSpendingNatureReadModel;
   readonly failed: boolean;
 }) {
-  const { root, isActive, onOpen, onLayout, prepare, reset } = useContext(BalanceInteraction);
+  const { root, isActive, onOpen, onLayout, prepare, reset, contributors } = useContext(BalanceInteraction);
   const [mode, setMode] = useState<DistributionMode>("categories");
   const collection = visibleValue(model?.categories);
   const categories = collection?.status === "KNOWN" || collection?.status === "PARTIAL" ? collection.items : [];
@@ -386,6 +433,8 @@ function CategoryCard({ model, spending, failed }: {
   const other = mode === "categories" ? visibleValue(model?.otherAmount) : undefined;
   const unclassified = mode === "categories" ? visibleValue(model?.unclassifiedAmount)
     : axis ? moneyAmount(axis.unclassifiedAmount) : undefined;
+  const marginLabel = root?.anchor === "margin" ? root.label : undefined;
+  const contributingCategories = marginLabel ? categories.filter(category => contributors.has(category.categoryId)) : [];
 
   return <>
     <BalanceAtom name="distributionModes" priority={105} minimum={1}>
@@ -401,14 +450,20 @@ function CategoryCard({ model, spending, failed }: {
           }}>{distributionModes[value]}</button>)}
       </div>
     </BalanceAtom>
+    {marginLabel && contributingCategories.length > 0 && <BalanceAtom name="contributions" priority={96}>
+      <p className={styles.contributionIntro}><strong>{marginLabel}</strong> · {contributingCategories.slice(0, 3).map(category => category.label).join(" · ")}
+        {contributingCategories.length > 3 && ` · +${contributingCategories.length - 3}`}</p>
+    </BalanceAtom>}
     {rows.length === 0 ? (mode === "categories" && !model ? <DataStatus failed={failed} />
       : <BalanceAtom name="status" priority={95}><p className={styles.note}>Aucun montant détaillé pour cette répartition.</p></BalanceAtom>) :
-      <BalanceAtom name="categories" priority={100} minimum={1}>
+      mode === "categories" ? <BalanceAtom name="categories" priority={100} minimum={1}>
         <ul className={styles.categoryPlot} data-expanded={expanded || undefined} aria-label={`${distributionModes[mode]} · parts des dépenses du mois`}>
           {rows.map((row, index) => {
             const active = isActive(row.target, placement);
-            return <li key={row.id} data-ranking-row data-expanded={active || undefined}>
-              <button type="button" style={{ "--category-color": categoryColors[index % categoryColors.length] } as CSSProperties}
+            const contributes = contributors.has(row.id);
+            return <li key={row.id} data-ranking-row data-expanded={active || undefined} data-contributor={contributes || undefined}
+              style={{ "--category-color": categoryColors[index % categoryColors.length] } as CSSProperties}>
+              <button type="button" aria-label={contributes ? `${row.label} · contribue à ${marginLabel?.toLocaleLowerCase("fr-FR")}` : undefined}
                 onFocus={() => prepare(row.target)} onBlur={() => prepare()}
                 onPointerEnter={event => { if (event.pointerType === "mouse") prepare(row.target); }} onPointerLeave={() => prepare()}
                 onClick={() => onOpen({ target: row.target, label: row.label, placement })} aria-expanded={active}>
@@ -418,8 +473,11 @@ function CategoryCard({ model, spending, failed }: {
             </li>;
           })}
         </ul>
+      </BalanceAtom> : <BalanceAtom name="distribution" priority={100} minimum={1}>
+        <CompositionSegments key={mode} axis={mode} label={distributionModes[mode]} buckets={metricValue(axis?.result) ?? []} coverage={axis?.coverageRatio} unclassified={axis?.unclassifiedAmount} placement="distribution" />
+        {expanded && <DetailSlot kind="segment" placement="distribution" />}
       </BalanceAtom>}
-    {[other, unclassified].some(value => Number(metricValue(value) ?? 0) !== 0) && <BalanceAtom name="coverage" priority={97} minimum={1}>
+    {mode === "categories" && [other, unclassified].some(value => Number(metricValue(value) ?? 0) !== 0) && <BalanceAtom name="coverage" priority={97} minimum={1}>
       <div className={styles.panelFoot}>
         {other && Number(metricValue(other) ?? 0) !== 0 && <span className={styles.zone}>Autres catégories <strong><MoneyMetric metric={other} /></strong></span>}
         {unclassified && Number(metricValue(unclassified) ?? 0) !== 0 && <span className={styles.zone}>Non classé <strong><MoneyMetric metric={unclassified} /></strong></span>}
@@ -474,11 +532,52 @@ function SegmentButton({ params, label, selected, children }: {
   const { onOpen, isActive } = useContext(BalanceInteraction);
   const target = { kind: "segment", params } as const;
   return <button type="button" aria-expanded={selected ?? isActive(target)}
-    onClick={() => onOpen({ target, label })}>{children}</button>;
+    onClick={() => onOpen({ target, label, anchor: "margin" })}>{children}</button>;
+}
+
+function CompositionSegments({ axis, label, buckets, coverage, unclassified, placement }: {
+  readonly axis: "behavior" | "necessity" | "lifeScope";
+  readonly label: string;
+  readonly buckets: readonly { readonly key: string; readonly amount: Money; readonly shareOfActual?: number }[];
+  readonly coverage?: number;
+  readonly unclassified?: Money;
+  readonly placement?: Placement;
+}) {
+  const { isActive, onOpen } = useContext(BalanceInteraction);
+  const [hovered, setHovered] = useState<string>();
+  const [focused, setFocused] = useState<string>();
+  const entries = buckets.map((bucket, index) => {
+    const target = { kind: "segment", params: { axis, bucket: bucket.key } } as const;
+    return { ...bucket, target, label: spendingPresentationLabel(bucket.key), color: necessityColors[bucket.key] ?? categoryColors[index % categoryColors.length], active: isActive(target, placement) };
+  });
+  const highlight = hovered ?? focused;
+  const hasUnclassified = unclassified !== undefined && Number(unclassified) !== 0;
+  const shareOfUnclassified = coverage !== undefined && hasUnclassified ? Math.max(0, 1 - coverage) : 0;
+
+  return <div className={styles.composition} data-composition={axis} data-distribution={placement || undefined} data-budget-reveal={placement || undefined}
+    onPointerLeave={() => setHovered(undefined)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(undefined); }}>
+    <div className={styles.stack} role="group" aria-label={label}>
+      {entries.map(entry => entry.shareOfActual === undefined || entry.shareOfActual <= 0 ? null : <button key={entry.key}
+        type="button" tabIndex={-1} aria-label={entry.label} aria-expanded={entry.active} data-highlight={highlight === entry.key}
+        style={{ width: `${Math.min(1, entry.shareOfActual) * 100}%`, background: entry.color }}
+        onPointerEnter={() => setHovered(entry.key)} onFocus={() => setFocused(entry.key)}
+        onClick={() => onOpen({ target: entry.target, label: entry.label, placement })} />)}
+      {shareOfUnclassified > 0 && <span className={styles.unclassified} style={{ width: `${shareOfUnclassified * 100}%` }} aria-hidden />}
+    </div>
+    <div className={styles.legend}>
+      {entries.map(entry => <button key={entry.key} type="button" aria-expanded={entry.active} data-highlight={highlight === entry.key}
+        onPointerEnter={() => setHovered(entry.key)} onFocus={() => setFocused(entry.key)}
+        onClick={() => onOpen({ target: entry.target, label: entry.label, placement })}>
+        <i style={{ background: entry.color }} aria-hidden />{entry.label} <strong>{formatMoney(entry.amount)}</strong>
+        {entry.shareOfActual !== undefined && <small>{Math.round(entry.shareOfActual * 100)} %</small>}
+      </button>)}
+      {hasUnclassified && <span className={styles.unclassifiedLabel}><i className={styles.unclassified} aria-hidden />Non classé <strong>{formatMoney(unclassified)}</strong></span>}
+    </div>
+  </div>;
 }
 
 function MarginCard({ model }: { readonly model: MonthSpendingNatureReadModel }) {
-  const { root, isActive, onOpen } = useContext(BalanceInteraction);
+  const { root, isActive } = useContext(BalanceInteraction);
   const matrix = visibleValue(model.matrix);
   const immediate = { necessity: "OPTIONAL", behavior: "VARIABLE" } as const;
   const medium = { necessity: "OPTIONAL", behavior: "FIXED" } as const;
@@ -488,6 +587,7 @@ function MarginCard({ model }: { readonly model: MonthSpendingNatureReadModel })
     { params: medium, label: "Ajustable à moyen terme", metric: matrix?.mediumMargin },
   ];
   const matrixActive = root?.target.kind === "segment" && !("axis" in root.target.params) && !optionActive && !root.placement;
+  const matrixSelection = matrixActive && root?.target.kind === "segment" && !("axis" in root.target.params) ? root.target.params : undefined;
   const matrixMaximum = Math.max(1, ...(matrix?.cells ?? []).map(cell => Math.abs(Number(cell.amount))));
 
   return <>
@@ -507,26 +607,13 @@ function MarginCard({ model }: { readonly model: MonthSpendingNatureReadModel })
       return <BalanceAtom key={name} name={name} priority={priority} minimum={active ? 1 : 0}>
         <div className={styles.breakdown}>
           <h3>{distributionModes[name]}</h3>
-          <div className={styles.stack} role="group" aria-label={distributionModes[name]}>
-            {buckets.map((bucket, index) => bucket.shareOfActual === undefined ? null : <button key={bucket.key}
-              type="button" tabIndex={-1} aria-label={spendingPresentationLabel(bucket.key)}
-              style={{ width: String(Math.max(0, Math.min(1, bucket.shareOfActual)) * 100) + "%", background: necessityColors[bucket.key] ?? categoryColors[index % categoryColors.length] }}
-              onClick={() => onOpen({ target: { kind: "segment", params: { axis: name, bucket: bucket.key } }, label: spendingPresentationLabel(bucket.key) })} />)}
-          </div>
-          <div className={styles.legend}>
-            {buckets.map((bucket, index) => <SegmentButton key={bucket.key} params={{ axis: name, bucket: bucket.key }} label={spendingPresentationLabel(bucket.key)}>
-              <i style={{ background: necessityColors[bucket.key] ?? categoryColors[index % categoryColors.length] }} aria-hidden />
-              {spendingPresentationLabel(bucket.key)} <strong>{formatMoney(bucket.amount)}</strong>
-              {bucket.shareOfActual !== undefined && <small>{Math.round(bucket.shareOfActual * 100)} %</small>}
-            </SegmentButton>)}
-          </div>
+          <CompositionSegments axis={name} label={distributionModes[name]} buckets={buckets} coverage={axis?.coverageRatio} unclassified={axis?.unclassifiedAmount} />
           {active && <DetailSlot kind="segment" />}
-          {!!axis && Number(axis.unclassifiedAmount) !== 0 && <p className={styles.note}>{formatMoney(axis.unclassifiedAmount)} non classés</p>}
         </div>
       </BalanceAtom>;
     })}
     {matrix && matrix.cells.length > 0 && <BalanceAtom name="matrix" priority={68} minimum={matrixActive ? 1 : 0}>
-      <section className={styles.matrix} aria-label="Dépenses fixes et variables par nécessité">
+      <section className={styles.matrix} data-column={matrixSelection?.behavior} aria-label="Dépenses fixes et variables par nécessité">
         <header><h3>Nécessité × type de dépense</h3>
           <span data-behavior="FIXED">Fixe</span><span data-behavior="VARIABLE">Variable</span>
         </header>
@@ -546,7 +633,7 @@ function MatrixRow({ rowKey, label, cells, maximum, rowActive }: {
   readonly rowActive: boolean;
 }) {
   const { onOpen, isActive } = useContext(BalanceInteraction);
-  return <li>
+  return <li data-matrix-current={rowActive || undefined}>
     <div className={styles.matrixRow}><strong>{label}</strong>{behaviors.map(behavior => {
       const key = rowKey + "__" + behavior;
       const cell = cells.find(value => value.key === key);
@@ -568,8 +655,9 @@ function MarginAmount({ metric }: { readonly metric?: MetricValue<Money> }) {
 }
 
 function LifeCard({ model, month }: { readonly model: MonthLifeMoneyReadModel; readonly month: YearMonth }) {
-  const { onOpen, isActive, root } = useContext(BalanceInteraction);
+  const { onOpen, isActive, root, linkedMoments } = useContext(BalanceInteraction);
   const [open, setOpen] = useState<string>();
+  const [previewMoment, setPreviewMoment] = useState<string>();
   const activities = visibleValue(model.activities);
   const moments = visibleValue(model.moments);
   const places = visibleValue(model.places);
@@ -580,14 +668,17 @@ function LifeCard({ model, month }: { readonly model: MonthLifeMoneyReadModel; r
 
   return <BalanceCollections.Provider value={{ open, setOpen }}>
     {momentList.length > 0 && <BalanceAtom name="moments" priority={100} minimum={1}>
-      <MonthTimeline month={month} moments={momentList} activeId={activeMoment}
+      <MonthTimeline month={month} moments={momentList} activeId={activeMoment} previewId={previewMoment} linkedIds={linkedMoments} onPreview={setPreviewMoment}
         onOpen={moment => onOpen({ target: { kind: "moment", momentId: moment.momentId }, label: moment.title, anchor: "timeline" })} />
       {root?.anchor === "timeline" && <DetailSlot kind="moment" />}
       <DetailRows items={momentList} label="Moments marquants" listKey="moments" cards>{items =>
       <ul className={styles.lifeCards} aria-label="Moments marquants">
         {items.map(moment => {
           const target = { kind: "moment", momentId: moment.momentId } as const;
-          return <li key={moment.momentId}><button type="button" aria-expanded={isActive(target)} onClick={() => onOpen({ target, label: moment.title })}>
+          return <li key={moment.momentId}><button type="button" aria-expanded={isActive(target)}
+            data-previewed={previewMoment === moment.momentId || undefined} data-linked={linkedMoments.has(moment.momentId) || undefined}
+            onPointerEnter={() => setPreviewMoment(moment.momentId)} onPointerLeave={() => setPreviewMoment(undefined)}
+            onFocus={() => setPreviewMoment(moment.momentId)} onBlur={() => setPreviewMoment(undefined)} onClick={() => onOpen({ target, label: moment.title })}>
             <span><ClayIcon name="events" size={22} />{formatFrenchDateRange(moment.startDate, moment.endDate, false)}</span>
             <strong title={moment.title}>{moment.title}</strong>
             {metricValue(moment.causalCost) === undefined ? <small>Coût non établi</small> : <MoneyMetric metric={moment.causalCost} />}

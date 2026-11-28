@@ -64,10 +64,14 @@ export function AmountBars({ rows, maximum = chartMaximum(rows) }: { readonly ro
   return <ul className={styles.plot}>{rows.map((row) => <li key={row.id}><AmountBar row={row} maximum={maximum} /></li>)}</ul>;
 }
 
+export const BalancePurchaseReturn = createContext<(id: string) => void>(() => {});
+
 export function DetailAmounts({ rows }: { readonly rows: readonly AmountRow[] }) {
+  const remember = useContext(BalancePurchaseReturn);
   return <ul className={styles.detailAmounts}>
     {rows.map(row => <li key={row.id} data-source-link={row.href ? true : undefined}>
-      {row.href ? <Link href={row.href} prefetch={false} className={styles.detailAmountLabel}
+      {row.href ? <Link href={row.href} prefetch={false} className={styles.detailAmountLabel} data-balance-purchase={row.id}
+        onNavigate={() => remember(row.id)}
         aria-label={`${row.label} · ouvrir la carte`}>{row.label} <ChevronRight size={12} aria-hidden /></Link>
         : <span className={styles.detailAmountLabel} title={row.label}>{row.label}</span>}
       <strong><MoneyMetric metric={row.amount} /></strong>
@@ -137,7 +141,7 @@ export function DetailRows<T>({ items, size = 4, label, listKey, cards = false, 
   const toggle = useRef<HTMLButtonElement>(null);
   const restore = useRef(false);
   const expanded = open === key;
-  const limit = cards ? 8 : 12;
+  const limit = Math.max(size + 1, cards ? 8 : 12);
   const start = Math.min(offset, Math.max(0, Math.ceil(items.length / limit) - 1) * limit);
   const visible = expanded ? items.slice(start, start + limit) : items.slice(0, size);
 
@@ -163,7 +167,7 @@ export function DetailRows<T>({ items, size = 4, label, listKey, cards = false, 
     event.preventDefault();
     toggleList();
   }}>
-    <div className={expanded && !cards ? styles.collectionGrid : undefined} id={id}>
+    <div className={expanded && !cards ? styles.collectionGrid : undefined} data-revealed-grid={expanded && cards && start === 0 || undefined} id={id}>
       {expanded && !cards
         ? Array.from({ length: Math.ceil(visible.length / 4) }, (_, index) => <div key={index}>{children(visible.slice(index * 4, (index + 1) * 4))}</div>)
         : children(visible)}

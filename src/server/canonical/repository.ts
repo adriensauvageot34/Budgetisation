@@ -2501,7 +2501,7 @@ export class CanonicalRepository {
   async loadCanonicalSubcategories(): Promise<readonly CanonicalRecord[]> {
     await this.assertAuthorizedCanonicalHouseholdScope();
     return this.readRows("calendar-economic:subcategories", "taxonomy", () =>
-      this.client.from("subcategories").select("subcategory_id,subcategory_key,nom_canonique").order("subcategory_id", { ascending: true }));
+      this.client.from("subcategories").select("subcategory_id,subcategory_key,nom_canonique,category_id").order("subcategory_id", { ascending: true }));
   }
 
   async loadTaxonomyRows(

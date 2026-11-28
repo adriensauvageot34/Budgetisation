@@ -28,7 +28,9 @@ export function MonthPicker() {
       value={selection} aria-busy={pending}
       onChange={event => {
         const nextPeriod = event.currentTarget.value;
-        const href = workspacePeriodHref(nextPeriod, pathname);
+        const destination = workspacePeriodHref(nextPeriod, pathname);
+        const href = destination.startsWith("/mois-a-venir/composer/bilan?") && pathname === "/mois-a-venir/composer/bilan" && search.get("charges") === "toutes"
+          ? `${destination}&charges=toutes` : destination;
         setNotice(null);
         const navigate = () => startTransition(() => {
           selectPeriod(nextPeriod);

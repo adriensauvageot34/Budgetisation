@@ -323,20 +323,26 @@ export async function resolveLatestPublishedHistoryV2Month() {
   return store.readLatestPublishedHistoryV2Month();
 }
 
-export async function readAuthenticatedSubcategoryLabels(): Promise<Readonly<Record<string, string>>> {
+export async function readAuthenticatedSubcategoryPresentation(): Promise<{
+  readonly labels: Readonly<Record<string, string>>;
+  readonly categories: Readonly<Record<string, string>>;
+}> {
   const bootstrap = await getBootstrapContext();
   const context = createAuthorizedRuntimeContext(bootstrap, parseInstant(new Date().toISOString()));
   try {
     const repository = new CanonicalRepository(createCanonicalReadClient(), context);
     const rows = await repository.loadCanonicalSubcategories();
-    return Object.fromEntries(rows.flatMap(({ subcategory_id, nom_canonique }) =>
-      typeof subcategory_id === "string" && typeof nom_canonique === "string" && nom_canonique.trim()
-        ? [[subcategory_id, nom_canonique.trim()]]
-        : [],
-    ));
+    const labels: [string, string][] = [];
+    const categories: [string, string][] = [];
+    for (const { subcategory_id, nom_canonique, category_id } of rows) {
+      if (typeof subcategory_id !== "string") continue;
+      if (typeof nom_canonique === "string" && nom_canonique.trim()) labels.push([subcategory_id, nom_canonique.trim()]);
+      if (typeof category_id === "string") categories.push([subcategory_id, category_id]);
+    }
+    return { labels: Object.fromEntries(labels), categories: Object.fromEntries(categories) };
   } catch (error) {
     if (!(error instanceof CanonicalReadError)) throw error;
-    return {};
+    return { labels: {}, categories: {} };
   }
 }
 
