@@ -5,9 +5,9 @@ import type { UiTransportState } from "@/ui";
 import { BalanceMonthRhythm } from "./balance-month-rhythm";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { useQueryRuntime } from "@/components/runtime/query-client";
-import type { Money } from "@/core/money";
+import { addMoney, subtractMoney, type Money } from "@/core/money";
 import type { ClayIconName } from "@/components/layout/clay-icon";
-import { yearMonthOf, type YearMonth } from "@/core/time";
+import { yearMonthOf, type LocalDate, type YearMonth } from "@/core/time";
 import { isArchivedRealizedMonth, isImportedRealizedMonth, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import {
   queryResourceKeys,
@@ -20,6 +20,9 @@ import { BalanceCollections, DetailAmounts, DetailGroup, DetailHero, DetailMetri
 import { expenseDisplayTitle, formatCount, formatFrenchDate, formatFrenchDateRange, spendingPresentationLabel } from "./presentation";
 import { CollectionState, DisplayState, MoneyMetric, StateBoundary, formatMoney } from "./renderers";
 import type { HistoryOverlayTarget } from "./types";
+import { overlayTargetKey } from "./route-state";
+import type { BankEconomyBridge } from "@/analytics/history-v2/month-balance";
+import type { CSSProperties } from "react";
 import styles from "./balance-dashboard.module.css";
 
 export type BalanceTarget = HistoryOverlayTarget | { readonly kind: "minimal" };
@@ -27,7 +30,7 @@ export type DetailSelection = {
   readonly target: BalanceTarget;
   readonly label: string;
   readonly placement?: "distribution";
-  readonly anchor?: "matrix" | "timeline";
+  readonly anchor?: "matrix" | "timeline" | "margin";
 };
 export type OpenDetail = (selection: DetailSelection) => void;
 type HistoryScope = ReturnType<typeof monthScope>;
@@ -47,12 +50,16 @@ export function BalanceDetail({ onReady, ...props }: Parameters<typeof BalanceDe
   return <DetailReady.Provider value={onReady}><BalanceDetailContent {...props} /></DetailReady.Provider>;
 }
 
-function BalanceDetailContent({ selection, month, subcategoryLabels, onOpen }: {
+function BalanceDetailContent({ selection, month, subcategoryLabels, categoryBySubcategory, onOpen, onJournalLinks, onContributors, contributorKey }: {
   readonly selection: DetailSelection;
   readonly month: YearMonth;
 
   readonly subcategoryLabels: Readonly<Record<string, string>>;
+  readonly categoryBySubcategory: Readonly<Record<string, string>>;
   readonly onOpen: OpenDetail;
+  readonly onJournalLinks: (date: LocalDate, momentIds: readonly string[]) => void;
+  readonly onContributors: (key: string, ids: readonly string[]) => void;
+  readonly contributorKey: string;
 }) {
   const { target } = selection;
   const scope = monthScope(month);
@@ -64,18 +71,18 @@ function BalanceDetailContent({ selection, month, subcategoryLabels, onOpen }: {
 
     case "category": return <CategoryDetail scope={scope} id={target.categoryId} labels={subcategoryLabels} />;
 
-    case "segment": return <SegmentDetail scope={scope} params={target.params} />;
+    case "segment": return <SegmentDetail scope={scope} params={target.params} contributorKey={contributorKey} categoryBySubcategory={categoryBySubcategory} onContributors={onContributors} />;
 
     case "activity": return <ActivityDetail scope={scope} id={target.activityTypeKey} onOpen={onOpen} />;
     case "moment": return <MomentDetail scope={scope} id={target.momentId} />;
-    case "place": return <PlaceDetail scope={scope} id={target.placeId} />;
-    case "journal": return <JournalDetail date={target.date} onOpen={onOpen} />;
+    case "place": return <PlaceDetail scope={scope} id={target.placeId} onOpen={onOpen} />;
+    case "journal": return <JournalDetail date={target.date} onOpen={onOpen} onJournalLinks={onJournalLinks} />;
   }
 }
 
 
 function DetailState<T>({ state, children }: { readonly state: UiTransportState<T>; readonly children: (data: T) => ReactNode }) {
-  return <StateBoundary state={state} skeleton={<p className={styles.detailLoading} role="status">Chargement du détail…</p>}>{children}</StateBoundary>;
+  return <StateBoundary state={state} skeleton={<div className={styles.detailLoading} role="status" aria-label="Chargement du détail"><i /><i /><i /></div>}>{children}</StateBoundary>;
 }
 
 function DetailCanvas({ lead, side = false, children }: { readonly lead: ReactNode; readonly side?: boolean; readonly children: ReactNode }) {
@@ -85,17 +92,18 @@ function DetailCanvas({ lead, side = false, children }: { readonly lead: ReactNo
   return <BalanceCollections.Provider value={{ open, setOpen }}>
     <div className={styles.detailCanvas} data-side={side || undefined} data-budget-reveal>
       {lead}
-      <div className={styles.detailColumns}>{children}</div>
+      <div className={`${styles.detailColumns} inline-balance-data`}>{children}</div>
     </div>
   </BalanceCollections.Provider>;
 }
 
-function DetailLink({ label, end, onClick }: {
+function DetailLink({ label, end, trigger, onClick }: {
   readonly label: string;
   readonly end?: React.ReactNode;
+  readonly trigger?: HistoryOverlayTarget;
   readonly onClick: () => void;
 }) {
-  return <button type="button" className={styles.detailLink} onClick={onClick}>
+  return <button type="button" className={styles.detailLink} data-balance-trigger={trigger && overlayTargetKey(trigger)} onClick={onClick}>
     <span title={label}>{label}</span>{end}<ChevronRight size={14} aria-hidden />
 
   </button>;
@@ -107,25 +115,48 @@ function DetailRow({ label, children }: { readonly label: string; readonly child
 
 function BankDetail({ scope }: { readonly scope: HistoryScope }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyBankEconomyBridge, scope, params: {} });
-  return <DetailState state={state}>{model => <DisplayState node={model.bridge}>{bridge => {
-    const maximum = Math.max(1, ...bridge.lines.map(line => Math.abs(Number(line.signedAmount))));
-    return <DetailCanvas lead={<DetailHero icon="expenses">
+  return <DetailState state={state}>{model => <DisplayState node={model.bridge}>{bridge => <DetailCanvas lead={<DetailHero icon="expenses">
       <DetailMetric label="Débits du compte" secondary>{formatMoney(bridge.bankOutflows)}</DetailMetric>
       <ArrowRight className={styles.bridgeArrow} size={17} aria-hidden />
       <DetailMetric label="Dépenses du mois">{formatMoney(bridge.actual)}</DetailMetric>
       <DetailMetric label="Écart" secondary>{formatDelta(bridge.gap)}</DetailMetric>
     </DetailHero>}>
-      <DetailGroup title="Les mouvements qui expliquent l’écart">
-        {bridge.lines.length ? <DetailRows label="Mouvements" items={bridge.lines}>{rows => <ul className={styles.adjustments}>
-          {rows.map(row => <li key={row.lineId}>
-            <span title={row.label}>{row.label}</span><strong>{formatDelta(row.signedAmount)}</strong>
-            <span className={styles.adjustmentTrack} aria-hidden="true"><i data-negative={Number(row.signedAmount) < 0}
-              style={{ width: `${Math.abs(Number(row.signedAmount)) / maximum * 50}%` }} /></span>
-          </li>)}
-        </ul>}</DetailRows> : <p className={styles.note}>Aucun ajustement détaillé.</p>}
+      <DetailGroup title="Des débits aux dépenses du mois">
+        <BankWaterfall bridge={bridge} />
+        {bridge.lines.length > 4 && <DetailRows label="Tous les ajustements" items={bridge.lines} size={0}>{rows => <ul className={styles.adjustments}>
+          {rows.map(row => <li key={row.lineId}><span title={row.label}>{row.label}</span><strong>{formatDelta(row.signedAmount)}</strong></li>)}
+        </ul>}</DetailRows>}
       </DetailGroup>
-    </DetailCanvas>;
-  }}</DisplayState>}</DetailState>;
+    </DetailCanvas>}</DisplayState>}</DetailState>;
+}
+
+function BankWaterfall({ bridge }: { readonly bridge: BankEconomyBridge }) {
+  const debit = Number(bridge.bankOutflows);
+  const actual = Number(bridge.actual);
+  let position = debit;
+  let amountAfterVisible = bridge.bankOutflows;
+  const adjustments = bridge.lines.slice(0, 4).map(line => {
+    const previous = position;
+    amountAfterVisible = addMoney(amountAfterVisible, line.signedAmount);
+    position = Number(amountAfterVisible);
+    return { key: line.lineId, label: line.label, value: formatDelta(line.signedAmount), previous, next: position };
+  });
+  const subtotal = Number(bridge.bridgeCalculatedActual);
+  if (bridge.lines.length > 4) adjustments.push({ key: "remaining", label: `${bridge.lines.length - 4} autres ajustements`, value: formatDelta(subtractMoney(bridge.bridgeCalculatedActual, amountAfterVisible)), previous: position, next: subtotal });
+  if (Math.abs(Number(bridge.residual)) >= .01) adjustments.push({ key: "unexplained", label: "Écart non expliqué", value: formatDelta(bridge.residual), previous: subtotal, next: actual });
+  const steps = [{ key: "debits", label: "Débits", value: formatMoney(bridge.bankOutflows), previous: 0, next: debit }, ...adjustments,
+    { key: "total", label: "Dépenses du mois", value: formatMoney(bridge.actual), previous: 0, next: actual }];
+  const top = Math.max(1, ...steps.flatMap(step => [step.previous, step.next]));
+  const bottom = Math.min(0, ...steps.flatMap(step => [step.previous, step.next]));
+  const percent = (value: number) => `${(value - bottom) / (top - bottom) * 100}%`;
+  return <ol className={styles.waterfall} aria-label="Cascade des ajustements en euros">
+    {steps.map((step, index) => <li key={step.key} data-step={step.key === "unexplained" ? "unknown" : index === 0 || index === steps.length - 1 ? "total" : step.next < step.previous ? "less" : "more"}>
+      <span className={styles.waterfallTrack} aria-hidden style={{ "--exit": percent(step.next) } as CSSProperties}>
+        <i style={{ "--from": percent(Math.min(step.previous, step.next)), "--to": percent(Math.max(step.previous, step.next)) } as CSSProperties} />
+      </span>
+      <span title={step.label}>{step.label}</span><strong>{step.value}</strong>
+    </li>)}
+  </ol>;
 }
 
 function MinimalDetail({ scope }: { readonly scope: HistoryScope }) {
@@ -225,8 +256,23 @@ function CategoryProfile({ axes }: { readonly axes: readonly { readonly label: s
   </DetailGroup>;
 }
 
-function SegmentDetail({ scope, params }: { readonly scope: HistoryScope; readonly params: Extract<HistoryOverlayTarget, { kind: "segment" }>["params"] }) {
+function SegmentDetail({ scope, params, contributorKey, categoryBySubcategory, onContributors }: {
+  readonly scope: HistoryScope;
+  readonly params: Extract<HistoryOverlayTarget, { kind: "segment" }>["params"];
+  readonly contributorKey: string;
+  readonly categoryBySubcategory: Readonly<Record<string, string>>;
+  readonly onContributors: (key: string, ids: readonly string[]) => void;
+}) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historySpendingSegmentDetail, scope, params });
+  const model = state.status === "success" ? state.response.data : undefined;
+  useLayoutEffect(() => {
+    if (!model) return;
+    const categories = journalItems(model.contributors).flatMap(row => {
+      if (row.grain === "CATEGORY") return [row.contributorId];
+      return Object.hasOwn(categoryBySubcategory, row.contributorId) ? [categoryBySubcategory[row.contributorId]!] : [];
+    });
+    onContributors(contributorKey, categories);
+  }, [model, contributorKey, categoryBySubcategory, onContributors]);
   return <DetailState state={state}>{model =>
     <DetailCanvas side lead={<DetailHero icon="categories">
       <DisplayState node={model.amount}>{amount => <DetailMetric label="Montant du poste"><MoneyMetric metric={amount} /></DetailMetric>}</DisplayState>
@@ -295,10 +341,7 @@ function ActivityDetail({ scope, id, onOpen }: { readonly scope: HistoryScope; r
     </DetailHero>}>
       <DetailGroup title="Dates de l’activité">
         <DisplayState node={model.occurrences}>{collection => <CollectionState collection={collection}>{items =>
-          <DetailRows label="Dates" items={items}>{rows => <ul className={styles.detailDates}>
-            {rows.map(row => <li key={row.occurrenceId}><DetailLink label={formatFrenchDate(row.effectiveDate, false)} end={row.effectiveTime}
-              onClick={() => onOpen({ target: { kind: "journal", date: row.effectiveDate }, label: formatFrenchDate(row.effectiveDate) })} /></li>)}
-          </ul>}</DetailRows>
+          <DateStrip observations={items.map(row => ({ date: row.effectiveDate, note: row.effectiveTime }))} onOpen={onOpen} />
         }</CollectionState>}</DisplayState>
       </DetailGroup>
       <ExpenseGroup label="Dépenses liées" node={model.causalExpenses} />
@@ -324,6 +367,7 @@ function JournalEvents({ items, label, onOpen }: { readonly items: readonly Jour
   return <DetailGroup title={label}>
     <DetailRows label={label} items={items}>{rows => <ol className={styles.dayTimeline}>{rows.map(row => <li key={row.calendarItemId}>
       {row.moment ? <DetailLink label={row.title}
+        trigger={{ kind: "moment", momentId: row.moment.momentId }}
         end={<DisplayState node={row.moment.causalCost}>{value => <MoneyMetric metric={value} />}</DisplayState>}
         onClick={() => onOpen({ target: { kind: "moment", momentId: row.moment!.momentId }, label: row.title })} />
         : <DetailRow label={row.title}>{row.startTime}</DetailRow>}
@@ -362,8 +406,14 @@ function MomentParticipants({ date, momentId }: { readonly date: Extract<History
   return <PeopleChips people={[...new Map(people.map(person => [person.participantId, person])).values()]} />;
 }
 
-function JournalDetail({ date, onOpen }: { readonly date: Extract<HistoryOverlayTarget, { kind: "journal" }>["date"]; readonly onOpen: OpenDetail }) {
+function JournalDetail({ date, onOpen, onJournalLinks }: { readonly date: LocalDate; readonly onOpen: OpenDetail; readonly onJournalLinks: (date: LocalDate, momentIds: readonly string[]) => void }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyDayJournal, scope: monthScope(yearMonthOf(date)), params: { date } });
+  const model = state.status === "success" ? state.response.data : undefined;
+  useLayoutEffect(() => {
+    if (!model) return;
+    const events = [...journalItems(model.timedTimeline), ...journalItems(model.untimedEvents)];
+    onJournalLinks(date, events.flatMap(row => row.moment && journalItems(row.moment.causalExpenses).some(expense => expense.economicDate === date) ? [row.moment.momentId] : []));
+  }, [model, date, onJournalLinks]);
   return <DetailState state={state}>{model =>
     <DetailCanvas side lead={<DetailHero icon="events" context={<PeopleChips people={journalItems(model.dayParticipants)} />}>
       <DisplayState node={model.economicAmount}>{amount => <DetailMetric label="Total des dépenses du jour"><MoneyMetric metric={amount} /></DetailMetric>}</DisplayState>
@@ -401,7 +451,25 @@ function MomentDetail({ scope, id }: { readonly scope: HistoryScope; readonly id
   }}</DetailState>;
 }
 
-function PlaceDetail({ scope, id }: { readonly scope: HistoryScope; readonly id: string }) {
+function DateStrip({ observations, onOpen }: { readonly observations: readonly { readonly date: LocalDate; readonly note?: string }[]; readonly onOpen: OpenDetail }) {
+  const grouped = Map.groupBy(observations, observation => observation.date);
+  const ordered = [...grouped.keys()].toSorted();
+  return <DetailRows label="Jours" items={ordered} size={7} cards>{rows => <ul className={styles.dateStrip}>
+    {rows.map((date, index) => {
+      const notes = grouped.get(date)?.flatMap(item => item.note ? [item.note] : []) ?? [];
+      const label = [`Ouvrir le ${formatFrenchDate(date)}`, ...notes].join(" · ");
+      return <li key={date}>
+      <button type="button" title={label} aria-label={label} data-balance-trigger={overlayTargetKey({ kind: "journal", date })}
+        onClick={() => onOpen({ target: { kind: "journal", date }, label: formatFrenchDate(date) })}>
+        {(index === 0 || rows[index - 1]?.slice(0, 7) !== date.slice(0, 7)) && <small>{formatFrenchDate(date, false).split(" ").slice(1).join(" ")}</small>}
+        <time dateTime={date}>{Number(date.slice(-2))}</time>
+      </button>
+    </li>;
+    })}
+  </ul>}</DetailRows>;
+}
+
+function PlaceDetail({ scope, id, onOpen }: { readonly scope: HistoryScope; readonly id: string; readonly onOpen: OpenDetail }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyPlaceDetail, scope, params: { placeId: id } });
   return <DetailState state={state}>{model =>
     <DetailCanvas side lead={<DetailHero icon="travel">
@@ -410,10 +478,7 @@ function PlaceDetail({ scope, id }: { readonly scope: HistoryScope; readonly id:
     </DetailHero>}>
       <DetailGroup title="Dates de présence">
         <DisplayState node={model.presenceDays}>{collection => <CollectionState collection={collection}>{items =>
-          <DetailRows label="Présences" items={items} size={7}>{rows => <ul className={styles.detailDates}>
-            {rows.map(row => <li key={row.date}><time dateTime={row.date}>{formatFrenchDate(row.date, false)}</time>
-              <small>{formatCount(row.presenceCount, "présence")}</small></li>)}
-          </ul>}</DetailRows>
+          <DateStrip observations={items.map(row => ({ date: row.date, note: formatCount(row.presenceCount, "présence") }))} onOpen={onOpen} />
         }</CollectionState>}</DisplayState>
       </DetailGroup>
     </DetailCanvas>

@@ -6,7 +6,7 @@ import { parseYearMonth } from "@/core/time";
 import { ARCHIVED_REALIZED_MONTHS, JULY_COMPOSER_HREF, realizedComposerHref } from "@/domain/phase2/planner/realized-month-entry";
 import { parseHistoryOverlaySearch } from "@/features/history-v2";
 import { ComposerBalanceDashboard } from "@/features/history-v2/balance-dashboard";
-import { readAuthenticatedSubcategoryLabels } from "@/server/query/runtime";
+import { readAuthenticatedSubcategoryPresentation } from "@/server/query/runtime";
 import { withProductAuthentication } from "@/app/product-query";
 import { composerCalendarHref, forecastWindowMonths } from "../../month-entry";
 import styles from "../composer.module.css";
@@ -29,9 +29,9 @@ export default async function ComposerBalancePage({
   }
   const month = parseYearMonth(archivedMonth);
   const dailySeries = readBalanceDailySeries(month);
-  const [initialState, subcategoryLabels] = await Promise.all([
+  const [initialState, subcategories] = await Promise.all([
     readHistoryBalance(month),
-    withProductAuthentication(readAuthenticatedSubcategoryLabels),
+    withProductAuthentication(readAuthenticatedSubcategoryPresentation),
   ]);
   const button = styles.reconstructionLink;
 
@@ -44,6 +44,7 @@ export default async function ComposerBalancePage({
       </nav>
     </AppToolbarContent>
     <ComposerBalanceDashboard key={month} month={month} initialState={initialState}
-      subcategoryLabels={subcategoryLabels} initialDetail={parseHistoryOverlaySearch(search)} dailySeries={dailySeries} />
+      subcategoryLabels={subcategories.labels} categoryBySubcategory={subcategories.categories}
+      initialDetail={parseHistoryOverlaySearch(search)} dailySeries={dailySeries} includeFixed={search.charges === "toutes"} />
   </>;
 }
