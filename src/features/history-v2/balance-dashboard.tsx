@@ -9,10 +9,10 @@ import type { MetricValue } from "@/core/history-v2";
 import type { Money } from "@/core/money";
 import type { HistorySpendingSegmentDetailParams, MonthBalanceSummaryReadModel, MonthCategoriesReadModel, MonthLifeMoneyReadModel, MonthQuickOverviewReadModel, MonthSpendingNatureReadModel } from "@/query-api";
 import { BalanceDetail, type BalanceTarget, type DetailSelection, type OpenDetail } from "./balance-dashboard-details";
-import { AmountBar, AmountBars, chartMaximum, formatDelta, metricValue, moneyAmount, stateValue, visibleValue } from "./balance-dashboard-widgets";
+import { AmountBar, AmountBars, BalanceCollections, DetailRows, chartMaximum, formatDelta, metricValue, moneyAmount, stateValue, visibleValue } from "./balance-dashboard-widgets";
 import { DailySpendingTrend, MonthTimeline, SpendingComparison, categoryColors } from "./balance-dashboard-charts";
 import { formatCount, formatFrenchDateRange, formatHistoricalRank, spendingPresentationLabel } from "./presentation";
-import { BalanceAtom, useBalanceDensity } from "./balance-density";
+import { BalanceAtom, BalanceLayout, useBalanceDensity } from "./balance-density";
 import { publicationMetasAreCoherent } from "./publication-coherence";
 import { MoneyMetric, formatMoney } from "./renderers";
 import { overlayTargetKey } from "./route-state";
@@ -166,7 +166,7 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
   </section>;
   const size = root?.target.kind === "journal" || root?.target.kind === "place" || root?.target.kind === "segment" ? "compact" : "large";
 
-  return <BalanceInteraction.Provider value={{ root, revision, isActive, onOpen: showDetail, onLayout: changeLayout, reset, detail }}>
+  return <BalanceLayout.Provider value={changeLayout}><BalanceInteraction.Provider value={{ root, revision, isActive, onOpen: showDetail, onLayout: changeLayout, reset, detail }}>
     <div className={styles.dashboard} data-month-balance data-focus={origin} data-detail-size={origin ? size : undefined}
       onKeyDown={event => {
         if (event.key !== "Escape" || !current) return;
@@ -193,7 +193,7 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
         </div>
       </div>
     </div>
-  </BalanceInteraction.Provider>;
+  </BalanceInteraction.Provider></BalanceLayout.Provider>;
 }
 
 function BalanceRegion({ kind, title, icon, headingId, children }: {
@@ -204,7 +204,7 @@ function BalanceRegion({ kind, title, icon, headingId, children }: {
   readonly children: ReactNode;
 }) {
   const { revision } = useContext(BalanceInteraction);
-  const { region, flow } = useBalanceDensity(undefined, revision);
+  const { region, flow } = useBalanceDensity(undefined, revision, kind === "summary");
   return <section ref={region} className={styles.panel} data-panel={kind} aria-labelledby={headingId}>
     <div ref={flow} className={styles.panelBody}>
       <BalanceAtom name="heading" priority={120} minimum={1}>
@@ -510,6 +510,7 @@ function MarginAmount({ metric }: { readonly metric?: MetricValue<Money> }) {
 
 function LifeCard({ model, month }: { readonly model: MonthLifeMoneyReadModel; readonly month: YearMonth }) {
   const { onOpen, isActive, root } = useContext(BalanceInteraction);
+  const [open, setOpen] = useState<string>();
   const activities = visibleValue(model.activities);
   const moments = visibleValue(model.moments);
   const places = visibleValue(model.places);
@@ -518,13 +519,14 @@ function LifeCard({ model, month }: { readonly model: MonthLifeMoneyReadModel; r
   const placeList = places?.status === "KNOWN" || places?.status === "PARTIAL" ? places.items : [];
   const activeMoment = root?.target.kind === "moment" ? root.target.momentId : undefined;
 
-  return <>
+  return <BalanceCollections.Provider value={{ open, setOpen }}>
     {momentList.length > 0 && <BalanceAtom name="moments" priority={100} minimum={1}>
       <MonthTimeline month={month} moments={momentList} activeId={activeMoment}
         onOpen={moment => onOpen({ target: { kind: "moment", momentId: moment.momentId }, label: moment.title, anchor: "timeline" })} />
       {root?.anchor === "timeline" && <DetailSlot kind="moment" />}
-      <ul className={styles.lifeRail} aria-label="Moments marquants">
-        {momentList.map(moment => {
+      <DetailRows items={momentList} label="Moments marquants" listKey="moments" cards>{items =>
+      <ul className={styles.lifeCards} aria-label="Moments marquants">
+        {items.map(moment => {
           const target = { kind: "moment", momentId: moment.momentId } as const;
           return <li key={moment.momentId}><button type="button" aria-expanded={isActive(target)} onClick={() => onOpen({ target, label: moment.title })}>
             <span><ClayIcon name="events" size={22} />{formatFrenchDateRange(moment.startDate, moment.endDate, false)}</span>
@@ -532,13 +534,14 @@ function LifeCard({ model, month }: { readonly model: MonthLifeMoneyReadModel; r
             {metricValue(moment.causalCost) === undefined ? <small>Coût non établi</small> : <MoneyMetric metric={moment.causalCost} />}
           </button></li>;
         })}
-      </ul>
+      </ul>}</DetailRows>
       {root?.anchor !== "timeline" && <DetailSlot kind="moment" />}
     </BalanceAtom>}
-    {activityList.length > 0 && <BalanceAtom name="activities" priority={82} minimum={root?.target.kind === "activity" ? 1 : 0}>
+    {activityList.length > 0 && <BalanceAtom name="activities" priority={82} minimum={root?.target.kind === "activity" || open === "activities" ? 1 : 0}>
       <h3 className={styles.railTitle}>Activités du mois</h3>
-      <ul className={styles.lifeRail} aria-label="Activités du mois">
-        {activityList.map(activity => {
+      <DetailRows items={activityList} label="Activités du mois" listKey="activities" cards>{items =>
+      <ul className={styles.lifeCards} aria-label="Activités du mois">
+        {items.map(activity => {
           const target = { kind: "activity", activityTypeKey: activity.activityTypeKey } as const;
           return <li key={activity.activityTypeKey}><button type="button" aria-expanded={isActive(target)} onClick={() => onOpen({ target, label: activity.label })}>
             <span><ClayIcon name="activity" size={22} />{formatCount(activity.occurrences, "fois", "fois")}</span>
@@ -546,24 +549,25 @@ function LifeCard({ model, month }: { readonly model: MonthLifeMoneyReadModel; r
             {metricValue(activity.cost) !== undefined && <small>{activity.costKind === "CAUSAL" ? "Lié" : "Associé"} · <MoneyMetric metric={activity.cost} /></small>}
           </button></li>;
         })}
-      </ul>
+      </ul>}</DetailRows>
       <DetailSlot kind="activity" />
     </BalanceAtom>}
-    {placeList.length > 0 && <BalanceAtom name="places" priority={76} minimum={root?.target.kind === "place" ? 1 : 0}>
+    {placeList.length > 0 && <BalanceAtom name="places" priority={76} minimum={root?.target.kind === "place" || open === "places" ? 1 : 0}>
       <h3 className={styles.railTitle}>Lieux fréquentés</h3>
-      <ul className={styles.lifeRail} aria-label="Lieux fréquentés">
-        {placeList.map(place => {
+      <DetailRows items={placeList} label="Lieux fréquentés" listKey="places" cards>{items =>
+      <ul className={styles.lifeCards} aria-label="Lieux fréquentés">
+        {items.map(place => {
           const target = { kind: "place", placeId: place.placeId } as const;
           return <li key={place.placeId}><button type="button" aria-expanded={isActive(target)} onClick={() => onOpen({ target, label: place.label })}>
             <span><ClayIcon name="travel" size={22} />{formatCount(place.presenceDays, "jour")}</span>
             <strong title={place.label}>{place.label}</strong>
           </button></li>;
         })}
-      </ul>
+      </ul>}</DetailRows>
       <DetailSlot kind="place" />
     </BalanceAtom>}
     {!momentList.length && !activityList.length && !placeList.length && <BalanceAtom name="status" priority={80}>
       <p className={styles.note}>Aucune activité, aucun moment ni lieu renseigné.</p>
     </BalanceAtom>}
-  </>;
+  </BalanceCollections.Provider>;
 }

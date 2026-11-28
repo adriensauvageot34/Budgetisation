@@ -1,8 +1,10 @@
 "use client";
 
-import type { ComponentProps } from "react";
+import { createContext, type ComponentProps } from "react";
 import { DensityAtom } from "@/components/layout/content-density";
 import styles from "./balance-dashboard.module.css";
+
+export const BalanceLayout = createContext<(update: () => void) => void>(update => update());
 
 export { useContentDensity as useBalanceDensity } from "@/components/layout/content-density";
 

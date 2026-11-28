@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { UiTransportState } from "@/ui";
 import { BalanceMonthRhythm } from "./balance-month-rhythm";
 import { ArrowRight, ChevronRight } from "lucide-react";
@@ -15,7 +15,7 @@ import {
   type ParticipantSummary,
 } from "@/query-api";
 
-import { AmountBars, DetailGroup, DetailRows, chartMaximum, formatDelta, metricValue, moneyAmount, visibleValue } from "./balance-dashboard-widgets";
+import { AmountBars, BalanceCollections, DetailGroup, DetailRows, chartMaximum, formatDelta, metricValue, moneyAmount, visibleValue } from "./balance-dashboard-widgets";
 import { expenseDisplayTitle, formatCount, formatFrenchDate, formatFrenchDateRange, spendingPresentationLabel } from "./presentation";
 import { CollectionState, DisplayState, MoneyMetric, StateBoundary, formatMoney } from "./renderers";
 import type { HistoryOverlayTarget } from "./types";
@@ -72,7 +72,10 @@ function DetailState<T>({ state, children }: { readonly state: UiTransportState<
 }
 
 function DetailColumns({ children }: { readonly children: ReactNode }) {
-  return <div className={styles.detailColumns} tabIndex={0} role="group" aria-label="Informations du détail">{children}</div>;
+  const [open, setOpen] = useState<string>();
+  return <BalanceCollections.Provider value={{ open, setOpen }}>
+    <div className={styles.detailColumns} role="group" aria-label="Informations du détail">{children}</div>
+  </BalanceCollections.Provider>;
 }
 
 function DetailLink({ label, end, onClick }: {
@@ -293,6 +296,26 @@ function JournalEvents({ items, label }: { readonly items: readonly JournalTimel
   </DetailGroup>;
 }
 
+function JournalEventExpenses({ items }: { readonly items: readonly JournalTimelineItem[] }) {
+  const groups = items.flatMap(event => {
+    if (!event.moment) return [];
+    const node = event.moment.causalExpenses;
+    return [{ event, expenses: journalItems(node), partial: visibleValue(node)?.status === "PARTIAL" }];
+  });
+  const expenses = groups.flatMap(({ event, expenses }) => expenses.map(row => ({
+    id: event.calendarItemId + ":" + row.expenseEventId,
+    label: expenseDisplayTitle(row) + " · " + event.title,
+    attribution: event.participants.find(person => person.participantId === row.narrativeOwnerId)?.label,
+    amount: moneyAmount(row.amount),
+  })));
+  if (!expenses.length) return null;
+  return <DetailGroup title="Dépenses liées aux événements" note={groups.some(group => group.partial) ? "Données partielles" : undefined}>
+    <DetailRows label="Dépenses liées aux événements" items={expenses}>{rows =>
+      <AmountBars rows={rows} maximum={chartMaximum(expenses)} />
+    }</DetailRows>
+  </DetailGroup>;
+}
+
 function MomentParticipants({ date, momentId }: { readonly date: Extract<HistoryOverlayTarget, { kind: "journal" }>["date"]; readonly momentId: string }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyDayJournal, scope: monthScope(yearMonthOf(date)), params: { date } });
   if (state.status !== "success") return null;
@@ -311,10 +334,7 @@ function JournalDetail({ date }: { readonly date: Extract<HistoryOverlayTarget, 
       </DetailGroup>
       <ExpenseGroup label="Autres dépenses du jour" node={model.otherMovements.otherExpenses} participants={journalItems(model.dayParticipants)} />
       <JournalEvents label="Événements du jour" items={[...journalItems(model.timedTimeline), ...journalItems(model.untimedEvents)]} />
-      {[...journalItems(model.timedTimeline), ...journalItems(model.untimedEvents)].map(event =>
-        event.moment && journalItems(event.moment.causalExpenses).length > 0
-          ? <ExpenseGroup key={event.calendarItemId} label={event.title} node={event.moment.causalExpenses} participants={event.participants} />
-          : null)}
+      <JournalEventExpenses items={[...journalItems(model.timedTimeline), ...journalItems(model.untimedEvents)]} />
     </DetailColumns>
   }</DetailState>;
 }
