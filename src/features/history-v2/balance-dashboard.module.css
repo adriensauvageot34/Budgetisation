@@ -634,6 +634,7 @@
 .inlineDetail .detailColumns:has(> :only-child) { grid-auto-columns: minmax(0, 1fr); }
 .inlineDetail :is(.plot,.amountBar) { gap: 2px; }
 .inlineDetail .barTrack { height: 4px; }
+.inlineDetail .amountText > span:first-child { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .detailLoading { min-height: 52px; display: grid; align-content: center; }
 .detailRail {
   display: grid; grid-auto-flow: column; grid-auto-columns: 100%; gap: 7px; overflow: auto hidden;
