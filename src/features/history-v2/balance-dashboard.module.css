@@ -992,6 +992,14 @@
 .categoryPinned .categoryAxes { gap: 4px 9px; }
 .categoryPinned .axisLegend { gap: 2px; }
 .categoryPinned .axisLegend li { font-size: .73rem; line-height: 1.16; }
+@media (max-width: 1100px) {
+  .dashboard[data-focus="categories"]:has(.categoryPinned) .panelGrid { grid-template-columns: minmax(0, .55fr) minmax(0, 1.45fr); }
+}
+@media (max-width: 1000px), (max-height: 760px) {
+  .dashboard[data-focus="categories"]:has(.categoryPinned) .column[data-side="right"] {
+    grid-template-rows: minmax(0, 1fr) clamp(76px, 20%, 170px);
+  }
+}
 @container category-detail (max-width: 635px) {
   .categoryPinned [data-category-groups="3"] .detailColumns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .categoryPinned [data-category-groups="3"] .detailGroup:has(.categoryItems) { grid-column: 1 / -1; }
