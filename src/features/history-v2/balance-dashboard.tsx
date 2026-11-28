@@ -424,7 +424,8 @@ function CategoryCard({ model, spending, failed }: {
   }) : [];
   const placement = mode === "categories" ? undefined : "distribution";
   const expanded = rows.some(row => isActive(row.target, placement));
-  const selected = mode === "categories" ? rows.find(row => isActive(row.target)) : undefined;
+  const selectedIndex = mode === "categories" ? rows.findIndex(row => isActive(row.target)) : -1;
+  const selected = selectedIndex === -1 ? undefined : rows[selectedIndex];
   const selectedId = selected?.id;
   useLayoutEffect(() => {
     if (categoryList.current) categoryList.current.scrollTop = selectedId ? 0 : rankingScroll.current;
@@ -479,7 +480,7 @@ function CategoryCard({ model, spending, failed }: {
       mode === "categories" ? <>
         {selected && <BalanceAtom name="selectedCategory" priority={115} minimum={1}>
           <ul className={`${styles.categoryPlot} ${styles.categoryPinned}`} data-open-category aria-label="Catégorie ouverte">
-            {categoryRow(selected, rows.indexOf(selected), true)}
+            {categoryRow(selected, selectedIndex, true)}
           </ul>
         </BalanceAtom>}
         {(!selected || rows.length > 1) && <BalanceAtom name="categories" priority={selected ? 56 : 100} minimum={selected ? 0 : 1}>
