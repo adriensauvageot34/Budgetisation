@@ -5,6 +5,7 @@ import { ArrowDownRight, ArrowLeft, ArrowUpRight, ChevronDown, Landmark, X } fro
 import { useLayoutMotion } from "@/components/layout/use-layout-motion";
 import { replaceViewSearch } from "@/components/layout/view-search";
 import { startDetailTiming } from "@/components/layout/detail-timing";
+import { focusCategoryRankingRow, useCategoryRankingScroll } from "@/components/layout/category-ranking";
 import { prepareHistoryDetail } from "@/components/runtime/query-client";
 import { parseLocalDate, type LocalDate } from "@/core/time";
 import { queryResourceKeys } from "@/query-api";
@@ -160,16 +161,10 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
     } else if (restoreFocus.current) {
       const source = opener.current;
       const category = restoreCategory.current;
-      const restoredRow = category ? dashboard.current?.querySelector<HTMLElement>(`[data-category-list] [data-category-trigger="${CSS.escape(category)}"]`) : null;
-      const target = source?.isConnected && source.getClientRects().length > 0 ? source : restoredRow ?? document.getElementById(id + "-" + restoreFocus.current + "-heading");
-      const list = target?.closest<HTMLElement>("[data-category-list]");
-      if (list && target) {
-        const rowBounds = target.getBoundingClientRect();
-        const listBounds = list.getBoundingClientRect();
-        if (rowBounds.top < listBounds.top) list.scrollTop += rowBounds.top - listBounds.top;
-        else if (rowBounds.bottom > listBounds.bottom) list.scrollTop += rowBounds.bottom - listBounds.bottom;
+      if (!category || !focusCategoryRankingRow(dashboard.current, category)) {
+        const target = source?.isConnected && source.getClientRects().length > 0 ? source : document.getElementById(id + "-" + restoreFocus.current + "-heading");
+        target?.focus({ preventScroll: true });
       }
-      target?.focus({ preventScroll: true });
       restoreFocus.current = undefined;
       restoreCategory.current = undefined;
     }
@@ -297,8 +292,9 @@ function BalanceRegion({ kind, title, icon, headingId, children }: {
   readonly headingId: string;
   readonly children: ReactNode;
 }) {
-  const { revision } = useContext(BalanceInteraction);
-  const { region, flow } = useBalanceDensity(".inline-balance-data", revision, kind === "summary");
+  const { revision, root } = useContext(BalanceInteraction);
+  const fitToContent = kind === "summary" || (kind === "categories" && root?.target.kind === "category");
+  const { region, flow } = useBalanceDensity(".inline-balance-data", revision, fitToContent);
   return <section ref={region} className={styles.panel} data-panel={kind} aria-labelledby={headingId}>
     <div ref={flow} className={styles.panelBody}>
       <BalanceAtom name="heading" priority={120} minimum={1}>
@@ -397,8 +393,6 @@ function CategoryCard({ model, spending, failed }: {
 }) {
   const { root, isActive, onOpen, onLayout, prepare, reset, contributors } = useContext(BalanceInteraction);
   const [mode, setMode] = useState<DistributionMode>("categories");
-  const categoryList = useRef<HTMLUListElement>(null);
-  const rankingScroll = useRef(0);
   const collection = visibleValue(model?.categories);
   const categories = collection?.status === "KNOWN" || collection?.status === "PARTIAL" ? collection.items : [];
   const axis = mode === "categories" ? undefined : visibleValue(spending?.[mode]);
@@ -427,9 +421,7 @@ function CategoryCard({ model, spending, failed }: {
   const selectedIndex = mode === "categories" ? rows.findIndex(row => isActive(row.target)) : -1;
   const selected = selectedIndex === -1 ? undefined : rows[selectedIndex];
   const selectedId = selected?.id;
-  useLayoutEffect(() => {
-    if (categoryList.current) categoryList.current.scrollTop = selectedId ? 0 : rankingScroll.current;
-  }, [mode, selectedId]);
+  const rankingScroll = useCategoryRankingScroll(selectedId, mode);
   const maximum = chartMaximum(rows);
   const previewMaximum = chartMaximum(segmentPreviews.flatMap(preview => preview.rows));
   const deviations = categories.flatMap(row => {
@@ -484,9 +476,8 @@ function CategoryCard({ model, spending, failed }: {
           </ul>
         </BalanceAtom>}
         {(!selected || rows.length > 1) && <BalanceAtom name="categories" priority={selected ? 56 : 100} minimum={selected ? 0 : 1}>
-          <ul ref={categoryList} className={styles.categoryPlot} data-category-list data-compact-list={selected ? "" : undefined}
-            aria-label={selected ? "Autres catégories" : "Catégories · parts des dépenses du mois"}
-            onScroll={event => { if (!selected) rankingScroll.current = event.currentTarget.scrollTop; }}>
+          <ul {...rankingScroll} className={styles.categoryPlot} data-category-list data-compact-list={selected ? "" : undefined}
+            aria-label={selected ? "Autres catégories" : "Catégories · parts des dépenses du mois"}>
             {rows.map((row, index) => row.id === selectedId ? null : categoryRow(row, index))}
           </ul>
         </BalanceAtom>}

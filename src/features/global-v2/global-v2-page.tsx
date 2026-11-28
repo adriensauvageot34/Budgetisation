@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
-import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, ChevronLeft, ChevronRight, ExternalLink, Info, Maximize2, Minimize2, RefreshCw, Sparkles, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Info, Maximize2, Minimize2, RefreshCw, Sparkles, X } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { parseMoney, type Money } from "@/core/money";
 import type { MetricEnvelope } from "@/core/metrics";
@@ -35,6 +35,7 @@ import { globalModulePresentation, globalUiCopy } from "./catalog";
 import { economicMetric, economicStructureGroups, economicStructureLabel } from "./economic-ui";
 import { emitGlobalV2UxEvent } from "./instrumentation";
 import { DensityAtom, useContentDensity } from "@/components/layout/content-density";
+import { focusCategoryRankingRow, useCategoryRankingScroll } from "@/components/layout/category-ranking";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { replaceViewSearch } from "@/components/layout/view-search";
 import { startDetailTiming } from "@/components/layout/detail-timing";
@@ -525,7 +526,7 @@ function M2EntityDetail({ model, entityRef, certifiedThrough }: { readonly model
     const amount = row.typedMeasure?.kind === "MONEY" ? m2TypedNumber(row) : undefined;
     return amount === undefined ? [] : [{ row, amount }];
   });
-  return <div className={atomic.categoryDetail}>
+  return <div className={atomic.categoryDetail} data-long-composition={composition.length > 10 || undefined}>
     {annualAmount && <dl className={atomic.categoryFacts}>{primaryMetrics.flatMap(([id, label]) => {
       const item = metric(id);
       const value = m2TypedNumber(item);
@@ -533,11 +534,11 @@ function M2EntityDetail({ model, entityRef, certifiedThrough }: { readonly model
       const display = item?.typedMeasure?.kind === "RATIO" ? formatM2Ratio(value) : item?.typedMeasure?.kind === "COUNT" ? `${integerFormatter.format(value)} mois` : formatMoney(value);
       return [<div key={id}><dt>{label}</dt><dd>{display}</dd></div>];
     })}</dl>}
-    {model.series.length > 0 && <M2MonetarySeries title="Évolution mensuelle" series={model.series.slice(0, 1)}
-      reference={reference} showLegend={false} showSummary={false} highlightLastPoint />}
-    {composition.length > 0 && <section aria-labelledby="m2-detail-composition">
+    {model.series.length > 0 && <div className={atomic.categoryTrend}><M2MonetarySeries title="Évolution mensuelle" series={model.series.slice(0, 1)}
+      reference={reference} showLegend={false} showSummary={false} highlightLastPoint /></div>}
+    {composition.length > 0 && <section className={atomic.categoryBreakdown} aria-labelledby="m2-detail-composition">
       <h4 id="m2-detail-composition">{isCategory ? "Ce qui compose ce poste" : "Catégories qui contribuent à ce besoin"}</h4>
-      <ul className={atomic.categoryComposition} tabIndex={0}>{composition.map(({ row, amount }) => <li key={row.rowId}>
+      <ul className={atomic.categoryComposition}>{composition.map(({ row, amount }) => <li key={row.rowId}>
         <span>{humanLabel(row.labelKey)}</span><strong>{formatMoney(amount)}</strong>
       </li>)}</ul>
     </section>}
@@ -843,9 +844,9 @@ function Atom(props: Omit<ComponentProps<typeof DensityAtom>, "className" | "mot
   return <DensityAtom {...props} className={atomic.atom} motionClassName={atomic.motion} />;
 }
 
-function AtomicSection({ slot, children, detail, actions }: { readonly slot: AtomicSlot; readonly children: ReactNode; readonly detail?: ReactNode; readonly actions?: ReactNode }) {
+function AtomicSection({ slot, children, detail, actions, fitToContent }: { readonly slot: AtomicSlot; readonly children: ReactNode; readonly detail?: ReactNode; readonly actions?: ReactNode; readonly fitToContent?: boolean }) {
   const { revision } = useContext(GlobalLayoutMotion);
-  const { region, flow } = useContentDensity(`.${atomic.detailViewport}[data-fit-detail]`, revision);
+  const { region, flow } = useContentDensity(`.${atomic.detailViewport}[data-fit-detail]`, revision, fitToContent);
   const { id, title, icon } = atomicSections[slot];
   return <section className={atomic.section} data-global-section={slot} data-focused={detail !== undefined} id={id} aria-labelledby={`${id}-title`} ref={region}>
     <div ref={flow} className={atomic.flow}>
@@ -1034,6 +1035,8 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const [previewMonth, setPreviewMonth] = useState<string>();
   const [distribution, setDistribution] = useState<DistributionMode>("categories");
   const origin = useRef<HTMLElement | null>(null);
+  const dashboard = useRef<HTMLDivElement>(null);
+  const restoreCategory = useRef<string>(undefined);
   const detailRef = useRef<HTMLElement>(null);
   const detailHeading = useRef<HTMLHeadingElement>(null);
   const timing = useRef<ReturnType<typeof startDetailTiming>>(null);
@@ -1069,6 +1072,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
 
   function resetFocus() {
     timing.current?.cancel();
+    restoreCategory.current = focus?.kind === "query" && focus.slot === "categories" ? focus.target.entityRef : undefined;
     replaceViewSearch({ "categorie-analyse": undefined, profil: undefined, "evenement-analyse": undefined });
     setTrail([]);
     if (window.location.hash) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
@@ -1142,7 +1146,12 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   }, [open, timeline]);
 
   useLayoutEffect(() => {
-    if (!focus) return;
+    if (!focus) {
+      const category = restoreCategory.current;
+      if (category) focusCategoryRankingRow(dashboard.current, category);
+      restoreCategory.current = undefined;
+      return;
+    }
     timing.current?.visible("structure");
     detailHeading.current?.focus({ preventScroll: true });
     const panel = detailRef.current;
@@ -1152,11 +1161,6 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
     markReady();
     const observer = new MutationObserver(markReady);
     if (panel) observer.observe(panel, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-busy"] });
-    const bar = detailRef.current?.closest("li[data-expanded]");
-    const ranking = bar?.closest(`.${atomic.ranking}`);
-    if (bar && ranking && bar.getBoundingClientRect().bottom > ranking.getBoundingClientRect().bottom) {
-      ranking.scrollTop += bar.getBoundingClientRect().top - ranking.getBoundingClientRect().top;
-    }
     return () => observer.disconnect();
   }, [focus]);
 
@@ -1176,7 +1180,10 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const chartReadoutReference = economicNumber(typical?.points.find(point => point.unitKey === chartReadoutMonth));
   const latestDrivers = transportData(recentChanges.state)?.rows.slice(0, 3) ?? [];
   const activeCategory = focus?.kind === "query" && focus.slot === "categories" ? focus.target.entityRef : undefined;
-  const categoryIsInline = visibleRows.some((row) => row.entityRef && row.entityRef === activeCategory);
+  const categoryDetailOpen = activeCategory?.startsWith("category:") === true;
+  const selectedCategoryIndex = distribution === "categories" && activeCategory ? visibleRows.findIndex(row => row.entityRef === activeCategory) : -1;
+  const selectedCategory = selectedCategoryIndex < 0 ? undefined : visibleRows[selectedCategoryIndex];
+  const rankingScroll = useCategoryRankingScroll(selectedCategory?.entityRef, distribution);
   const isFocusing = focus !== undefined;
   const selectSection = (slot: AtomicSlot, moduleKey: GlobalPrimaryModuleKey, section: GlobalExpandedSectionKey, title: string) => {
     if (focus?.kind === "query" && focus.slot === slot && focus.target.initialSection === section && !focus.target.entityRef) close();
@@ -1199,7 +1206,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
             onClick={() => open({ kind: "person", slot: "profiles" })}>Comparer avec {focus.person === "adrien" ? "Manon" : "Adrien"}</button>}
           <button type="button" onClick={close} aria-label="Fermer le détail"><X size={17} /></button>
         </header>
-        <AtomicDetailPages inline={categoryIsInline} key={focus.kind === "query" ? [focus.target.entityRef, focus.target.initialSection].join(":") : focus.kind === "event" ? focus.event.eventRef : focus.kind === "vehicle" ? "vehicle" : focus.person ?? "profiles"}>
+        <AtomicDetailPages inline={categoryDetailOpen} key={focus.kind === "query" ? [focus.target.entityRef, focus.target.initialSection].join(":") : focus.kind === "event" ? focus.event.eventRef : focus.kind === "vehicle" ? "vehicle" : focus.person ?? "profiles"}>
           {focus.kind === "query" ? <AtomicQueryDetail target={focus.target} slot={slot} runtime={runtime} certifiedThrough={certifiedThrough} open={open} />
             : focus.kind === "event" ? <AtomicEventDetail event={focus.event} runtime={runtime} certifiedThrough={certifiedThrough} open={open} />
             : focus.kind === "person" ? <AtomicProfiles runtime={runtime} person={focus.person} />
@@ -1207,6 +1214,20 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
         </AtomicDetailPages>
       </article>
     </Atom>;
+  }
+
+  function categoryRow(row: GlobalDetailRow, index: number, expanded = false) {
+    const label = humanLabel(row.labelKey);
+    const value = m2TypedNumber(row) ?? 0;
+    const target = row.entityRef && entityOverlayTarget("CATEGORIES_NEEDS", row.entityRef, label, "BREAKDOWN");
+    const item = <><span>{label}</span><strong>{formatMoney(value)}</strong>{target && <ChevronDown size={13} aria-hidden />}
+      <i aria-hidden><b style={{ width: `${Math.max(0, (value / categoryMaximum) * 100)}%`, background: categoryColors[index % categoryColors.length] }} /></i></>;
+    return <li key={row.rowId} data-expanded={expanded || undefined}>
+      {target ? <button type="button" data-category-trigger={row.entityRef} aria-expanded={expanded}
+        aria-controls={expanded ? "global-category-detail" : undefined} onClick={() => expanded ? close() : open({ kind: "query", slot: "categories", target })}>{item}</button>
+        : <div className={atomic.passiveBar}>{item}</div>}
+      {expanded && <div id="global-category-detail">{detail("categories")}</div>}
+    </li>;
   }
 
   function chartSizeButton(slot: RhythmSlot) {
@@ -1232,14 +1253,14 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
     </Atom>;
   }
 
-  return <GlobalLayoutMotion.Provider value={motion}><div className={atomic.dashboard} data-global-v2="" data-publication-id={bundle.initial.publicationMeta.publicationId} onKeyDown={(event) => {
+  return <GlobalLayoutMotion.Provider value={motion}><div ref={dashboard} className={atomic.dashboard} data-global-v2="" data-publication-id={bundle.initial.publicationMeta.publicationId} onKeyDown={(event) => {
     if (event.key === "Escape" && focus) { event.preventDefault(); close(); }
   }}>
     <AppToolbarContent className={atomic.header}><h1>Analyse globale</h1><p>{period.label.replace("—", "→")}</p>
       {visible.has("ECONOMIC") && <button type="button" className={atomic.method} onClick={() => open({ kind: "query", slot: "spending", target: methodOverlayTarget("ECONOMIC") })}><Info aria-hidden size={15} /> Méthode</button>}
     </AppToolbarContent>
     {bundle.newerPublication && <aside className={atomic.banner} role="status"><strong>Une version plus récente est disponible.</strong><button type="button" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={15} /> Actualiser</button></aside>}
-    <div className={atomic.grid} data-focus={focus?.slot} data-chart-focus={focus?.kind === "rhythm-chart" ? focus.slot : undefined} data-focus-size={focus?.kind === "event" && !("eventCost" in focus.event) ? "compact" : undefined}>
+    <div className={atomic.grid} data-focus={focus?.slot} data-category-focused={categoryDetailOpen || undefined} data-chart-focus={focus?.kind === "rhythm-chart" ? focus.slot : undefined} data-focus-size={focus?.kind === "event" && !("eventCost" in focus.event) ? "compact" : undefined}>
       <div className={atomic.column} data-side="left">
         {visible.has("ECONOMIC") && <AtomicSection slot="spending" detail={detail("spending")}>
           <Atom name="financial-markers" priority={95} minimum={1}>{overview ? <div className={atomic.figures}>
@@ -1336,7 +1357,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
         {visible.has("RHYTHM") && <AtomicSection slot="food" actions={chartSizeButton("food")}>
           {rhythm("food")}
         </AtomicSection>}
-        {visible.has("CATEGORIES_NEEDS") && <AtomicSection slot="categories">
+        {visible.has("CATEGORIES_NEEDS") && <AtomicSection slot="categories" fitToContent={categoryDetailOpen} detail={selectedCategory ? undefined : detail("categories")}>
           <Atom name="distribution-controls" priority={90} minimum={isFocusing && focus?.slot !== "categories" ? 0 : 1}>
             <div role="group" aria-label="Mode de répartition" className={atomic.distributionModes}>
               {(Object.keys(distributionModes) as DistributionMode[]).map((mode) => <button key={mode} type="button"
@@ -1350,22 +1371,19 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
             </div>
             <p className={atomic.distributionPeriod}>{distribution === "categories" ? period.label.split(" · ")[0] : period.targetLabel}</p>
           </Atom>
-          <Atom name="category-ranking" priority={75} minimum={isFocusing && focus?.slot !== "categories" ? 0 : 1}>
+          {selectedCategory && <Atom name="selectedCategory" priority={115} minimum={1}>
+            <ul className={`${atomic.ranking} ${atomic.categoryPinned}`} data-open-category aria-label="Catégorie ouverte">
+              {categoryRow(selectedCategory, selectedCategoryIndex, true)}
+            </ul>
+          </Atom>}
+          <Atom name="category-ranking" priority={selectedCategory ? 68 : 75} minimum={selectedCategory || (isFocusing && focus?.slot !== "categories") ? 0 : 1}>
             {distribution !== "categories" ? structure ? <MonthlyDistribution model={structure} axis={distribution} /> :
               structureResult.state.status === "ERROR" ? <LocalError retry={structureResult.retry} /> : <LoadingCard label="répartition du mois" compact /> :
               categories === undefined ? categoriesResult.state.status === "ERROR" ? <LocalError retry={categoriesResult.retry} /> : <LoadingCard label="catégories" compact /> :
               visibleRows.length === 0 ? <p className={atomic.note}>Aucune dépense classée sur cette période.</p> :
-                <ul className={atomic.ranking} data-expanded={categoryIsInline || undefined} aria-label="Dépenses par catégorie">{visibleRows.map((row, index) => {
-                  const label = humanLabel(row.labelKey);
-                  const value = m2TypedNumber(row) ?? 0;
-                  const target = row.entityRef && entityOverlayTarget("CATEGORIES_NEEDS", row.entityRef, label, "BREAKDOWN");
-                  const expanded = target && activeCategory === row.entityRef;
-                  const item = <><span>{label}</span><strong>{formatMoney(value)}</strong><i aria-hidden><b style={{ width: `${Math.max(0, (value / categoryMaximum) * 100)}%`, background: categoryColors[index % categoryColors.length] }} /></i></>;
-                  return <li key={row.rowId} data-expanded={expanded ? true : undefined}>
-                    {target ? <button type="button" aria-expanded={Boolean(expanded)} onClick={() => expanded ? close() : open({ kind: "query", slot: "categories", target })}>{item}</button> : <div className={atomic.passiveBar}>{item}</div>}
-                    {expanded && detail("categories")}
-                  </li>;
-                })}</ul>}
+              (visibleRows.length > 1 || !selectedCategory) && <ul {...rankingScroll} className={atomic.ranking} data-category-list data-compact-list={selectedCategory ? "" : undefined} aria-label={selectedCategory ? "Autres catégories" : "Dépenses par catégorie"}>
+                {visibleRows.map((row, index) => index === selectedCategoryIndex ? null : categoryRow(row, index))}
+              </ul>}
           </Atom>
         </AtomicSection>}
       </div>
