@@ -128,8 +128,8 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
       }
       actual = usedHeight();
       function limitDetail(height: number) {
-        if (!detail || height <= limit + .5) return;
-        const space = Math.max(48, Math.floor(detail.clientHeight - (height - limit)));
+        if (!detail || height <= limit + 1.25) return;
+        const space = Math.max(48, Math.ceil(detail.getBoundingClientRect().height - (height - limit)));
         detail.style.setProperty("--balanced-detail-height", `${space}px`);
         detail.dataset.detailOverflow = "";
         detail.tabIndex = 0;
@@ -152,6 +152,8 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
       verificationFrame = requestAnimationFrame(() => {
         let height = usedHeight();
         if (height > limit + .5) {
+          for (const animation of animations.values()) animation.cancel();
+          animations.clear();
           for (const { atom, level } of upgrades.toReversed()) {
             if (height <= limit + .5) break;
             if (atom.density !== level) continue;
@@ -163,13 +165,22 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
         limitDetail(usedHeight());
       });
 
-      const canAnimate = animate && width === lastWidth && available === lastHeight && !reducedMotion.matches
+      const positions = regions.map(region => {
+        const box = region.getBoundingClientRect();
+        return { region, top: box.top, height: box.height, from: oldTops.get(region) ?? box.top };
+      });
+      // A translation keeps its new height throughout the animation. If it
+      // would cross a neighbour while data is arriving, use the fitted layout.
+      const originsFit = positions.every(({ from }, index) => {
+        const previous = positions[index - 1];
+        return !previous || from >= previous.from + previous.height - .5;
+      });
+      const canAnimate = originsFit && animate && width === lastWidth && available === lastHeight && !reducedMotion.matches
         && !(CSS.supports(`selector(:active-view-transition-type(${motionType}))`)
           && document.documentElement.matches(`:active-view-transition-type(${motionType})`));
       lastTops.clear();
-      for (const region of regions) {
-        const top = region.getBoundingClientRect().top;
-        const delta = (oldTops.get(region) ?? top) - top;
+      for (const { region, top, from } of positions) {
+        const delta = from - top;
         lastTops.set(region, top);
         if (canAnimate && Math.abs(delta) > 1) {
           animations.set(region, region.animate([{ translate: `0 ${delta}px` }, { translate: "0 0" }],
