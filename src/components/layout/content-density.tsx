@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 
-
+const maxDensity = 4;
 type Density = 0 | 1 | 2 | 3 | 4;
 
 export function DensityAtom({ name, priority, minimum = 0, className, motionClassName, children }: {
@@ -19,128 +19,184 @@ export function DensityAtom({ name, priority, minimum = 0, className, motionClas
   </div>;
 }
 
-export function useContentDensity(detailViewportSelector?: string, layoutRevision?: number, fitToMaxHeight = false) {
-  const region = useRef<HTMLElement>(null);
-  const flow = useRef<HTMLDivElement>(null);
-  const fitLayout = useRef<() => void>(null);
-  const animateAtoms = layoutRevision === undefined;
+type Atom = {
+  element: HTMLElement;
+  priority: number;
+  minimum: number;
+  density: number;
+  previous: number;
+
+};
+
+function setDensity(atom: Atom, density: number) {
+  atom.density = density;
+  atom.element.dataset.density = String(density);
+}
+
+/**
+ * Sections keep their DOM order and intrinsic heights. A whole column shares one
+ * height budget, so every pixel released by one section is offered to its neighbours.
+ */
+export function useAdaptiveColumn(revision: number, detailSelector: string, motionType: string) {
+  const column = useRef<HTMLDivElement>(null);
+  const fitLayout = useRef<(animate: boolean) => void>(null);
 
   useLayoutEffect(() => {
-    const container = region.current;
-    const content = flow.current;
-    if (!container || !content) return;
-
-    const budgetRegion = fitToMaxHeight ? container.parentElement : null;
+    const container = column.current;
+    if (!container) return;
+    const root = container;
+    const lastTops = new Map<HTMLElement, number>();
+    const animations = new Map<HTMLElement, Animation>();
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
     let frame = 0;
-    let positions = new Map<HTMLElement, number>();
-    const observed = new Set<HTMLElement>();
-    const fittedSizes = new WeakMap<Element, readonly [number, number]>();
-    const resize = new ResizeObserver(entries => {
-      if (animateAtoms || entries.some(entry => {
-        const fitted = fittedSizes.get(entry.target);
-        const size = entry.borderBoxSize[0];
-        return !fitted || !size || Math.abs(size.inlineSize - fitted[0]) > 1 || Math.abs(size.blockSize - fitted[1]) > 1;
+    let verificationFrame = 0;
+    let lastWidth = 0;
+    let lastHeight = 0;
+    const resize = new ResizeObserver(() => {
+      if (root.clientWidth !== lastWidth || root.clientHeight !== lastHeight) schedule();
+    });
+    const mutation = new MutationObserver(records => {
+      if (records.some(({ target }) => {
+        const element = target instanceof Element ? target : target.parentElement;
+        return element && !element.closest("svg, .ui-chart-renderer");
       })) schedule();
     });
-    const mutation = new MutationObserver(schedule);
 
     function schedule() {
-      if (!frame) frame = requestAnimationFrame(fit);
+      if (frame === 0) frame = requestAnimationFrame(() => fit(true));
     }
 
-    function fit() {
+    function fit(animate: boolean) {
       cancelAnimationFrame(frame);
+      cancelAnimationFrame(verificationFrame);
       frame = 0;
-      const atoms = [...content!.querySelectorAll<HTMLElement>(":scope > [data-balance-atom]")]
-        .toSorted((a, b) => Number(b.dataset.priority) - Number(a.dataset.priority));
-      for (const node of observed) {
-        if (!node.isConnected) {
-          resize.unobserve(node);
-          observed.delete(node);
+      const available = root.clientHeight;
+      const width = root.clientWidth;
+      if (!available || !width) return;
+      const regions = Array.from(root.querySelectorAll<HTMLElement>(":scope > [data-adaptive-region]"));
+      const flows = regions.flatMap(region => Array.from(region.querySelectorAll<HTMLElement>(":scope > [data-adaptive-flow]")));
+      const oldTops = new Map(lastTops);
+      for (const [region, animation] of animations) {
+        if (animation.playState === "running") oldTops.set(region, region.getBoundingClientRect().top);
+        animation.cancel();
+      }
+      animations.clear();
+
+      for (const viewport of root.querySelectorAll<HTMLElement>("[data-detail-overflow]")) {
+        delete viewport.dataset.detailOverflow;
+        viewport.removeAttribute("tabindex");
+      }
+      const list = root.querySelector<HTMLElement>("[data-adaptive-list]");
+      list?.style.removeProperty("max-block-size");
+      const detail = root.querySelector<HTMLElement>(":scope > [data-adaptive-active]")?.querySelector<HTMLElement>(detailSelector);
+
+      const atoms = flows.flatMap(flow => {
+        const focusBonus = flow.parentElement?.hasAttribute("data-adaptive-active") ? 30 : 0;
+        return Array.from(flow.querySelectorAll<HTMLElement>(":scope > [data-balance-atom]"), (element): Atom => ({
+          element,
+          priority: Number(element.dataset.priority) + focusBonus,
+          minimum: Number(element.dataset.minimum),
+          density: Number(element.dataset.density),
+          previous: Number(element.dataset.density),
+        }));
+      });
+      const gap = parseFloat(getComputedStyle(root).rowGap) || 0;
+      const limit = available - gap * Math.max(0, regions.length - 1);
+      const chrome = regions.reduce((height, region) => {
+        const style = getComputedStyle(region);
+        return height + parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)
+          + parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+      }, 0);
+      const usedHeight = () => flows.reduce((height, flow) => height + flow.getBoundingClientRect().height, chrome);
+
+      for (const atom of atoms) setDensity(atom, atom.minimum);
+      let actual = usedHeight();
+      const upgrades = atoms.flatMap(atom => Array.from({ length: maxDensity - atom.minimum }, (_, index) => {
+        const level = atom.minimum + index + 1;
+        // Showing an additional piece of information ranks ahead of enlarging
+        // an existing one with a comparable priority.
+        return { atom, level, score: atom.priority - (level - 1) * 45 };
+      })).sort((a, b) => b.score - a.score);
+
+      for (const { atom, level } of upgrades) {
+        if (atom.density !== level - 1) continue;
+        setDensity(atom, level);
+        const next = usedHeight();
+        const reserve = next > actual && atom.previous < level && level > 1 ? 4 : 0;
+        if (next > limit - reserve) setDensity(atom, level - 1);
+        else actual = next;
+      }
+      actual = usedHeight();
+      function limitDetail(height: number) {
+        if (!detail || height <= limit + .5) return;
+        const space = Math.max(48, Math.floor(detail.clientHeight - (height - limit)));
+        detail.style.setProperty("--balanced-detail-height", `${space}px`);
+        detail.dataset.detailOverflow = "";
+        detail.tabIndex = 0;
+      }
+      limitDetail(actual);
+
+      const listAtom = list && atoms.find(({ element }) => element.contains(list));
+      function fitList() {
+        if (!list || !listAtom) return;
+        const density = Math.max(1, listAtom.density);
+        setDensity(listAtom, 0);
+        const room = limit - usedHeight();
+        if (room < 55 && listAtom.minimum === 0) return;
+        list.style.maxBlockSize = `${Math.max(36, Math.min(360, Math.floor(room - 12)))}px`;
+        setDensity(listAtom, density);
+      }
+      fitList();
+
+      // Local charts may settle after their data and styles are committed.
+      verificationFrame = requestAnimationFrame(() => {
+        let height = usedHeight();
+        if (height > limit + .5) {
+          for (const { atom, level } of upgrades.toReversed()) {
+            if (height <= limit + .5) break;
+            if (atom.density !== level) continue;
+            setDensity(atom, level - 1);
+            height = usedHeight();
+          }
+        }
+        fitList();
+        limitDetail(usedHeight());
+      });
+
+      const canAnimate = animate && width === lastWidth && available === lastHeight && !reducedMotion.matches
+        && !(CSS.supports(`selector(:active-view-transition-type(${motionType}))`)
+          && document.documentElement.matches(`:active-view-transition-type(${motionType})`));
+      lastTops.clear();
+      for (const region of regions) {
+        const top = region.getBoundingClientRect().top;
+        const delta = (oldTops.get(region) ?? top) - top;
+        lastTops.set(region, top);
+        if (canAnimate && Math.abs(delta) > 1) {
+          animations.set(region, region.animate([{ translate: `0 ${delta}px` }, { translate: "0 0" }],
+            { duration: 200, easing: "cubic-bezier(.22,.75,.22,1)" }));
         }
       }
-      const style = getComputedStyle(container!);
-      const maxHeight = fitToMaxHeight ? parseFloat(style.maxBlockSize) : NaN;
-      const innerHeight = Number.isFinite(maxHeight)
-        ? maxHeight - parseFloat(style.borderTopWidth) - parseFloat(style.borderBottomWidth)
-        : container!.clientHeight;
-      const available = innerHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
-      if (detailViewportSelector || !animateAtoms) container!.style.setProperty("--region-available-height", `${Math.max(0, available)}px`);
-      const previous = new Map<HTMLElement, number>();
-      for (const node of atoms) {
-        if (!observed.has(node)) {
-          resize.observe(node);
-          observed.add(node);
-        }
-        previous.set(node, Number(node.dataset.density));
-        node.dataset.density = node.dataset.minimum ?? "0";
-      }
-
-      const detailViewport = detailViewportSelector ? content!.querySelector<HTMLElement>(detailViewportSelector) : null;
-      if (detailViewport) {
-        delete detailViewport.dataset.detailOverflow;
-        detailViewport.removeAttribute("tabindex");
-      }
-
-      for (let target = 1; target <= 4; target++) {
-        for (const node of atoms) {
-          const density = Number(node.dataset.density);
-          if (density !== target - 1) continue;
-          const growReserve = previous.get(node)! < target && target > 1 ? 6 : 0;
-          node.dataset.density = String(target);
-          if (content!.offsetHeight > available - growReserve) node.dataset.density = String(density);
-        }
-      }
-      if (detailViewport) {
-        const deficit = content!.offsetHeight - available;
-        if (deficit > 0 && detailViewport.clientHeight > deficit) {
-          detailViewport.style.setProperty("--balanced-detail-height", `${Math.floor(detailViewport.clientHeight - deficit)}px`);
-          detailViewport.style.setProperty("--balanced-detail-width", `${detailViewport.clientWidth}px`);
-          detailViewport.dataset.detailOverflow = "";
-          detailViewport.tabIndex = 0;
-        }
-      }
-
-      if (!animateAtoms) {
-        // Changes already included in this fit do not need another pass on the next frame.
-        mutation.takeRecords();
-        for (const node of [container!, ...atoms]) fittedSizes.set(node, [node.offsetWidth, node.offsetHeight]);
-        if (budgetRegion) fittedSizes.set(budgetRegion, [budgetRegion.offsetWidth, budgetRegion.offsetHeight]);
-        return;
-      }
-
-      const nextPositions = new Map<HTMLElement, number>();
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      for (const node of atoms) {
-        if (node.dataset.density === "0") continue;
-        const top = node.getBoundingClientRect().top;
-        const previous = positions.get(node);
-        nextPositions.set(node, top);
-        if (reduced || previous === undefined || Math.abs(previous - top) < 2 || Math.abs(previous - top) > 160) continue;
-        const child = node.firstElementChild;
-        child?.getAnimations().forEach(animation => animation.cancel());
-        child?.animate([{ transform: `translateY(${previous - top}px)` }, { transform: "none" }],
-          { duration: 200, easing: "cubic-bezier(.22,.75,.22,1)" });
-      }
-      positions = nextPositions;
+      lastWidth = width;
+      lastHeight = available;
     }
 
-    resize.observe(container);
-    if (budgetRegion) resize.observe(budgetRegion);
-    mutation.observe(content, { childList: true, subtree: true, characterData: true });
+    resize.observe(root);
+    mutation.observe(root, { childList: true, subtree: true, characterData: true });
+    root.addEventListener("load", schedule, true);
+    document.fonts.addEventListener("loadingdone", schedule);
     fitLayout.current = fit;
-    if (animateAtoms) fit();
     return () => {
       fitLayout.current = null;
       cancelAnimationFrame(frame);
+      cancelAnimationFrame(verificationFrame);
       resize.disconnect();
       mutation.disconnect();
+      root.removeEventListener("load", schedule, true);
+      document.fonts.removeEventListener("loadingdone", schedule);
+      for (const animation of animations.values()) animation.cancel();
     };
-  }, [animateAtoms, detailViewportSelector, fitToMaxHeight]);
+  }, [detailSelector, motionType]);
 
-  useLayoutEffect(() => {
-    if (layoutRevision !== undefined) fitLayout.current?.();
-  }, [layoutRevision]);
-
-  return { region, flow };
+  useLayoutEffect(() => { fitLayout.current?.(false); }, [revision]);
+  return column;
 }

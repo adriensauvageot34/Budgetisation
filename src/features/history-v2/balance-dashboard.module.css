@@ -526,21 +526,8 @@
 }
 .dashboard:is([data-focus="summary"], [data-focus="spending"]) .panelGrid { grid-template-columns: minmax(0, 1.16fr) minmax(0, .84fr); }
 .dashboard:is([data-focus="categories"], [data-focus="life"]) .panelGrid { grid-template-columns: minmax(0, .80fr) minmax(0, 1.20fr); }
-.column { display: grid; min-height: 0; min-width: 0; }
-.column[data-side="left"] { container-type: size; grid-template-rows: auto minmax(0, 1fr); }
-.panel[data-panel="summary"] { max-block-size: 48cqh; }
-.dashboard[data-focus="summary"] .panel[data-panel="summary"] { max-block-size: 70cqh; }
-.dashboard[data-focus="spending"] .panel[data-panel="summary"] { max-block-size: 34cqh; }
-.column[data-side="right"] { container-type: size; grid-template-rows: minmax(0, .98fr) minmax(0, 1.02fr); border-inline-start: 1px solid #d8c7e8a0; padding-inline-start: clamp(12px, 1.7vw, 24px); }
-.dashboard[data-focus="categories"] .column[data-side="right"] { grid-template-rows: minmax(0, 1.35fr) minmax(0, .65fr); }
-.dashboard[data-focus="life"] .column[data-side="right"] { grid-template-rows: minmax(0, .70fr) minmax(0, 1.30fr); }
-.dashboard:not([data-focus="categories"], [data-focus="life"]) .column[data-side="right"]:has([data-distribution-mode]:not([data-distribution-mode="categories"])) {
-  grid-template-rows: minmax(0, .61fr) minmax(0, 1.39fr);
-}
-.dashboard:not([data-focus="categories"], [data-focus="life"]) .column[data-side="right"]:has([data-distribution-mode][data-has-previews="false"]:not([data-distribution-mode="categories"])) {
-  grid-template-rows: clamp(122px, 21dvh, 182px) minmax(0, 1fr);
-}
-.dashboard[data-focus="categories"][data-detail-size="compact"] .column[data-side="right"] { grid-template-rows: minmax(0, 1.23fr) minmax(0, .77fr); }
+.column { display: grid; align-content: start; grid-auto-rows: max-content; min-height: 0; min-width: 0; }
+.column[data-side="right"] { border-inline-start: 1px solid #d8c7e8a0; padding-inline-start: clamp(12px, 1.7vw, 24px); }
 .panel { contain: layout; overflow: clip; padding: clamp(3px, .85dvh, 11px) 0; border-top: 1px solid #d8c7e8a0; }
 .clayHeading { width: var(--icon-size); height: var(--icon-size); flex: 0 0 auto; }
 .panelBody { gap: clamp(3px, .73dvh, 8px); }
@@ -566,12 +553,12 @@
 .distributionModes button:hover, .distributionModes button[aria-pressed="true"], .legend button:is(:hover, [aria-expanded="true"]) {
   background: #eadef6; border-color: #d3b9eb; color: #4e2b77;
 }
-.atom[data-density="1"] { --ranking-size: 76px; }
-.atom[data-density="2"] { --ranking-size: 114px; }
-.atom[data-density="3"] { --ranking-size: 172px; }
-.atom[data-density="4"] { --ranking-size: clamp(160px, 31dvh, 325px); }
+.atom[data-density="1"] [data-category-list] { --ranking-size: 76px; }
+.atom[data-density="2"] [data-category-list] { --ranking-size: 114px; }
+.atom[data-density="3"] [data-category-list] { --ranking-size: 172px; }
+.atom[data-density="4"] [data-category-list] { --ranking-size: clamp(160px, 31dvh, 325px); }
 .atom [data-category-list] {
-  max-height: min(var(--ranking-size), max(52px, calc(var(--region-available-height, 270px) - 86px)));
+  max-height: var(--ranking-size);
   overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #bd9dd6 transparent;
   padding: 0 4px 2px 1px;
 }
@@ -623,9 +610,6 @@
 .lifeCards > li { min-width: 0; }
 .dashboard:not([data-focus]) .panelGrid:has(.panel[data-panel="life"] [data-collection-open]) {
   grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
-}
-.dashboard .column[data-side="right"]:has(.panel[data-panel="life"] [data-collection-open]):not(:has(.panel[data-panel="categories"] .inlineDetail)) {
-  grid-template-rows: minmax(0, .76fr) minmax(0, 1.24fr);
 }
 .lifeCards button {
   display: grid; grid-template-rows: auto 1fr auto; align-content: start; gap: 2px; width: 100%; height: 100%;
@@ -950,25 +934,6 @@
 }
 .composition[data-distribution][data-composition="lifeScope"] .stack { justify-content: space-between; background: #f3e9f7; }
 .composition[data-distribution][data-composition="lifeScope"] .stack button:nth-child(2) { border-inline: 2px solid #fff9; }
-.dashboard[data-focus="summary"] .panel[data-panel="summary"]:has(.inlineDetail[data-detail-kind="journal"] .detailCanvas):not(:has(.detailGroup:nth-child(3), .detailAmounts > li:nth-child(4), [data-collection-open])) { max-block-size: 60cqh; }
-.dashboard[data-focus="life"] .column[data-side="right"]:has(.inlineDetail .detailCanvas):not(:has(.inlineDetail .detailGroup:nth-child(3), .inlineDetail .detailAmounts > li:nth-child(4), [data-collection-open])) {
-  grid-template-rows: minmax(0, .87fr) minmax(0, 1.13fr);
-}
-.dashboard[data-focus="categories"] .column[data-side="right"]:has(.inlineDetail .detailCanvas):not(:has(.inlineDetail .detailGroup:nth-child(3), .inlineDetail .detailAmounts > li:nth-child(4), [data-collection-open])) {
-  grid-template-rows: minmax(0, 1.12fr) minmax(0, .88fr);
-}
-.panel:is([data-panel="spending"], [data-panel="life"]) { container: bilan-panel / size; }
-.dashboard[data-focus="summary"]:has(.inlineDetail .detailGroup:nth-child(3)) .panel[data-panel="spending"]
-  .atom:is([data-balance-atom="matrix"], [data-balance-atom="lifeScope"]) { display: none; }
-.dashboard[data-focus="categories"]:has(.categoryPinned) .column[data-side="right"] {
-  grid-template-rows: auto minmax(0, 1fr);
-}
-.panel[data-panel="categories"]:has(.categoryPinned) {
-  align-self: start;
-  max-block-size: calc(100cqh - clamp(96px, 24cqh, 240px));
-}
-.panel[data-panel="categories"]:has([data-long-composition]) { max-block-size: calc(100cqh - clamp(72px, 17cqh, 148px)); }
-
 .atom[data-balance-atom="selectedCategory"] { --category-gap: 4px; --category-text: .73rem; --category-label: .79rem; --category-icon: 29px; }
 .atom[data-balance-atom="selectedCategory"][data-density="3"] { --category-gap: 6px; --category-text: .79rem; --category-label: .85rem; --category-icon: 34px; }
 .atom[data-balance-atom="selectedCategory"][data-density="4"] { --category-gap: 8px; --category-text: .84rem; --category-label: .92rem; --category-icon: 39px; }
@@ -998,32 +963,12 @@
 @media (max-width: 1100px) {
   .dashboard[data-focus="categories"]:has(.categoryPinned) .panelGrid { grid-template-columns: minmax(0, .55fr) minmax(0, 1.45fr); }
 }
-@media (max-width: 1000px), (max-height: 760px) {
-  .panel[data-panel="categories"]:has(.categoryPinned) { max-block-size: calc(100cqh - clamp(76px, 18cqh, 155px)); }
-}
 @container category-detail (max-width: 635px) {
   .categoryPinned [data-category-groups="3"] .detailColumns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .categoryPinned [data-category-groups="3"] .detailGroup:has(.categoryItems) { grid-column: 1 / -1; }
 }
-@container bilan-panel (max-height: 264px) {
-  .panelBody { gap: 3px; }
-  .atom .headingRow { --icon-size: 24px; --heading-size: .96rem; }
-  .atom .marginStats > button { --row-pad: 2px; }
-  .atom .breakdown .stack { height: 4px; }
-  .atom .breakdown .legend button, .atom .breakdown .unclassifiedLabel { font-size: .69rem; }
-  .atom[data-balance-atom="matrix"]:not(:has(.inlineDetail)) { display: none; }
-  .lifeCards button { padding-block: 2px; }
-  .lifeCards button > strong { -webkit-line-clamp: 1; }
-  .lifeCards img { width: 15px; height: 15px; }
-}
-@container bilan-panel (max-height: 218px) {
-  .atom[data-balance-atom="places"]:not(:has(.inlineDetail, [data-collection-open])) { display: none; }
-  .atom[data-balance-atom="lifeScope"]:not(:has(.inlineDetail)) .stack { display: none; }
-}
-@container bilan-panel (max-height: 166px) {
-  .atom[data-balance-atom="activities"]:not(:has(.inlineDetail, [data-collection-open])),
-  .atom[data-balance-atom="lifeScope"]:not(:has(.inlineDetail)) { display: none; }
-}
+.atom[data-density="1"] .breakdown .legend button,
+.atom[data-density="1"] .breakdown .unclassifiedLabel { font-size: .69rem; }
 @media (min-width: 1000px) {
   .detailCanvas[data-side] .detailColumns:has(.dateStrip):not(:has(.detailGroup + .detailGroup)) .detailGroup { grid-column: 1 / -1; }
 }

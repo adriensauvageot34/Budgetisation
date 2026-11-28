@@ -34,7 +34,7 @@ import { globalV2MethodRef } from "@/query-api/global-v2";
 import { globalModulePresentation, globalUiCopy } from "./catalog";
 import { economicMetric, economicStructureGroups, economicStructureLabel } from "./economic-ui";
 import { emitGlobalV2UxEvent } from "./instrumentation";
-import { DensityAtom, useContentDensity } from "@/components/layout/content-density";
+import { DensityAtom, useAdaptiveColumn } from "@/components/layout/content-density";
 import { focusCategoryRankingRow, useCategoryRankingScroll } from "@/components/layout/category-ranking";
 import { AppToolbarContent } from "@/components/layout/app-toolbar";
 import { replaceViewSearch } from "@/components/layout/view-search";
@@ -844,12 +844,10 @@ function Atom(props: Omit<ComponentProps<typeof DensityAtom>, "className" | "mot
   return <DensityAtom {...props} className={atomic.atom} motionClassName={atomic.motion} />;
 }
 
-function AtomicSection({ slot, children, detail, actions, fitToContent }: { readonly slot: AtomicSlot; readonly children: ReactNode; readonly detail?: ReactNode; readonly actions?: ReactNode; readonly fitToContent?: boolean }) {
-  const { revision } = useContext(GlobalLayoutMotion);
-  const { region, flow } = useContentDensity(`.${atomic.detailViewport}[data-fit-detail]`, revision, fitToContent);
+function AtomicSection({ slot, children, detail, actions, active }: { readonly slot: AtomicSlot; readonly children: ReactNode; readonly detail?: ReactNode; readonly actions?: ReactNode; readonly active: boolean }) {
   const { id, title, icon } = atomicSections[slot];
-  return <section className={atomic.section} data-global-section={slot} data-focused={detail !== undefined} id={id} aria-labelledby={`${id}-title`} ref={region}>
-    <div ref={flow} className={atomic.flow}>
+  return <section className={atomic.section} data-global-section={slot} data-adaptive-region data-adaptive-active={active || undefined} id={id} aria-labelledby={`${id}-title`}>
+    <div className={atomic.flow} data-adaptive-flow>
       <Atom name="heading" priority={100} minimum={1}>
         <div className={atomic.sectionHeader}>
           <h2 id={`${id}-title`} className={atomic.heading}><GlobalClayIcon name={icon} size={34} />{title}</h2>
@@ -1031,6 +1029,8 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
   const { changeLayout } = motion;
   const [trail, setTrail] = useState<readonly AtomicFocus[]>([]);
   const focus = trail.at(-1);
+  const left = useAdaptiveColumn(motion.revision, "[data-fit-detail]", "global-layout");
+  const right = useAdaptiveColumn(motion.revision, "[data-fit-detail]", "global-layout");
   const [selectedMonth, setSelectedMonth] = useState<string>();
   const [previewMonth, setPreviewMonth] = useState<string>();
   const [distribution, setDistribution] = useState<DistributionMode>("categories");
@@ -1206,7 +1206,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
             onClick={() => open({ kind: "person", slot: "profiles" })}>Comparer avec {focus.person === "adrien" ? "Manon" : "Adrien"}</button>}
           <button type="button" onClick={close} aria-label="Fermer le détail"><X size={17} /></button>
         </header>
-        <AtomicDetailPages inline={categoryDetailOpen} key={focus.kind === "query" ? [focus.target.entityRef, focus.target.initialSection].join(":") : focus.kind === "event" ? focus.event.eventRef : focus.kind === "vehicle" ? "vehicle" : focus.person ?? "profiles"}>
+        <AtomicDetailPages key={focus.kind === "query" ? [focus.target.entityRef, focus.target.initialSection].join(":") : focus.kind === "event" ? focus.event.eventRef : focus.kind === "vehicle" ? "vehicle" : focus.person ?? "profiles"}>
           {focus.kind === "query" ? <AtomicQueryDetail target={focus.target} slot={slot} runtime={runtime} certifiedThrough={certifiedThrough} open={open} />
             : focus.kind === "event" ? <AtomicEventDetail event={focus.event} runtime={runtime} certifiedThrough={certifiedThrough} open={open} />
             : focus.kind === "person" ? <AtomicProfiles runtime={runtime} person={focus.person} />
@@ -1261,8 +1261,8 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
     </AppToolbarContent>
     {bundle.newerPublication && <aside className={atomic.banner} role="status"><strong>Une version plus récente est disponible.</strong><button type="button" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={15} /> Actualiser</button></aside>}
     <div className={atomic.grid} data-focus={focus?.slot} data-category-focused={categoryDetailOpen || undefined} data-chart-focus={focus?.kind === "rhythm-chart" ? focus.slot : undefined} data-focus-size={focus?.kind === "event" && !("eventCost" in focus.event) ? "compact" : undefined}>
-      <div className={atomic.column} data-side="left">
-        {visible.has("ECONOMIC") && <AtomicSection slot="spending" detail={detail("spending")}>
+      <div ref={left} className={atomic.column} data-side="left">
+        {visible.has("ECONOMIC") && <AtomicSection slot="spending" active={focus?.slot === "spending"} detail={detail("spending")}>
           <Atom name="financial-markers" priority={95} minimum={1}>{overview ? <div className={atomic.figures}>
             <div><span>{selectedMonth ? capitalize(frenchMonth(selectedMonth)) : period.targetLabel}</span>
               {selectedMonth ? <strong>{formatMoney(monthActual)}</strong> : <EconomicMetricValue metric={economicMetric(overview, "actual")} unknownText="Indisponible" />}
@@ -1318,7 +1318,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
             {recurring ? <RecurringPayments model={recurring} /> : recurrences.state.status === "ERROR" ? <LocalError retry={recurrences.retry} /> : <LoadingCard label="dépenses récurrentes" compact />}
           </Atom>
         </AtomicSection>}
-        {visible.has("RHYTHM") && <AtomicSection slot="life" detail={detail("life")}>
+        {visible.has("RHYTHM") && <AtomicSection slot="life" active={focus?.slot === "life"} detail={detail("life")}>
           {timeline === undefined ? <Atom name="timeline-status" priority={65}>{timelineResult.state.status === "ERROR" ? <LocalError retry={timelineResult.retry} /> : <LoadingCard label="événements" compact />}</Atom> :
             <AtomicTimeline model={timeline} compact={isFocusing} open={(next) => {
               if (next.kind === "event" && focus?.kind === "event" && next.event.eventRef === focus.event.eventRef) close();
@@ -1330,8 +1330,8 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
           </div></Atom>
         </AtomicSection>}
       </div>
-      <div className={atomic.column} data-side="right">
-        {visible.has("PERSONAS") && <AtomicSection slot="profiles" detail={detail("profiles")}>
+      <div ref={right} className={atomic.column} data-side="right">
+        {visible.has("PERSONAS") && <AtomicSection slot="profiles" active={focus?.slot === "profiles"} detail={detail("profiles")}>
           <Atom name="portraits" priority={86} minimum={1}><div className={atomic.portraits}>
             {(["adrien", "manon"] as const).map((person) => <button type="button" key={person} aria-pressed={focus?.kind === "person" && focus.person === person}
               onClick={() => focus?.kind === "person" && focus.person === person ? close() : open({ kind: "person", slot: "profiles", person })}>
@@ -1343,7 +1343,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
             </button>)}
           </div></Atom>
         </AtomicSection>}
-        {visible.has("RHYTHM") && <AtomicSection slot="car" detail={detail("car")} actions={
+        {visible.has("RHYTHM") && <AtomicSection slot="car" active={focus?.slot === "car"} detail={detail("car")} actions={
           <div className={atomic.chartActions}>
             {chartSizeButton("car")}
             <button className={atomic.focusLink} type="button" aria-expanded={focus?.kind === "vehicle"}
@@ -1354,10 +1354,10 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
         }>
           {focus?.kind !== "vehicle" && rhythm("car")}
         </AtomicSection>}
-        {visible.has("RHYTHM") && <AtomicSection slot="food" actions={chartSizeButton("food")}>
+        {visible.has("RHYTHM") && <AtomicSection slot="food" active={focus?.slot === "food"} actions={chartSizeButton("food")}>
           {rhythm("food")}
         </AtomicSection>}
-        {visible.has("CATEGORIES_NEEDS") && <AtomicSection slot="categories" fitToContent={categoryDetailOpen} detail={selectedCategory ? undefined : detail("categories")}>
+        {visible.has("CATEGORIES_NEEDS") && <AtomicSection slot="categories" active={focus?.slot === "categories"} detail={selectedCategory ? undefined : detail("categories")}>
           <Atom name="distribution-controls" priority={90} minimum={isFocusing && focus?.slot !== "categories" ? 0 : 1}>
             <div role="group" aria-label="Mode de répartition" className={atomic.distributionModes}>
               {(Object.keys(distributionModes) as DistributionMode[]).map((mode) => <button key={mode} type="button"
@@ -1381,7 +1381,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
               structureResult.state.status === "ERROR" ? <LocalError retry={structureResult.retry} /> : <LoadingCard label="répartition du mois" compact /> :
               categories === undefined ? categoriesResult.state.status === "ERROR" ? <LocalError retry={categoriesResult.retry} /> : <LoadingCard label="catégories" compact /> :
               visibleRows.length === 0 ? <p className={atomic.note}>Aucune dépense classée sur cette période.</p> :
-              (visibleRows.length > 1 || !selectedCategory) && <ul {...rankingScroll} className={atomic.ranking} data-category-list data-compact-list={selectedCategory ? "" : undefined} aria-label={selectedCategory ? "Autres catégories" : "Dépenses par catégorie"}>
+              (visibleRows.length > 1 || !selectedCategory) && <ul {...rankingScroll} className={atomic.ranking} data-category-list data-adaptive-list data-compact-list={selectedCategory ? "" : undefined} aria-label={selectedCategory ? "Autres catégories" : "Dépenses par catégorie"}>
                 {visibleRows.map((row, index) => index === selectedCategoryIndex ? null : categoryRow(row, index))}
               </ul>}
           </Atom>

@@ -18,7 +18,8 @@ import { BalanceDetail, type BalanceTarget, type DetailSelection, type OpenDetai
 import { AmountBar, AmountBars, BalanceCollections, BalancePurchaseReturn, DetailRows, chartMaximum, formatDelta, metricValue, moneyAmount, stateValue, visibleValue } from "./balance-dashboard-widgets";
 import { DailySpendingTrend, MonthTimeline, SpendingComparison, categoryColors } from "./balance-dashboard-charts";
 import { formatCount, formatFrenchDateRange, formatHistoricalRank, spendingPresentationLabel } from "./presentation";
-import { BalanceAtom, BalanceLayout, useBalanceDensity } from "./balance-density";
+import { useAdaptiveColumn } from "@/components/layout/content-density";
+import { BalanceAtom, BalanceLayout } from "./balance-density";
 import { publicationMetasAreCoherent } from "./publication-coherence";
 import { MoneyMetric, formatMoney } from "./renderers";
 import { historyV2Href, overlayTargetKey, parseHistoryOverlaySearch } from "./route-state";
@@ -91,6 +92,8 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
 }) {
   const state = useHistoryPageState(month, initialState);
   const { revision, changeLayout } = useLayoutMotion("balance-layout");
+  const left = useAdaptiveColumn(revision, ".inline-balance-data", "balance-layout");
+  const right = useAdaptiveColumn(revision, ".inline-balance-data", "balance-layout");
   const [stack, setStack] = useState<readonly DetailSelection[]>(() =>
     initialDetail ? [{ target: initialDetail, label: linkedDetailLabels[initialDetail.kind] }] : []);
   const id = useId();
@@ -251,18 +254,17 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
         changeLayout(() => setStack(items => [...items, selection]));
       }} />
   </section>;
-  const size = root?.target.kind === "journal" || root?.target.kind === "place" || root?.target.kind === "segment" ? "compact" : "large";
 
   return <BalanceLayout.Provider value={changeLayout}><BalanceInteraction.Provider value={{ root, revision, isActive, onOpen: showDetail, onLayout: changeLayout, prepare, reset, detail, linkedMoments, contributors }}>
     <BalancePurchaseReturn.Provider value={rememberPurchase}>
-    <div ref={dashboard} className={styles.dashboard} data-month-balance data-focus={origin} data-detail-size={origin ? size : undefined}
+    <div ref={dashboard} className={styles.dashboard} data-month-balance data-focus={origin}
       onKeyDown={event => {
         if (event.key !== "Escape" || !current) return;
         event.preventDefault();
         previousDetail();
       }}>
       <div className={styles.panelGrid}>
-        <div className={styles.column} data-side="left">
+        <div ref={left} className={styles.column} data-side="left">
           <BalanceRegion kind="summary" headingId={id + "-summary-heading"} title="Dépenses du mois" icon="expenses">
             {summary ? <SummaryCard model={summary} dailySeries={dailySeries} overview={overview} onOpen={showDetail} includeFixed={includeFixed}
               onPreview={date => prepare(date ? { kind: "journal", date: parseLocalDate(date) } : undefined)} />
@@ -272,7 +274,7 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
             {spending ? <MarginCard model={spending} /> : <DataStatus failed={state.spendingNature.status === "error"} />}
           </BalanceRegion>
         </div>
-        <div className={styles.column} data-side="right">
+        <div ref={right} className={styles.column} data-side="right">
           <BalanceRegion kind="categories" headingId={id + "-categories-heading"} title="Répartition des dépenses" icon="categories">
             <CategoryCard model={categories} spending={spending} failed={state.categories.status === "error"} />
           </BalanceRegion>
@@ -292,11 +294,9 @@ function BalanceRegion({ kind, title, icon, headingId, children }: {
   readonly headingId: string;
   readonly children: ReactNode;
 }) {
-  const { revision, root } = useContext(BalanceInteraction);
-  const fitToContent = kind === "summary" || (kind === "categories" && root?.target.kind === "category");
-  const { region, flow } = useBalanceDensity(".inline-balance-data", revision, fitToContent);
-  return <section ref={region} className={styles.panel} data-panel={kind} aria-labelledby={headingId}>
-    <div ref={flow} className={styles.panelBody}>
+  const { root } = useContext(BalanceInteraction);
+  return <section className={styles.panel} data-panel={kind} data-adaptive-region data-adaptive-active={panelFor(root) === kind || undefined} aria-labelledby={headingId}>
+    <div className={styles.panelBody} data-adaptive-flow>
       <BalanceAtom name="heading" priority={120} minimum={1}>
         <h2 id={headingId} className={styles.headingRow} tabIndex={-1}>
           <ClayIcon name={icon} size={34} className={styles.clayHeading} /><span>{title}</span>
@@ -476,7 +476,7 @@ function CategoryCard({ model, spending, failed }: {
           </ul>
         </BalanceAtom>}
         {(!selected || rows.length > 1) && <BalanceAtom name="categories" priority={selected ? 56 : 100} minimum={selected ? 0 : 1}>
-          <ul {...rankingScroll} className={styles.categoryPlot} data-category-list data-compact-list={selected ? "" : undefined}
+          <ul {...rankingScroll} className={styles.categoryPlot} data-category-list data-adaptive-list data-compact-list={selected ? "" : undefined}
             aria-label={selected ? "Autres catégories" : "Catégories · parts des dépenses du mois"}>
             {rows.map((row, index) => row.id === selectedId ? null : categoryRow(row, index))}
           </ul>
