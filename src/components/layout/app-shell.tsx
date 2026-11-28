@@ -50,8 +50,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const composer = pathname === "/mois-a-venir/composer";
   const globalAnalysis = pathname === globalAnalysisHref;
   const cagnottes = pathname === "/cagnottes";
-  const glass = plannedMonth;
-  const compactWorkspace = composer || composerCalendar || glass;
+  const glass = plannedMonth && !composerBalance;
+  const compactWorkspace = composer || composerCalendar || plannedMonth;
 
   function navigateFromMenu(event: { preventDefault(): void }, href: string) {
     if (composer && monthNavigationGuard.current) {
@@ -72,12 +72,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return <ComposerMonthNavigationContext.Provider value={monthNavigationGuard}>
     <div ref={compactWorkspace ? setBackgroundRoot : undefined} data-planned-shell={glass ? "" : undefined}
-      className={composer ? "grid h-dvh grid-rows-[auto_minmax(0,1fr)]" : glass ? `${scene.shell}${composerBalance ? ` ${styles.balanceShell}` : ""}`
+      className={composer ? "grid h-dvh grid-rows-[auto_minmax(0,1fr)]" : glass ? scene.shell
         : globalAnalysis ? `${styles.clayShell} ${styles.globalShell}`
+          : composerBalance ? `${styles.clayShell} ${styles.balanceShell}`
           : cagnottes ? styles.clayShell
           : composerCalendar ? `${styles.clayShell} ${styles.calendarShell}` : "min-h-screen"}>
       {glass && <div data-planned-background className={scene.background} aria-hidden="true" />}
-      <header data-planned-header={plannedMonth ? "" : undefined} className={plannedMonth ? scene.header : "border-b border-[var(--color-border)] bg-white"}>
+      <header data-planned-header={glass ? "" : undefined} className={glass ? scene.header : "border-b border-[var(--color-border)] bg-white"}>
         <div className={styles.bar} data-global-header={globalAnalysis ? "" : undefined}>
           <details ref={menu} className={styles.logoMenu} onToggle={event => {
             if (!event.currentTarget.open) setMenuNotice(null);
