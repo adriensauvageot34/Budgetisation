@@ -272,7 +272,7 @@ check(() => assert.doesNotMatch(pageSource, /currentPage|Événements précéden
 check(() => assert.match(pageSource, /month === key \? undefined : key[\s\S]*events\.map[\s\S]*event\.canonicalName/u));
 check(() => assert.doesNotMatch(detailNavigationSource, /Page précédente|Page suivante|className=\{styles\.pagination\}/u));
 check(() => assert.doesNotMatch(pageSource + detailNavigationSource, /<select|Aller directement à|Voir l’évolution sur la période|Statistiques détaillées/u));
-check(() => assert.match(pageSource, /<li key=\{row\.rowId\} data-expanded[\s\S]*expanded && detail\("categories"\)/u));
+check(() => assert.match(pageSource, /data-open-category[^\n]+\n\s*\{categoryRow\(selectedCategory, selectedCategoryIndex, true\)\}[\s\S]*data-category-list[^\n]+\n\s*\{visibleRows\.map\(\(row, index\) => index === selectedCategoryIndex \? null : categoryRow\(row, index\)\)\}/u));
 check(() => assert.match(profileNavigationSource, /aria-pressed=\{selection === id\}[\s\S]*\{block\.title\}[\s\S]*<ProfileTopicDetail block=\{current\.block\}/u));
 check(() => assert.doesNotMatch(profileNavigationSource, /Informations du profil|<select|<PersonaEditorialView/u));
 check(() => assert.match(pageSource, /sectionKey: section[\s\S]*target\.resource, params/u));
