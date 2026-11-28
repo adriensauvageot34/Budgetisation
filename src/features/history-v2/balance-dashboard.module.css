@@ -959,6 +959,26 @@
 .dashboard[data-focus="categories"] .column[data-side="right"]:has(.inlineDetail .detailCanvas):not(:has(.inlineDetail .detailGroup:nth-child(3), .inlineDetail .detailAmounts > li:nth-child(4), [data-collection-open])) {
   grid-template-rows: minmax(0, 1.12fr) minmax(0, .88fr);
 }
+.panel:is([data-panel="spending"], [data-panel="life"]) { container: bilan-panel / size; }
+@container bilan-panel (max-height: 264px) {
+  .panelBody { gap: 3px; }
+  .atom .headingRow { --icon-size: 24px; --heading-size: .96rem; }
+  .atom .marginStats > button { --row-pad: 2px; }
+  .atom .breakdown .stack { height: 4px; }
+  .atom .breakdown .legend button, .atom .breakdown .unclassifiedLabel { font-size: .69rem; }
+  .atom[data-balance-atom="matrix"]:not(:has(.inlineDetail)) { display: none; }
+  .lifeCards button { padding-block: 2px; }
+  .lifeCards button > strong { -webkit-line-clamp: 1; }
+  .lifeCards img { width: 15px; height: 15px; }
+}
+@container bilan-panel (max-height: 218px) {
+  .atom[data-balance-atom="places"]:not(:has(.inlineDetail, [data-collection-open])) { display: none; }
+  .atom[data-balance-atom="lifeScope"]:not(:has(.inlineDetail)) .stack { display: none; }
+}
+@container bilan-panel (max-height: 166px) {
+  .atom[data-balance-atom="activities"]:not(:has(.inlineDetail, [data-collection-open])),
+  .atom[data-balance-atom="lifeScope"]:not(:has(.inlineDetail)) { display: none; }
+}
 @media (min-width: 1000px) {
   .detailCanvas[data-side] .detailColumns:has(.dateStrip):not(:has(.detailGroup + .detailGroup)) .detailGroup { grid-column: 1 / -1; }
 }

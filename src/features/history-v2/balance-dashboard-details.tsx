@@ -384,9 +384,9 @@ function JournalEventExpenses({ items }: { readonly items: readonly JournalTimel
   });
   const expenses = groups.flatMap(({ event, expenses }) => expenses.map(row => ({
     id: event.calendarItemId + ":" + row.expenseEventId,
-    label: expenseDisplayTitle(row) + " · " + event.title,
+    label: expenseDisplayTitle(row),
     href: expenseSourceHref(row),
-    attribution: event.participants.find(person => person.participantId === row.narrativeOwnerId)?.label,
+    attribution: [groups.length > 1 ? event.title : undefined, event.participants.find(person => person.participantId === row.narrativeOwnerId)?.label].filter(Boolean).join(" · ") || undefined,
     amount: moneyAmount(row.amount),
   })));
   if (!expenses.length) return null;
