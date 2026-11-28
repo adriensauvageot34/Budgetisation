@@ -544,6 +544,12 @@
 .dashboard[data-focus="spending"] .column[data-side="left"] { grid-template-rows: minmax(0, .72fr) minmax(0, 1.28fr); }
 .dashboard[data-focus="categories"] .column[data-side="right"] { grid-template-rows: minmax(0, 1.35fr) minmax(0, .65fr); }
 .dashboard[data-focus="life"] .column[data-side="right"] { grid-template-rows: minmax(0, .70fr) minmax(0, 1.30fr); }
+.dashboard:not([data-focus="categories"], [data-focus="life"]) .column[data-side="right"]:has([data-distribution-mode]:not([data-distribution-mode="categories"])) {
+  grid-template-rows: minmax(0, .61fr) minmax(0, 1.39fr);
+}
+.dashboard:not([data-focus="categories"], [data-focus="life"]) .column[data-side="right"]:has([data-distribution-mode][data-has-previews="false"]:not([data-distribution-mode="categories"])) {
+  grid-template-rows: clamp(122px, 21dvh, 182px) minmax(0, 1fr);
+}
 .dashboard[data-focus="categories"][data-detail-size="compact"] .column[data-side="right"] { grid-template-rows: minmax(0, 1.23fr) minmax(0, .77fr); }
 .panel { contain: layout; overflow: clip; padding: clamp(3px, .85dvh, 11px) 0; border-top: 1px solid #d8c7e8a0; }
 .clayHeading { width: var(--icon-size); height: var(--icon-size); flex: 0 0 auto; }
@@ -554,6 +560,12 @@
 .dailyPlot button[data-highlighted="true"]:not([data-missing="true"]) i { background: #644095; }
 
 .distributionModes { display: flex; flex-wrap: wrap; gap: 4px; }
+.distributionPreview { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 5px; padding-block-start: 3px; }
+.distributionPreview > section { padding: 5px 6px; min-width: 0; border: 1px solid #e5d5ef; border-radius: 8px; background: #fffaffb8; }
+.distributionPreview h3 { margin: 0 0 3px; font-size: .76rem; }
+.distributionPreview :is(.plot, .amountBar) { gap: 2px; }
+.distributionPreview .barTrack { height: 3px; }
+.atom[data-density="1"] .distributionPreview li:nth-child(n+3) { display: none; }
 .distributionModes button, .legend button {
   padding: 3px 7px; border: 1px solid #e4d4ef; border-radius: 7px; background: #fffaffb0;
   color: var(--primary); font-size: .73rem; font-weight: 700; cursor: pointer;

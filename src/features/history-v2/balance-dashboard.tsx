@@ -9,7 +9,7 @@ import type { MetricValue } from "@/core/history-v2";
 import type { Money } from "@/core/money";
 import type { HistorySpendingSegmentDetailParams, MonthBalanceSummaryReadModel, MonthCategoriesReadModel, MonthLifeMoneyReadModel, MonthQuickOverviewReadModel, MonthSpendingNatureReadModel } from "@/query-api";
 import { BalanceDetail, type BalanceTarget, type DetailSelection, type OpenDetail } from "./balance-dashboard-details";
-import { AmountBar, chartMaximum, formatDelta, metricValue, moneyAmount, stateValue, visibleValue } from "./balance-dashboard-widgets";
+import { AmountBar, AmountBars, chartMaximum, formatDelta, metricValue, moneyAmount, stateValue, visibleValue } from "./balance-dashboard-widgets";
 import { DailySpendingTrend, MonthTimeline, SpendingComparison, categoryColors } from "./balance-dashboard-charts";
 import { formatCount, formatFrenchDateRange, formatHistoricalRank, spendingPresentationLabel } from "./presentation";
 import { BalanceAtom, useBalanceDensity } from "./balance-density";
@@ -311,6 +311,19 @@ function CategoryCard({ model, spending, failed }: {
     id: bucket.key, label: spendingPresentationLabel(bucket.key), amount: moneyAmount(bucket.amount), share: bucket.shareOfActual,
     target: { kind: "segment", params: { axis: mode, bucket: bucket.key } } as const,
   }))).toSorted((a, b) => Number(metricValue(b.amount) ?? 0) - Number(metricValue(a.amount) ?? 0));
+  const segments = mode !== "categories" && spending && "segments" in spending ? visibleValue(spending.segments) : undefined;
+  const segmentPreviews = segments?.status === "KNOWN" || segments?.status === "PARTIAL" ? segments.items.flatMap(item => {
+    if (item.segment.axis !== mode || !item.segment.bucket) return [];
+    const contributors = visibleValue(item.contributors);
+    if (contributors?.status !== "KNOWN" && contributors?.status !== "PARTIAL") return [];
+    return contributors.items.length ? [{
+      key: item.segment.bucket,
+      label: spendingPresentationLabel(item.segment.bucket),
+      rows: contributors.items.slice(0, 3).map(row => ({
+        id: row.contributorId, label: row.label, amount: moneyAmount(row.amount),
+      })),
+    }] : [];
+  }) : [];
   const placement = mode === "categories" ? undefined : "distribution";
   const expanded = rows.some(row => isActive(row.target, placement));
   const maximum = chartMaximum(rows);
@@ -325,7 +338,8 @@ function CategoryCard({ model, spending, failed }: {
 
   return <>
     <BalanceAtom name="distributionModes" priority={105} minimum={1}>
-      <div className={styles.distributionModes} role="group" aria-label="Mode de répartition">
+      <div className={styles.distributionModes} role="group" aria-label="Mode de répartition"
+        data-distribution-mode={mode} data-has-previews={segmentPreviews.length > 0}>
         {(Object.keys(distributionModes) as DistributionMode[]).map(value => <button key={value} type="button"
           aria-pressed={value === mode} onClick={() => {
             if (value === mode) return;
@@ -356,6 +370,14 @@ function CategoryCard({ model, spending, failed }: {
       <div className={styles.panelFoot}>
         {other && Number(metricValue(other) ?? 0) !== 0 && <span className={styles.zone}>Autres catégories <strong><MoneyMetric metric={other} /></strong></span>}
         {unclassified && Number(metricValue(unclassified) ?? 0) !== 0 && <span className={styles.zone}>Non classé <strong><MoneyMetric metric={unclassified} /></strong></span>}
+      </div>
+    </BalanceAtom>}
+    {mode !== "categories" && !expanded && segmentPreviews.length > 0 && <BalanceAtom name="contributors" priority={75}>
+      <div className={styles.distributionPreview}>
+        {segmentPreviews.map(group => <section key={group.key}>
+          <h3>{group.label} · principaux postes</h3>
+          <AmountBars rows={group.rows} />
+        </section>)}
       </div>
     </BalanceAtom>}
     {mode === "categories" && !expanded && deviations.length > 0 && <BalanceAtom name="deviations" priority={36}>
