@@ -960,6 +960,16 @@
   grid-template-rows: minmax(0, 1.12fr) minmax(0, .88fr);
 }
 .panel:is([data-panel="spending"], [data-panel="life"]) { container: bilan-panel / size; }
+.dashboard[data-focus="summary"]:has(.inlineDetail .detailGroup:nth-child(3)) .panel[data-panel="spending"]
+  .atom:is([data-balance-atom="matrix"], [data-balance-atom="lifeScope"]) { display: none; }
+.dashboard[data-focus="categories"]:has(.categoryPlot .inlineDetail .detailGroup:nth-child(3)) .column[data-side="right"] {
+  grid-template-rows: minmax(0, 1.2fr) minmax(0, .8fr);
+}
+.dashboard[data-focus="categories"]:has(.categoryPlot .inlineDetail .detailGroup:nth-child(3)) .panel[data-panel="life"]
+  .atom[data-balance-atom="places"]:not(:has([data-collection-open])) { display: none; }
+.dashboard[data-focus="categories"]:has(.categoryPlot .inlineDetail .detailGroup:nth-child(3)) .panel[data-panel="life"] .lifeCards button {
+  padding-block: 2px;
+}
 @container bilan-panel (max-height: 264px) {
   .panelBody { gap: 3px; }
   .atom .headingRow { --icon-size: 24px; --heading-size: .96rem; }
