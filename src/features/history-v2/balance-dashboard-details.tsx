@@ -6,16 +6,16 @@ import { BalanceMonthRhythm } from "./balance-month-rhythm";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { useQueryRuntime } from "@/components/runtime/query-client";
 import type { Money } from "@/core/money";
+import type { ClayIconName } from "@/components/layout/clay-icon";
 import { yearMonthOf, type YearMonth } from "@/core/time";
 import {
   queryResourceKeys,
-  type CategoryMonthSummary,
   type EconomicExpenseSummary,
   type JournalTimelineItem,
   type ParticipantSummary,
 } from "@/query-api";
 
-import { AmountBars, BalanceCollections, DetailGroup, DetailRows, chartMaximum, formatDelta, metricValue, moneyAmount, visibleValue } from "./balance-dashboard-widgets";
+import { AmountBars, BalanceCollections, DetailGroup, DetailHero, DetailMetric, DetailRows, chartMaximum, formatDelta, metricValue, moneyAmount, visibleValue } from "./balance-dashboard-widgets";
 import { expenseDisplayTitle, formatCount, formatFrenchDate, formatFrenchDateRange, spendingPresentationLabel } from "./presentation";
 import { CollectionState, DisplayState, MoneyMetric, StateBoundary, formatMoney } from "./renderers";
 import type { HistoryOverlayTarget } from "./types";
@@ -71,10 +71,11 @@ function DetailState<T>({ state, children }: { readonly state: UiTransportState<
   return <StateBoundary state={state} skeleton={<p className={styles.detailLoading} role="status">Chargement du détail…</p>}>{children}</StateBoundary>;
 }
 
-function DetailColumns({ children }: { readonly children: ReactNode }) {
+function DetailCanvas({ lead, receipt = false, children }: { readonly lead: ReactNode; readonly receipt?: boolean; readonly children: ReactNode }) {
   const [open, setOpen] = useState<string>();
   return <BalanceCollections.Provider value={{ open, setOpen }}>
-    <div className={styles.detailColumns} role="group" aria-label="Informations du détail">{children}</div>
+    {lead}
+    <div className={styles.detailColumns} data-receipt={receipt || undefined}>{children}</div>
   </BalanceCollections.Provider>;
 }
 
@@ -97,15 +98,12 @@ function BankDetail({ scope }: { readonly scope: HistoryScope }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyBankEconomyBridge, scope, params: {} });
   return <DetailState state={state}>{model => <DisplayState node={model.bridge}>{bridge => {
     const maximum = Math.max(1, ...bridge.lines.map(line => Math.abs(Number(line.signedAmount))));
-    return <DetailColumns>
-      <DetailGroup title="Du compte au bilan">
-        <div className={styles.bankBridge}>
-          <span>Débits du compte <strong>{formatMoney(bridge.bankOutflows)}</strong></span>
-          <ArrowRight aria-hidden />
-          <span>Dépenses du mois <strong>{formatMoney(bridge.actual)}</strong></span>
-        </div>
-        <DetailRow label="Écart">{formatDelta(bridge.gap)}</DetailRow>
-      </DetailGroup>
+    return <DetailCanvas lead={<DetailHero icon="expenses">
+      <DetailMetric label="Débits du compte" secondary>{formatMoney(bridge.bankOutflows)}</DetailMetric>
+      <ArrowRight className={styles.bridgeArrow} size={17} aria-hidden />
+      <DetailMetric label="Dépenses du mois">{formatMoney(bridge.actual)}</DetailMetric>
+      <DetailMetric label="Écart" secondary>{formatDelta(bridge.gap)}</DetailMetric>
+    </DetailHero>}>
       <DetailGroup title="Les mouvements qui expliquent l’écart">
         {bridge.lines.length ? <DetailRows label="Mouvements" items={bridge.lines}>{rows => <ul className={styles.adjustments}>
           {rows.map(row => <li key={row.lineId}>
@@ -115,14 +113,16 @@ function BankDetail({ scope }: { readonly scope: HistoryScope }) {
           </li>)}
         </ul>}</DetailRows> : <p className={styles.note}>Aucun ajustement détaillé.</p>}
       </DetailGroup>
-    </DetailColumns>;
+    </DetailCanvas>;
   }}</DisplayState>}</DetailState>;
 }
 
 function MinimalDetail({ scope }: { readonly scope: HistoryScope }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyMinimalPreview, scope, params: {} });
   return <DetailState state={state}>{model => <DisplayState node={model.preview}>{preview =>
-    <DetailColumns>
+    <DetailCanvas lead={<DetailHero icon="overview">
+      <DisplayState node={model.minimalValue}>{amount => <DetailMetric label="Minimum estimé"><MoneyMetric metric={amount} /></DetailMetric>}</DisplayState>
+    </DetailHero>}>
       <DetailGroup title="Postes du minimum estimé">
         <AmountBars rows={preview.families.map((family) => ({ id: family.family, label: spendingPresentationLabel(family.family), amount: moneyAmount(family.amount) }))} />
       </DetailGroup>
@@ -131,7 +131,7 @@ function MinimalDetail({ scope }: { readonly scope: HistoryScope }) {
           <DetailRow key={row.componentId} label={row.label}>{formatMoney(row.amount)}</DetailRow>
         )}</DetailRows>
       </DetailGroup>
-    </DetailColumns>
+    </DetailCanvas>
   }</DisplayState>}</DetailState>;
 }
 
@@ -161,8 +161,11 @@ function CategoryDetail({ scope, id, labels }: { readonly scope: HistoryScope; r
     const kind = category.label.trim().toLocaleLowerCase("fr-FR");
     const rhythm = kind === "alimentation" ? "food" : kind === "transport & voiture" ? "car" : undefined;
     const drivers = explanation ? [...explanation.drivers, ...(explanation.compensator ? [explanation.compensator] : [])] : [];
-    return <DetailColumns>
-      <DetailGroup title="Ce mois et le mois habituel"><CategoryComparison category={category} /></DetailGroup>
+    return <DetailCanvas lead={<DetailHero icon="categories">
+      <DetailMetric label="Ce mois"><MoneyMetric metric={category.actual} /></DetailMetric>
+      <DetailMetric label="Mois habituel" secondary><MoneyMetric metric={category.typical} /></DetailMetric>
+      {metricValue(category.delta) !== undefined && <DetailMetric label="Écart à l’habitude" secondary>{formatDelta(metricValue(category.delta)!)}</DetailMetric>}
+    </DetailHero>}>
       {rhythm && <BalanceMonthRhythm key={scope.time.month + rhythm} month={scope.time.month} domain={rhythm} />}
       {drivers.length > 0 && <DetailGroup title="Postes qui expliquent l’écart">
         <DetailRows label="Écarts par poste" items={drivers}>{rows => rows.map(row =>
@@ -175,53 +178,51 @@ function CategoryDetail({ scope, id, labels }: { readonly scope: HistoryScope; r
         {entries.length ? <DetailRows label="Sous-catégories" items={entries}>{rows => <AmountBars rows={rows} maximum={chartMaximum(entries)} />}</DetailRows>
           : <p className={styles.note}>Pas assez de données pour détailler un mois habituel.</p>}
       </DetailGroup>
-      <CategoryAxis label="Nécessité" axis={visibleValue(model.classificationViews.necessity)} />
-      <CategoryAxis label="Fixes et variables" axis={visibleValue(model.classificationViews.behavior)} />
-      <CategoryAxis label="Quotidien et hors quotidien" axis={visibleValue(model.classificationViews.lifeScope)} />
-    </DetailColumns>;
+      <CategoryProfile axes={[
+        { label: "Nécessité", axis: visibleValue(model.classificationViews.necessity) },
+        { label: "Fixes et variables", axis: visibleValue(model.classificationViews.behavior) },
+        { label: "Quotidien et hors quotidien", axis: visibleValue(model.classificationViews.lifeScope) },
+      ]} />
+    </DetailCanvas>;
   }}</DetailState>;
 }
 
-function CategoryComparison({ category }: { readonly category: CategoryMonthSummary }) {
-  const delta = metricValue(category.delta);
-  return <>
-    <AmountBars rows={[
-      { id: "actual", label: "Ce mois", amount: category.actual },
-      { id: "typical", label: "Mois habituel", amount: category.typical, tone: "secondary" },
-    ]} />
-    {delta !== undefined && <DetailRow label="Écart à l’habitude">{formatDelta(delta)}</DetailRow>}
-  </>;
-}
-
 type PublishedAxis = import("@/analytics/history-v2/month-balance").SpendingAxis;
-function CategoryAxis({ label, axis }: { readonly label: string; readonly axis?: PublishedAxis }) {
-  const buckets = metricValue(axis?.result);
-  if (!buckets?.length) return null;
-  return <DetailGroup title={label}>
-    <div className={styles.axisTrack} aria-hidden="true">
-      {buckets.map((bucket, index) => bucket.shareOfActual === undefined ? null :
-        <span key={bucket.key} data-series={index} style={{ width: `${Math.max(0, Math.min(100, bucket.shareOfActual * 100))}%` }} />)}
+
+function CategoryProfile({ axes }: { readonly axes: readonly { readonly label: string; readonly axis?: PublishedAxis }[] }) {
+  const visibleAxes = axes.flatMap(({ label, axis }) => {
+    const buckets = metricValue(axis?.result);
+    return axis && buckets?.length ? [{ label, axis, buckets }] : [];
+  });
+  if (!visibleAxes.length) return null;
+
+  return <DetailGroup title="Profil des dépenses" wide>
+    <div className={styles.categoryAxes}>
+      {visibleAxes.map(({ label, axis, buckets }) => <div key={label} className={styles.categoryAxis}>
+        <strong>{label}</strong>
+        <div className={styles.axisTrack} aria-hidden="true">
+          {buckets.map((bucket, index) => bucket.shareOfActual === undefined ? null :
+            <span key={bucket.key} data-series={index} style={{ width: String(Math.max(0, Math.min(100, bucket.shareOfActual * 100))) + "%" }} />)}
+        </div>
+        <ul className={styles.axisLegend}>{buckets.map((bucket, index) => <li key={bucket.key}>
+          <i data-series={index} aria-hidden /><span>{spendingPresentationLabel(bucket.key)}</span>
+          <strong>{bucket.shareOfActual === undefined ? formatMoney(bucket.amount) : String(Math.round(bucket.shareOfActual * 100)) + " %"}</strong>
+        </li>)}</ul>
+        {Number(axis.unclassifiedAmount) !== 0 && <small className={styles.note}>{formatMoney(axis.unclassifiedAmount)} non classés</small>}
+      </div>)}
     </div>
-    <ul className={styles.axisLegend}>{buckets.map((bucket, index) => <li key={bucket.key}>
-      <i data-series={index} aria-hidden /><span>{spendingPresentationLabel(bucket.key)}</span>
-      <strong>{bucket.shareOfActual === undefined ? formatMoney(bucket.amount) : `${Math.round(bucket.shareOfActual * 100)} %`}</strong>
-    </li>)}</ul>
-    {axis && Number(axis.unclassifiedAmount) !== 0 && <small className={styles.note}>{formatMoney(axis.unclassifiedAmount)} non classés</small>}
   </DetailGroup>;
 }
-
-
 
 function SegmentDetail({ scope, params }: { readonly scope: HistoryScope; readonly params: Extract<HistoryOverlayTarget, { kind: "segment" }>["params"] }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historySpendingSegmentDetail, scope, params });
   return <DetailState state={state}>{model =>
-    <DetailColumns>
-      <DetailGroup title="Montant du poste">
-        <DisplayState node={model.amount}>{amount => <MoneyMetric metric={amount} className={styles.detailTotal} />}</DisplayState>
-        <DisplayState node={model.otherAmount}>{metric => Number(metricValue(metric)) === 0 ? null :
-          <DetailRow label="Autres dépenses du poste"><MoneyMetric metric={metric} /></DetailRow>
-        }</DisplayState>
-      </DetailGroup>
+    <DetailCanvas lead={<DetailHero icon="categories">
+      <DisplayState node={model.amount}>{amount => <DetailMetric label="Montant du poste"><MoneyMetric metric={amount} /></DetailMetric>}</DisplayState>
+      <DisplayState node={model.otherAmount}>{metric => Number(metricValue(metric)) === 0 ? null :
+        <DetailMetric label="Autres dépenses du poste" secondary><MoneyMetric metric={metric} /></DetailMetric>
+      }</DisplayState>
+    </DetailHero>}>
       <DetailGroup title="Dépenses qui le composent">
         <DisplayState node={model.contributors}>{collection => <CollectionState collection={collection}>{items =>
           <DetailRows label="Dépenses du poste" items={items}>{rows => <AmountBars rows={rows.map(row => ({
@@ -231,25 +232,30 @@ function SegmentDetail({ scope, params }: { readonly scope: HistoryScope; readon
           }))} />}</DetailRows>
         }</CollectionState>}</DisplayState>
       </DetailGroup>
-    </DetailColumns>
+    </DetailCanvas>
   }</DetailState>;
 }
 
-function ExpenseGroup({ label, node, participants = [], exclude }: {
+function ExpenseGroup({ label, node, participants = [], exclude, tone = "linked", maximum, sharedPartial = false }: {
   readonly label: string;
   readonly node: import("@/core/history-v2").DisplayNode<import("@/core/history-v2").CollectionValue<EconomicExpenseSummary>>;
   readonly participants?: readonly ParticipantSummary[];
   readonly exclude?: ReadonlySet<string>;
+  readonly tone?: "linked" | "context";
+  readonly maximum?: number;
+  readonly sharedPartial?: boolean;
 }) {
-  return <DetailGroup title={label}>
-    <DisplayState node={node}>{collection => <CollectionState collection={collection}>{items => {
+  if (node.visibility === "HIDDEN") return null;
+  const partial = visibleValue(node)?.status === "PARTIAL";
+  return <DetailGroup title={label} tone={tone} note={partial && !sharedPartial ? "Données partielles" : undefined}>
+    <DisplayState node={node}>{collection => <CollectionState collection={collection} showPartialNote={false}>{items => {
       const amounts = items.filter(row => !exclude?.has(row.expenseEventId)).map(row => ({
         id: row.expenseEventId,
         label: expenseDisplayTitle(row),
         attribution: participants.find(person => person.participantId === row.narrativeOwnerId)?.label,
         amount: moneyAmount(row.amount),
       }));
-      return <DetailRows label={label} items={amounts}>{rows => <AmountBars rows={rows} maximum={chartMaximum(amounts)} />}</DetailRows>;
+      return <DetailRows label={label} items={amounts}>{rows => <AmountBars rows={rows} maximum={maximum ?? chartMaximum(amounts)} />}</DetailRows>;
     }}</CollectionState>}</DisplayState>
   </DetailGroup>;
 }
@@ -257,18 +263,23 @@ function ExpenseGroup({ label, node, participants = [], exclude }: {
 function ActivityDetail({ scope, id, onOpen }: { readonly scope: HistoryScope; readonly id: string; readonly onOpen: OpenDetail }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyActivityDetail, scope, params: { activityTypeKey: id } });
   return <DetailState state={state}>{model =>
-    <DetailColumns>
+    <DetailCanvas lead={<DetailHero icon="activity">
+      <DetailMetric label="Occurrences">{formatCount(model.activity.occurrences, "fois", "fois")}</DetailMetric>
+      {model.activity.costKind !== "NONE" && <DetailMetric label={model.activity.costKind === "CAUSAL" ? "Dépenses liées" : "Dépenses associées"} secondary>
+        <MoneyMetric metric={model.activity.cost} />
+      </DetailMetric>}
+    </DetailHero>}>
       <DetailGroup title="Dates de l’activité">
         <DisplayState node={model.occurrences}>{collection => <CollectionState collection={collection}>{items =>
-          <DetailRows label="Dates" items={items}>{rows => rows.map(row => <DetailLink key={row.occurrenceId}
-            label={formatFrenchDate(row.effectiveDate)} end={row.effectiveTime}
-            onClick={() => onOpen({ target: { kind: "journal", date: row.effectiveDate }, label: formatFrenchDate(row.effectiveDate) })} />
-          )}</DetailRows>
+          <DetailRows label="Dates" items={items}>{rows => <ul className={styles.detailDates}>
+            {rows.map(row => <li key={row.occurrenceId}><DetailLink label={formatFrenchDate(row.effectiveDate, false)} end={row.effectiveTime}
+              onClick={() => onOpen({ target: { kind: "journal", date: row.effectiveDate }, label: formatFrenchDate(row.effectiveDate) })} /></li>)}
+          </ul>}</DetailRows>
         }</CollectionState>}</DisplayState>
       </DetailGroup>
       <ExpenseGroup label="Dépenses liées" node={model.causalExpenses} />
-      <ExpenseGroup label="Dépenses associées" node={model.associatedExpenses} />
-    </DetailColumns>
+      <ExpenseGroup label="Dépenses associées" node={model.associatedExpenses} tone="context" />
+    </DetailCanvas>
   }</DetailState>;
 }
 
@@ -287,12 +298,12 @@ function PeopleChips({ people }: { readonly people: readonly ParticipantSummary[
 function JournalEvents({ items, label }: { readonly items: readonly JournalTimelineItem[]; readonly label: string }) {
   if (!items.length) return null;
   return <DetailGroup title={label}>
-    <DetailRows label={label} items={items}>{rows => rows.map(row => <div key={row.calendarItemId}>
+    <DetailRows label={label} items={items}>{rows => <ol className={styles.dayTimeline}>{rows.map(row => <li key={row.calendarItemId}>
       <DetailRow label={row.title}>
         {row.moment ? <DisplayState node={row.moment.causalCost}>{value => <MoneyMetric metric={value} />}</DisplayState> : row.startTime}
       </DetailRow>
       <PeopleChips people={row.participants} />
-    </div>)}</DetailRows>
+    </li>)}</ol>}</DetailRows>
   </DetailGroup>;
 }
 
@@ -328,48 +339,60 @@ function MomentParticipants({ date, momentId }: { readonly date: Extract<History
 function JournalDetail({ date }: { readonly date: Extract<HistoryOverlayTarget, { kind: "journal" }>["date"] }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyDayJournal, scope: monthScope(yearMonthOf(date)), params: { date } });
   return <DetailState state={state}>{model =>
-    <DetailColumns>
-      <DetailGroup title="Total des dépenses du jour">
-        <DisplayState node={model.economicAmount}>{amount => <MoneyMetric metric={amount} className={styles.detailTotal} />}</DisplayState>
-      </DetailGroup>
-      <ExpenseGroup label="Autres dépenses du jour" node={model.otherMovements.otherExpenses} participants={journalItems(model.dayParticipants)} />
+    <DetailCanvas lead={<DetailHero icon="events" context={<PeopleChips people={journalItems(model.dayParticipants)} />}>
+      <DisplayState node={model.economicAmount}>{amount => <DetailMetric label="Total des dépenses du jour"><MoneyMetric metric={amount} /></DetailMetric>}</DisplayState>
+    </DetailHero>}>
+      <ExpenseGroup label="Autres dépenses du jour" node={model.otherMovements.otherExpenses} tone="context" participants={journalItems(model.dayParticipants)} />
       <JournalEvents label="Événements du jour" items={[...journalItems(model.timedTimeline), ...journalItems(model.untimedEvents)]} />
       <JournalEventExpenses items={[...journalItems(model.timedTimeline), ...journalItems(model.untimedEvents)]} />
-    </DetailColumns>
+    </DetailCanvas>
   }</DetailState>;
 }
 
+const momentIcons = new Map<string, ClayIconName>([
+  ["beach", "beach"], ["family", "family"], ["travel", "travel"], ["night", "night"],
+  ["concert", "concert"], ["restaurant", "restaurant"], ["celebration", "celebration"], ["sport", "activity"],
+]);
+
 function MomentDetail({ scope, id }: { readonly scope: HistoryScope; readonly id: string }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyMomentDetail, scope, params: { momentId: id } });
-  return <DetailState state={state}>{model =>
-    <DetailColumns>
-      <DetailGroup title="Budget du moment" note={formatFrenchDateRange(model.moment.startDate, model.moment.endDate)}>
-        <DisplayState node={model.causalCost}>{amount => <DetailRow label="Dépenses liées"><MoneyMetric metric={amount} /></DetailRow>}</DisplayState>
-        <DisplayState node={model.spentDuring}>{amount => <DetailRow label="Dépenses sur la période"><MoneyMetric metric={amount} /></DetailRow>}</DisplayState>
-        <MomentParticipants date={model.moment.startDate} momentId={id} />
-      </DetailGroup>
-      <ExpenseGroup label="Achats liés au moment" node={model.causalExpenses} />
+  return <DetailState state={state}>{model => {
+    const linked = journalItems(model.causalExpenses);
+    const linkedIds = new Set(linked.map(expense => expense.expenseEventId));
+    const other = journalItems(model.spentDuringExpenses).filter(expense => !linkedIds.has(expense.expenseEventId));
+    const maximum = Math.max(1, ...[...linked, ...other].map(expense => Math.abs(Number(expense.amount))));
+    const sharedPartial = visibleValue(model.causalExpenses)?.status === "PARTIAL"
+      && visibleValue(model.spentDuringExpenses)?.status === "PARTIAL";
+    const icon = momentIcons.get(model.moment.fallbackIconKey) ?? "events";
+    return <DetailCanvas receipt lead={<DetailHero icon={icon} context={<>
+      <span>{formatFrenchDateRange(model.moment.startDate, model.moment.endDate)}</span>
+      <MomentParticipants date={model.moment.startDate} momentId={id} />
+    </>} note={sharedPartial ? "Achats recensés partiellement" : undefined}>
+      <DisplayState node={model.causalCost}>{amount => <DetailMetric label="Dépenses liées"><MoneyMetric metric={amount} /></DetailMetric>}</DisplayState>
+      <DisplayState node={model.spentDuring}>{amount => <DetailMetric label="Dépenses sur la période" secondary><MoneyMetric metric={amount} /></DetailMetric>}</DisplayState>
+    </DetailHero>}>
+      <ExpenseGroup label="Achats liés au moment" node={model.causalExpenses} maximum={maximum} sharedPartial={sharedPartial} />
       <ExpenseGroup label="Autres achats sur la période" node={model.spentDuringExpenses}
-        exclude={new Set(journalItems(model.causalExpenses).map(expense => expense.expenseEventId))} />
-    </DetailColumns>
-  }</DetailState>;
+        tone="context" exclude={linkedIds} maximum={maximum} sharedPartial={sharedPartial} />
+    </DetailCanvas>;
+  }}</DetailState>;
 }
 
 function PlaceDetail({ scope, id }: { readonly scope: HistoryScope; readonly id: string }) {
   const state = useQueryRuntime({ resource: queryResourceKeys.historyPlaceDetail, scope, params: { placeId: id } });
   return <DetailState state={state}>{model =>
-    <DetailColumns>
-      <DetailGroup title={model.place.label}>
-        <DetailRow label="Jours de présence">{model.place.presenceDays}</DetailRow>
-        <DisplayState node={model.localizedAmount}>{amount => <DetailRow label="Dépenses localisées"><MoneyMetric metric={amount} /></DetailRow>}</DisplayState>
-      </DetailGroup>
+    <DetailCanvas lead={<DetailHero icon="travel">
+      <DetailMetric label="Jours de présence">{model.place.presenceDays}</DetailMetric>
+      <DisplayState node={model.localizedAmount}>{amount => <DetailMetric label="Dépenses localisées" secondary><MoneyMetric metric={amount} /></DetailMetric>}</DisplayState>
+    </DetailHero>}>
       <DetailGroup title="Dates de présence">
         <DisplayState node={model.presenceDays}>{collection => <CollectionState collection={collection}>{items =>
-          <DetailRows label="Présences" items={items}>{rows => rows.map(row =>
-            <DetailRow key={row.date} label={formatFrenchDate(row.date)}>{formatCount(row.presenceCount, "présence")}</DetailRow>
-          )}</DetailRows>
+          <DetailRows label="Présences" items={items} size={7}>{rows => <ul className={styles.detailDates}>
+            {rows.map(row => <li key={row.date}><time dateTime={row.date}>{formatFrenchDate(row.date, false)}</time>
+              <small>{formatCount(row.presenceCount, "présence")}</small></li>)}
+          </ul>}</DetailRows>
         }</CollectionState>}</DisplayState>
       </DetailGroup>
-    </DetailColumns>
+    </DetailCanvas>
   }</DetailState>;
 }
