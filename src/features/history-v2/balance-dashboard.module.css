@@ -158,7 +158,7 @@
 .detailHeader .close { margin-inline-start: auto; }
 .detailColumns {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(178px, 100%), 1fr));
   gap: 5px;
   align-items: start;
   min-width: 0;
@@ -641,7 +641,9 @@
 .inlineDetail .detailRow, .inlineDetail .detailLink { min-height: 20px; padding-block: 1px; }
 .inlineDetail :is(.plot,.amountBar) { gap: 2px; }
 .inlineDetail .barTrack { height: 4px; }
+.inlineDetail .amountText { grid-template-columns: minmax(min(45px, 40%), 1fr) minmax(0, auto); }
 .inlineDetail .amountText > span:first-child { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.inlineDetail .amountText > span:last-child { justify-content: flex-end; flex-wrap: wrap; white-space: normal; text-align: end; }
 .detailLoading { min-height: 52px; display: grid; align-content: center; }
 .detailColumns > .detailGroup:has([data-collection-open]) { grid-column: 1 / -1; }
 .atom[data-density="1"] .detailColumns:has([data-collection-open]) > .detailGroup:not(:has([data-collection-open])) { display: none; }
