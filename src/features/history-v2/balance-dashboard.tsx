@@ -20,7 +20,7 @@ import { formatCount, formatFrenchDateRange, formatHistoricalRank, spendingPrese
 import { BalanceAtom, BalanceLayout, useBalanceDensity } from "./balance-density";
 import { publicationMetasAreCoherent } from "./publication-coherence";
 import { MoneyMetric, formatMoney } from "./renderers";
-import { historyV2Href, overlayTargetKey } from "./route-state";
+import { historyV2Href, overlayTargetKey, parseHistoryOverlaySearch } from "./route-state";
 import type { BalanceDailySeries, HistoryOverlayTarget, HistoryV2InitialState } from "./types";
 import { useHistoryPageState } from "./use-history-page-state";
 import styles from "./balance-dashboard.module.css";
@@ -91,6 +91,7 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
   const opener = useRef<HTMLElement | null>(null);
   const restoreFocus = useRef<PanelKind | undefined>(undefined);
   const detailTitle = useRef<HTMLHeadingElement>(null);
+  const restored = useRef(false);
   const timing = useRef<ReturnType<typeof startDetailTiming>>(null);
   const previewTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const root = stack[0];
@@ -103,6 +104,14 @@ export function ComposerBalanceDashboard({ month, initialState, initialDetail, s
   }, []);
 
   useLayoutEffect(() => {
+    if (!restored.current) {
+      restored.current = true;
+      const target = parseHistoryOverlaySearch(Object.fromEntries(new URLSearchParams(window.location.search)));
+      if (target && !current) {
+        setStack([{ target, label: linkedDetailLabels[target.kind] }]);
+        return;
+      }
+    }
     const url = new URL(historyV2Href({
       month, view: "balance", surface: "composer",
       overlay: current?.target.kind === "minimal" ? undefined : current?.target,

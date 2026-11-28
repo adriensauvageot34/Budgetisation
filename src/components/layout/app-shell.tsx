@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return <ComposerMonthNavigationContext.Provider value={monthNavigationGuard}>
     <div ref={compactWorkspace ? setBackgroundRoot : undefined} data-planned-shell={glass ? "" : undefined}
-      className={composer ? "grid h-dvh grid-rows-[auto_minmax(0,1fr)]" : glass ? scene.shell
+      className={composer ? `${styles.clayShell} grid h-dvh grid-rows-[auto_minmax(0,1fr)]` : glass ? `${styles.clayShell} ${scene.shell}`
         : globalAnalysis ? `${styles.clayShell} ${styles.globalShell}`
           : composerBalance ? `${styles.clayShell} ${styles.balanceShell}`
           : cagnottes ? styles.clayShell

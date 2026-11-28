@@ -40,7 +40,7 @@
 .legend span[data-tone="car-work"] { --legend-color: #7963b0; }
 .legend span[data-tone="car-outside"] { --legend-color: #ba9ed9; }
 .legend span[data-tone="car-unresolved"] { --legend-color: #ece0f4; }
-.annualVisualBody { position: relative; min-width: 0; padding-top: 76px; }
+.annualVisualBody { position: relative; min-width: 0; padding-top: 76px; container: rhythm-plot / inline-size; }
 .annualRiver { display: block; width: 100%; height: 268px; overflow: visible; }
 .annualRiver > path { stroke: rgb(255 255 255 / .34); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
 .swileFundingOverlay { pointer-events: none; }
@@ -57,7 +57,7 @@
 .monthAnchor[data-selected="true"]::after { border-color: var(--color-primary-deep); box-shadow: 0 0 0 2px rgb(255 255 255 / .84); }
 .monthAnchor > span { position: absolute; right: 0; bottom: 4px; left: 0; overflow: hidden; font-size: 10px; font-weight: 760; text-align: center; text-overflow: clip; text-transform: capitalize; white-space: nowrap; }
 .monthAnchor > span[data-full-month] { display: none; }
-@container rhythm-panel (min-width: 810px) {
+@container rhythm-plot (min-width: 825px) {
   .monthAnchor > span:not([data-full-month]) { display: none; }
   .monthAnchor > span[data-full-month] { display: block; }
 }
