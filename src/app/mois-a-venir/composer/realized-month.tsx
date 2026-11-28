@@ -37,6 +37,7 @@ const flowFilters = [
 type FlowFilter = typeof flowFilters[number][0];
 type RailMemory = { sort: SortOrder; flow: FlowFilter; status: JulyPilotStatus | ""; query: string; position: number };
 const railMemory = new Map<string, RailMemory>();
+const emptyDetails: ReadonlyMap<string, RealizedCard> = new Map();
 const distance = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
 const carArtwork = "option:activity:transport:car";
 
@@ -325,7 +326,8 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
     () => initialCardId ? { cardId: initialCardId,
       paymentId: initialCardId.startsWith("payment-") ? initialCardId.slice("payment-".length) : undefined } : null,
   );
-  const [loaded, setLoaded] = useState<ReadonlyMap<string, RealizedCard>>(() => new Map());
+  const [cache, setCache] = useState<{ source: PackedRealizedOverview; cards: ReadonlyMap<string, RealizedCard> }>();
+  const loaded = cache?.source === packed ? cache.cards : emptyDetails;
   const [failedKey, setFailedKey] = useState<string>();
   const [retry, setRetry] = useState(0);
   const memoKey = `${overview.month}:${pilot}`;
@@ -411,10 +413,11 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
     abort.current = controller;
     return () => {
       controller.abort();
+      pending.current.clear();
       if (prepareTimer.current !== null) clearTimeout(prepareTimer.current);
       timing.current?.cancel();
     };
-  }, [memoKey]);
+  }, [packed]);
 
   const readDetail = useCallback((key: string, id: string) => {
     const existing = pending.current.get(key);
@@ -427,19 +430,23 @@ export function RealizedComposerMonth({ overview: packed, initialDetail, editabl
         if (!response.ok) throw new Error("CARD_DETAIL_UNAVAILABLE");
         const card = await response.json() as RealizedCard;
         if (card.id !== id) throw new Error("CARD_DETAIL_MISMATCH");
-        if (!signal?.aborted) setLoaded(previous => new Map(previous).set(key, card));
+        if (!signal?.aborted) setCache(previous => ({
+          source: packed, cards: new Map(previous?.source === packed ? previous.cards : undefined).set(key, card),
+        }));
         return card;
       }).finally(() => {
         if (pending.current.get(key) === request) pending.current.delete(key);
       });
     pending.current.set(key, request);
     return request;
-  }, [overview.month, pilot]);
+  }, [overview.month, packed, pilot]);
 
   const prepareDetail = useCallback((key?: string, id?: string) => {
     if (prepareTimer.current !== null) clearTimeout(prepareTimer.current);
     if (!key || !id || loaded.has(key) || initialDetail?.key === key) return;
-    prepareTimer.current = setTimeout(() => { void readDetail(key, id).catch(() => undefined); }, 180);
+    prepareTimer.current = setTimeout(() => {
+      if (pending.current.size < 2) void readDetail(key, id).catch(() => undefined);
+    }, 180);
   }, [initialDetail?.key, loaded, readDetail]);
 
   useEffect(() => {
