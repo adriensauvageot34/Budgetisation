@@ -25,7 +25,6 @@ type Atom = {
   minimum: number;
   density: number;
   previous: number;
-
 };
 
 function setDensity(atom: Atom, density: number) {
@@ -37,7 +36,7 @@ function setDensity(atom: Atom, density: number) {
  * Sections keep their DOM order and intrinsic heights. A whole column shares one
  * height budget, so every pixel released by one section is offered to its neighbours.
  */
-export function useAdaptiveColumn(revision: number, detailSelector: string, motionType: string) {
+export function useAdaptiveColumn(revision: number, detailSelector: string, motionType: string, mediaQuery?: string) {
   const column = useRef<HTMLDivElement>(null);
   const fitLayout = useRef<(animate: boolean) => void>(null);
 
@@ -48,6 +47,7 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
     const lastTops = new Map<HTMLElement, number>();
     const animations = new Map<HTMLElement, Animation>();
     const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+    const media = mediaQuery ? matchMedia(mediaQuery) : null;
     let frame = 0;
     let verificationFrame = 0;
     let lastWidth = 0;
@@ -70,6 +70,18 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
       cancelAnimationFrame(frame);
       cancelAnimationFrame(verificationFrame);
       frame = 0;
+      if (media && !media.matches) {
+        for (const animation of animations.values()) animation.cancel();
+        animations.clear();
+        lastTops.clear();
+        for (const viewport of root.querySelectorAll("[data-detail-overflow]")) {
+          viewport.removeAttribute("data-detail-overflow");
+          viewport.removeAttribute("tabindex");
+        }
+        lastWidth = root.clientWidth;
+        lastHeight = root.clientHeight;
+        return;
+      }
       const available = root.clientHeight;
       const width = root.clientWidth;
       if (!available || !width) return;
@@ -109,8 +121,9 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
       }, 0);
       const usedHeight = () => flows.reduce((height, flow) => height + flow.getBoundingClientRect().height, chrome);
 
+      const distributeSpareHeight = root.hasAttribute("data-adaptive-fill");
+      if (distributeSpareHeight) root.style.setProperty("--adaptive-spare-growth", "0");
       for (const atom of atoms) setDensity(atom, atom.minimum);
-      let actual = usedHeight();
       const upgrades = atoms.flatMap(atom => Array.from({ length: maxDensity - atom.minimum }, (_, index) => {
         const level = atom.minimum + index + 1;
         // Showing an additional piece of information ranks ahead of enlarging
@@ -118,15 +131,17 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
         return { atom, level, score: atom.priority - (level - 1) * 45 };
       })).sort((a, b) => b.score - a.score);
 
-      for (const { atom, level } of upgrades) {
-        if (atom.density !== level - 1) continue;
-        setDensity(atom, level);
-        const next = usedHeight();
-        const reserve = next > actual && atom.previous < level && level > 1 ? 4 : 0;
-        if (next > limit - reserve) setDensity(atom, level - 1);
-        else actual = next;
+      function offerUpgrades(height: number) {
+        for (const { atom, level } of upgrades) {
+          if (atom.density !== level - 1) continue;
+          setDensity(atom, level);
+          const next = usedHeight();
+          const reserve = next > height && atom.previous < level && level > 1 ? 4 : 0;
+          if (next > limit - reserve) setDensity(atom, level - 1);
+          else height = next;
+        }
       }
-      actual = usedHeight();
+      offerUpgrades(usedHeight());
       function limitDetail(height: number) {
         if (!detail || height <= limit + 1.25) return;
         const space = Math.max(48, Math.ceil(detail.getBoundingClientRect().height - (height - limit)));
@@ -134,7 +149,7 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
         detail.dataset.detailOverflow = "";
         detail.tabIndex = 0;
       }
-      limitDetail(actual);
+      limitDetail(usedHeight());
 
       const listAtom = list && atoms.find(({ element }) => element.contains(list));
       function fitList() {
@@ -150,6 +165,7 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
 
       // Local charts may settle after their data and styles are committed.
       function verifyLayout(afterPaint: boolean) {
+        if (distributeSpareHeight) root.style.setProperty("--adaptive-spare-growth", "0");
         let height = usedHeight();
         if (height > limit + .5) {
           for (const animation of animations.values()) animation.cancel();
@@ -160,13 +176,19 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
             setDensity(atom, level - 1);
             height = usedHeight();
           }
+        } else if (distributeSpareHeight && height < limit - 14) {
+          // Some week previews change height once the compact style is painted.
+          // Offer any space released by that change to the other atoms.
+          offerUpgrades(height);
         }
         fitList();
         limitDetail(usedHeight());
+        if (distributeSpareHeight) root.style.removeProperty("--adaptive-spare-growth");
         if (!afterPaint) verificationFrame = requestAnimationFrame(() => verifyLayout(true));
       }
       verificationFrame = requestAnimationFrame(() => verifyLayout(false));
 
+      if (distributeSpareHeight) root.style.removeProperty("--adaptive-spare-growth");
       const positions = regions.map(region => {
         const box = region.getBoundingClientRect();
         return { region, top: box.top, height: box.height, from: oldTops.get(region) ?? box.top };
@@ -196,6 +218,7 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
     resize.observe(root);
     mutation.observe(root, { childList: true, subtree: true, characterData: true });
     root.addEventListener("load", schedule, true);
+    media?.addEventListener("change", schedule);
     document.fonts.addEventListener("loadingdone", schedule);
     fitLayout.current = fit;
     return () => {
@@ -205,10 +228,11 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
       resize.disconnect();
       mutation.disconnect();
       root.removeEventListener("load", schedule, true);
+      media?.removeEventListener("change", schedule);
       document.fonts.removeEventListener("loadingdone", schedule);
       for (const animation of animations.values()) animation.cancel();
     };
-  }, [detailSelector, motionType]);
+  }, [detailSelector, motionType, mediaQuery]);
 
   useLayoutEffect(() => { fitLayout.current?.(false); }, [revision]);
   return column;
