@@ -19,7 +19,7 @@ export function DensityAtom({ name, priority, minimum = 0, className, motionClas
   </div>;
 }
 
-export function useContentDensity(detailViewportSelector?: string, layoutRevision?: number) {
+export function useContentDensity(detailViewportSelector?: string, layoutRevision?: number, fitToMaxHeight = false) {
   const region = useRef<HTMLElement>(null);
   const flow = useRef<HTMLDivElement>(null);
   const fitLayout = useRef<() => void>(null);
@@ -30,6 +30,7 @@ export function useContentDensity(detailViewportSelector?: string, layoutRevisio
     const content = flow.current;
     if (!container || !content) return;
 
+    const budgetRegion = fitToMaxHeight ? container.parentElement : null;
     let frame = 0;
     let positions = new Map<HTMLElement, number>();
     const observed = new Set<HTMLElement>();
@@ -59,7 +60,11 @@ export function useContentDensity(detailViewportSelector?: string, layoutRevisio
         }
       }
       const style = getComputedStyle(container!);
-      const available = container!.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      const maxHeight = fitToMaxHeight ? parseFloat(style.maxBlockSize) : NaN;
+      const innerHeight = Number.isFinite(maxHeight)
+        ? maxHeight - parseFloat(style.borderTopWidth) - parseFloat(style.borderBottomWidth)
+        : container!.clientHeight;
+      const available = innerHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
       if (detailViewportSelector || !animateAtoms) container!.style.setProperty("--region-available-height", `${Math.max(0, available)}px`);
       for (const node of atoms) {
         if (!observed.has(node)) {
@@ -95,6 +100,7 @@ export function useContentDensity(detailViewportSelector?: string, layoutRevisio
         // Changes already included in this fit do not need another pass on the next frame.
         mutation.takeRecords();
         for (const node of [container!, ...atoms]) fittedSizes.set(node, [node.offsetWidth, node.offsetHeight]);
+        if (budgetRegion) fittedSizes.set(budgetRegion, [budgetRegion.offsetWidth, budgetRegion.offsetHeight]);
         return;
       }
 
@@ -115,6 +121,7 @@ export function useContentDensity(detailViewportSelector?: string, layoutRevisio
     }
 
     resize.observe(container);
+    if (budgetRegion) resize.observe(budgetRegion);
     mutation.observe(content, { childList: true, subtree: true, characterData: true });
     fitLayout.current = fit;
     if (animateAtoms) fit();
@@ -124,7 +131,7 @@ export function useContentDensity(detailViewportSelector?: string, layoutRevisio
       resize.disconnect();
       mutation.disconnect();
     };
-  }, [animateAtoms, detailViewportSelector]);
+  }, [animateAtoms, detailViewportSelector, fitToMaxHeight]);
 
   useLayoutEffect(() => {
     if (layoutRevision !== undefined) fitLayout.current?.();
