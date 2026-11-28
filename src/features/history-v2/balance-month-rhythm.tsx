@@ -24,7 +24,7 @@ export function BalanceMonthRhythm({ month, domain }: { readonly month: YearMont
   }, [month, domain]);
 
   const title = domain === "food" ? "Courses, restaurants et livraisons" : "Carburant et trajets";
-  return <DetailGroup title={title}>
+  return <DetailGroup title={title} note={data ? "Repère du mois · Analyse globale" : undefined}>
     {data === undefined ? <p className={styles.detailLoading} role="status">Chargement du repère mensuel…</p>
       : data === null ? <p className={styles.note}>Repère mensuel non disponible.</p>
       : data.domain === "food" ? <AmountBars rows={data.rows.map((row, index) => ({

@@ -232,14 +232,15 @@ function SegmentDetail({ scope, params }: { readonly scope: HistoryScope; readon
   }</DetailState>;
 }
 
-function ExpenseGroup({ label, node, participants = [] }: {
+function ExpenseGroup({ label, node, participants = [], exclude }: {
   readonly label: string;
   readonly node: import("@/core/history-v2").DisplayNode<import("@/core/history-v2").CollectionValue<EconomicExpenseSummary>>;
   readonly participants?: readonly ParticipantSummary[];
+  readonly exclude?: ReadonlySet<string>;
 }) {
   return <DetailGroup title={label}>
     <DisplayState node={node}>{collection => <CollectionState collection={collection}>{items => {
-      const amounts = items.map(row => ({
+      const amounts = items.filter(row => !exclude?.has(row.expenseEventId)).map(row => ({
         id: row.expenseEventId,
         label: expenseDisplayTitle(row),
         attribution: participants.find(person => person.participantId === row.narrativeOwnerId)?.label,
@@ -328,7 +329,8 @@ function MomentDetail({ scope, id }: { readonly scope: HistoryScope; readonly id
         <MomentParticipants date={model.moment.startDate} momentId={id} />
       </DetailGroup>
       <ExpenseGroup label="Achats liés au moment" node={model.causalExpenses} />
-      <ExpenseGroup label="Autres achats sur la période" node={model.spentDuringExpenses} />
+      <ExpenseGroup label="Autres achats sur la période" node={model.spentDuringExpenses}
+        exclude={new Set(journalItems(model.causalExpenses).map(expense => expense.expenseEventId))} />
     </DetailColumns>
   }</DetailState>;
 }
