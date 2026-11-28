@@ -476,7 +476,7 @@ function CategoryCard({ model, spending, failed }: {
           </ul>
         </BalanceAtom>}
         {(!selected || rows.length > 1) && <BalanceAtom name="categories" priority={selected ? 56 : 100} minimum={selected ? 0 : 1}>
-          <ul {...rankingScroll} className={styles.categoryPlot} data-category-list data-compact-list={selected ? "" : undefined}
+          <ul {...rankingScroll} className={styles.categoryPlot} data-category-list data-adaptive-list data-compact-list={selected ? "" : undefined}
             aria-label={selected ? "Autres catégories" : "Catégories · parts des dépenses du mois"}>
             {rows.map((row, index) => row.id === selectedId ? null : categoryRow(row, index))}
           </ul>

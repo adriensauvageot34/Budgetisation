@@ -1381,7 +1381,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
               structureResult.state.status === "ERROR" ? <LocalError retry={structureResult.retry} /> : <LoadingCard label="répartition du mois" compact /> :
               categories === undefined ? categoriesResult.state.status === "ERROR" ? <LocalError retry={categoriesResult.retry} /> : <LoadingCard label="catégories" compact /> :
               visibleRows.length === 0 ? <p className={atomic.note}>Aucune dépense classée sur cette période.</p> :
-              (visibleRows.length > 1 || !selectedCategory) && <ul {...rankingScroll} className={atomic.ranking} data-category-list data-compact-list={selectedCategory ? "" : undefined} aria-label={selectedCategory ? "Autres catégories" : "Dépenses par catégorie"}>
+              (visibleRows.length > 1 || !selectedCategory) && <ul {...rankingScroll} className={atomic.ranking} data-category-list data-adaptive-list data-compact-list={selectedCategory ? "" : undefined} aria-label={selectedCategory ? "Autres catégories" : "Dépenses par catégorie"}>
                 {visibleRows.map((row, index) => index === selectedCategoryIndex ? null : categoryRow(row, index))}
               </ul>}
           </Atom>

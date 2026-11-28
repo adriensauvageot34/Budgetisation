@@ -553,10 +553,10 @@
 .distributionModes button:hover, .distributionModes button[aria-pressed="true"], .legend button:is(:hover, [aria-expanded="true"]) {
   background: #eadef6; border-color: #d3b9eb; color: #4e2b77;
 }
-.atom[data-density="1"] { --ranking-size: 76px; }
-.atom[data-density="2"] { --ranking-size: 114px; }
-.atom[data-density="3"] { --ranking-size: 172px; }
-.atom[data-density="4"] { --ranking-size: clamp(160px, 31dvh, 325px); }
+.atom[data-density="1"] [data-category-list] { --ranking-size: 76px; }
+.atom[data-density="2"] [data-category-list] { --ranking-size: 114px; }
+.atom[data-density="3"] [data-category-list] { --ranking-size: 172px; }
+.atom[data-density="4"] [data-category-list] { --ranking-size: clamp(160px, 31dvh, 325px); }
 .atom [data-category-list] {
   max-height: var(--ranking-size);
   overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #bd9dd6 transparent;
