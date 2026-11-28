@@ -149,7 +149,7 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
       fitList();
 
       // Local charts may settle after their data and styles are committed.
-      verificationFrame = requestAnimationFrame(() => {
+      function verifyLayout(afterPaint: boolean) {
         let height = usedHeight();
         if (height > limit + .5) {
           for (const animation of animations.values()) animation.cancel();
@@ -163,7 +163,9 @@ export function useAdaptiveColumn(revision: number, detailSelector: string, moti
         }
         fitList();
         limitDetail(usedHeight());
-      });
+        if (!afterPaint) verificationFrame = requestAnimationFrame(() => verifyLayout(true));
+      }
+      verificationFrame = requestAnimationFrame(() => verifyLayout(false));
 
       const positions = regions.map(region => {
         const box = region.getBoundingClientRect();
