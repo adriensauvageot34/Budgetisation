@@ -62,6 +62,16 @@ export function AmountBars({ rows, maximum = chartMaximum(rows) }: { readonly ro
   return <ul className={styles.plot}>{rows.map((row) => <li key={row.id}><AmountBar row={row} maximum={maximum} /></li>)}</ul>;
 }
 
+export function DetailAmounts({ rows }: { readonly rows: readonly AmountRow[] }) {
+  return <ul className={styles.detailAmounts}>
+    {rows.map(row => <li key={row.id}>
+      <span className={styles.detailAmountLabel} title={row.label}>{row.label}</span>
+      <strong><MoneyMetric metric={row.amount} /></strong>
+      {row.attribution && <small>{row.attribution}</small>}
+    </li>)}
+  </ul>;
+}
+
 export function DetailGroup({ title, note, tone, wide, children }: {
   readonly title: string;
   readonly note?: ReactNode;
